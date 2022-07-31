@@ -1,0 +1,13 @@
+<resources>
+    <string name="app_name">Billiard</string>
+    <string name="administrator">Администратор</string>
+    <string name="password">Пароль</string>
+    <string name="setting">Настойки</string>
+    <string name="login">Вход</string>
+    <string name="tableNumber">Номер стола</string>
+    <string name="tariff">Тарифы</string>
+    <string name="employee">Сотрудники</string>
+    <string name="admin">Администраторы</string>
+    <string name="client">Клиенты</string>
+    <string name="sale">скидки</string>
+</resources>
