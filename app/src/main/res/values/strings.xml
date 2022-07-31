@@ -10,4 +10,11 @@
     <string name="admin">Администраторы</string>
     <string name="client">Клиенты</string>
     <string name="sale">скидки</string>
+    <string name="tableType">Тип стола</string>
+    <string name="table">Cтол</string>
+    <string name="status">Статус</string>
+    <string name="startTime">Время\nначала</string>
+    <string name="duration">длительность</string>
+    <string name="statusToExtend">следующий\nрезерв</string>
+    <string name="reserve">Статус резерва\n на сегодня</string>
 </resources>

@@ -4,6 +4,9 @@
     <option name="filePathToZoomLevelMap">
       <map>
         <entry key="..\:/Users/Gasayni/AndroidStudioProjects/Billiard/app/src/main/res/drawable-v24/btn_style_1.xml" value="0.1" />
+        <entry key="..\:/Users/Gasayni/AndroidStudioProjects/Billiard/app/src/main/res/drawable-v24/btn_style_2.xml" value="0.2245" />
+        <entry key="..\:/Users/Gasayni/AndroidStudioProjects/Billiard/app/src/main/res/drawable-v24/btn_style_3.xml" value="0.1575" />
+        <entry key="..\:/Users/Gasayni/AndroidStudioProjects/Billiard/app/src/main/res/layout/activity_common.xml" value="0.25052083333333336" />
         <entry key="..\:/Users/Gasayni/AndroidStudioProjects/Billiard/app/src/main/res/layout/activity_main.xml" value="0.24895833333333334" />
       </map>
     </option>
