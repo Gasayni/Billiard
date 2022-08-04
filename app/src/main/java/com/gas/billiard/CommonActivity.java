@@ -13,6 +13,7 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import java.text.SimpleDateFormat;
@@ -30,35 +31,16 @@ public class CommonActivity extends AppCompatActivity implements View.OnClickLis
     private final SimpleDateFormat dateFormat = new SimpleDateFormat("dd.MM.yyyy", Locale.ENGLISH);
     String today = dateFormat.format(currentDate);
     List<String> todayReserveList = new ArrayList<>();
-
-    private TextView tvTime, tvAdminName;
     LocalTime startGameLocalTime, endGameLocalTime;
+    private TextView tvTime, tvAdminName;
 
-    Button btnAdd;
-    public Button
-            btnTable1, btnTable2, btnTable3, btnTable4, btnTable5, btnTable6, btnTable7, btnTable8,
-            btnTable9, btnTable10, btnTable11, btnTable12, btnTable13, btnTable14, btnTable15,
-            btnTable16, btnTable17, btnTable18, btnTable19;
-    public Button btnStatus1, btnStatus2, btnStatus3, btnStatus4, btnStatus5, btnStatus6,
-            btnStatus7, btnStatus8, btnStatus9, btnStatus10, btnStatus11, btnStatus12, btnStatus13,
-            btnStatus14, btnStatus15, btnStatus16, btnStatus17, btnStatus18, btnStatus19;
-    public Button btnStartGameTime1, btnStartGameTime2, btnStartGameTime3, btnStartGameTime4, btnStartGameTime5,
-            btnStartGameTime6, btnStartGameTime7, btnStartGameTime8, btnStartGameTime9, btnStartGameTime10,
-            btnStartGameTime11, btnStartGameTime12, btnStartGameTime13, btnStartGameTime14, btnStartGameTime15,
-            btnStartGameTime16, btnStartGameTime17, btnStartGameTime18, btnStartGameTime19;
-    public String endGameTime1, endGameTime2, endGameTime3, endGameTime4, endGameTime5,
-            endGameTime6, endGameTime7, endGameTime8, endGameTime9, endGameTime10,
-            endGameTime11, endGameTime12, endGameTime13, endGameTime14, endGameTime15,
-            endGameTime16, endGameTime17, endGameTime18, endGameTime19;
-    public Button btnduration1, btnduration2, btnduration3, btnduration4,
-            btnduration5, btnduration6, btnduration7, btnduration8, btnduration9,
-            btnduration10, btnduration11, btnduration12, btnduration13, btnduration14,
-            btnduration15, btnduration16, btnduration17, btnduration18, btnduration19;
-    // возможность резерва
-    public Button btnReserve1, btnReserve2, btnReserve3, btnReserve4, btnReserve5, btnReserve6,
-            btnReserve7, btnReserve8, btnReserve9, btnReserve10, btnReserve11, btnReserve12,
-            btnReserve13, btnReserve14, btnReserve15, btnReserve16, btnReserve17, btnReserve18,
-            btnReserve19;
+    OptionallyClass option = new OptionallyClass();
+    LinearLayout linTable, linHour, linTableTime, linTableTimeHead, linTableHead;
+    private final int hourCount = 18;
+    private final int tableCount = 19;
+    Button btnDate, btnTableHead, btnTime, btnTable;
+    private int marginLength;
+
     // БД
     DBHelper dbHelper;
     SQLiteDatabase database;
@@ -70,34 +52,31 @@ public class CommonActivity extends AppCompatActivity implements View.OnClickLis
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_common);
 
-        initBtn();
+        // сначала создадим все кнопки
+        marginLength = option.convertDpToPixels(this, 2);
+        addBtnTableHead();
+        addBtnHour();
+        addBtnCommon();
 
-        // Получаем имя админа
-        Intent intent = getIntent();
-        String adminName = intent.getStringExtra("adminName");
-        tvAdminName.setText(String.format("Администратор:   %s", adminName));
+        // покажем текущее время
+        tvTime = findViewById(R.id.tvTime);
+//        actualTime();
+
         // работа с БД
         dbHelper = new DBHelper(this);
         database = dbHelper.getWritableDatabase();
         contentValues = new ContentValues();
-        choseTable();
-        // текущее время
-        actualTime();
-        // времени осталось до конца
-        btnduration1.setOnClickListener(this);
-        btnReserve1.setOnClickListener(this);
-        // добавить новый резерв
-        btnAdd.setOnClickListener(this);
+//        choseTypeTable();
 
         // нам нужно загрузить с Таблиц каждого стола данные о резервах на сегодня
-        reserveToday();
+//        reserveToday();
     }
 
     @SuppressLint("NonConstantResourceId")
     @Override
     public void onClick(View view) {
         Intent intent;
-        switch (view.getId()) {
+        /*switch (view.getId()) {
             // переключаемся на редактор резерва
             case R.id.btnDuration1: {
                 intent = new Intent("TimeEditActivity");
@@ -118,10 +97,10 @@ public class CommonActivity extends AppCompatActivity implements View.OnClickLis
                 startActivity(intent);
                 break;
             }
-        }
+        }*/
     }
 
-    private void actualTime() {
+    /*private void actualTime() {
         // каждую секунду обновляет время
         final Handler handler = new Handler();
         new Thread(() -> {
@@ -138,9 +117,9 @@ public class CommonActivity extends AppCompatActivity implements View.OnClickLis
                 actualTime();  // мис рекурсия
             });
         }).start();
-    }
+    }*/
 
-    private void choseTable() {
+    private void choseTypeTable() {
         // получаем данные c табл "tables"
         cursorTables = database.query(DBHelper.TABLES,
                 null, null, null,
@@ -148,120 +127,97 @@ public class CommonActivity extends AppCompatActivity implements View.OnClickLis
         if (cursorTables.moveToFirst()) {
             int numberTableIndex = cursorTables.getColumnIndex(DBHelper.KEY_ID);
             int typeIndex = cursorTables.getColumnIndex(DBHelper.KEY_TYPE);
-            int startTimeIndex = cursorTables.getColumnIndex(DBHelper.KEY_START_TIME);
-            int endTimeIndex = cursorTables.getColumnIndex(DBHelper.KEY_END_TIME);
-            int startDateIndex = cursorTables.getColumnIndex(DBHelper.KEY_START_DATE);
-            int endDateIndex = cursorTables.getColumnIndex(DBHelper.KEY_END_DATE);
-            int statusIndex = cursorTables.getColumnIndex(DBHelper.KEY_STATUS);
-            int endRateIndex = cursorTables.getColumnIndex(DBHelper.KEY_RATE);
             int descriptionIndex = cursorTables.getColumnIndex(DBHelper.KEY_DESCRIPTION);
             do {
-                // для каждого стола
+                // находим каждый кнопки столов
                 switch (cursorTables.getInt(numberTableIndex)) {
                     case 1: {
-                        btnStartGameTime1.setText(cursorTables.getString(startTimeIndex));
-                        endGameTime1 = cursorTables.getString(endTimeIndex);
-                        Log.i("Gas", "endGameTime1 = " + endGameTime1);
-                        if (cursorTables.getString(statusIndex).equals("pool")) {
-                            btnTable1.setBackgroundResource(R.drawable.am_flag);
-                            btnTable1.setPadding(28, 0, 0, 0);
-                        } else if (cursorTables.getString(statusIndex).equals("pyramid")) {
-                            btnTable1.setBackgroundResource(R.drawable.rus_flag);
-                            btnTable1.setPadding(28, 0, 0, 0);
-                        }
+                        btnTableHead = btnTableHead.findViewWithTag("btnTableHead1");
                         break;
                     }
                     case 2: {
-                        btnStartGameTime2.setText(cursorTables.getString(startTimeIndex));
-                        endGameTime2 = cursorTables.getString(endTimeIndex);
+                        btnTableHead = btnTableHead.findViewWithTag("btnTableHead2");
                         break;
                     }
                     case 3: {
-                        btnStartGameTime3.setText(cursorTables.getString(startTimeIndex));
-                        endGameTime3 = cursorTables.getString(endTimeIndex);
+                        btnTableHead = btnTableHead.findViewWithTag("btnTableHead3");
                         break;
                     }
                     case 4: {
-                        btnStartGameTime4.setText(cursorTables.getString(startTimeIndex));
-                        endGameTime4 = cursorTables.getString(endTimeIndex);
+                        btnTableHead = btnTableHead.findViewWithTag("btnTableHead4");
                         break;
                     }
                     case 5: {
-                        btnStartGameTime5.setText(cursorTables.getString(startTimeIndex));
-                        endGameTime5 = cursorTables.getString(endTimeIndex);
+                        btnTableHead = btnTableHead.findViewWithTag("btnTableHead5");
                         break;
                     }
                     case 6: {
-                        btnStartGameTime6.setText(cursorTables.getString(startTimeIndex));
-                        endGameTime6 = cursorTables.getString(endTimeIndex);
+                        btnTableHead = btnTableHead.findViewWithTag("btnTableHead6");
                         break;
                     }
                     case 7: {
-                        btnStartGameTime7.setText(cursorTables.getString(startTimeIndex));
-                        endGameTime7 = cursorTables.getString(endTimeIndex);
+                        btnTableHead = btnTableHead.findViewWithTag("btnTableHead7");
                         break;
                     }
                     case 8: {
-                        btnStartGameTime8.setText(cursorTables.getString(startTimeIndex));
-                        endGameTime8 = cursorTables.getString(endTimeIndex);
+                        btnTableHead = btnTableHead.findViewWithTag("btnTableHead8");
                         break;
                     }
                     case 9: {
-                        btnStartGameTime9.setText(cursorTables.getString(startTimeIndex));
-                        endGameTime9 = cursorTables.getString(endTimeIndex);
+                        btnTableHead = btnTableHead.findViewWithTag("btnTableHead9");
                         break;
                     }
                     case 10: {
-                        btnStartGameTime10.setText(cursorTables.getString(startTimeIndex));
-                        endGameTime10 = cursorTables.getString(endTimeIndex);
+                        btnTableHead = btnTableHead.findViewWithTag("btnTableHead10");
                         break;
                     }
                     case 11: {
-                        btnStartGameTime11.setText(cursorTables.getString(startTimeIndex));
-                        endGameTime11 = cursorTables.getString(endTimeIndex);
+                        btnTableHead = btnTableHead.findViewWithTag("btnTableHead11");
                         break;
                     }
                     case 12: {
-                        btnStartGameTime12.setText(cursorTables.getString(startTimeIndex));
-                        endGameTime12 = cursorTables.getString(endTimeIndex);
+                        btnTableHead = btnTableHead.findViewWithTag("btnTableHead12");
                         break;
                     }
                     case 13: {
-                        btnStartGameTime13.setText(cursorTables.getString(startTimeIndex));
-                        endGameTime13 = cursorTables.getString(endTimeIndex);
+                        btnTableHead = btnTableHead.findViewWithTag("btnTableHead13");
                         break;
                     }
                     case 14: {
-                        btnStartGameTime14.setText(cursorTables.getString(startTimeIndex));
-                        endGameTime14 = cursorTables.getString(endTimeIndex);
+                        btnTableHead = btnTableHead.findViewWithTag("btnTableHead14");
                         break;
                     }
                     case 15: {
-                        btnStartGameTime15.setText(cursorTables.getString(startTimeIndex));
-                        endGameTime15 = cursorTables.getString(endTimeIndex);
+                        btnTableHead = btnTableHead.findViewWithTag("btnTableHead15");
                         break;
                     }
                     case 16: {
-                        btnStartGameTime16.setText(cursorTables.getString(startTimeIndex));
-                        endGameTime16 = cursorTables.getString(endTimeIndex);
+                        btnTableHead = btnTableHead.findViewWithTag("btnTableHead16");
                         break;
                     }
                     case 17: {
-                        btnStartGameTime17.setText(cursorTables.getString(startTimeIndex));
-                        endGameTime17 = cursorTables.getString(endTimeIndex);
+                        btnTableHead = btnTableHead.findViewWithTag("btnTableHead17");
                         break;
                     }
                     case 18: {
-                        btnStartGameTime18.setText(cursorTables.getString(startTimeIndex));
-                        endGameTime18 = cursorTables.getString(endTimeIndex);
+                        btnTableHead = btnTableHead.findViewWithTag("btnTableHead18");
                         break;
                     }
                     case 19: {
-                        btnStartGameTime19.setText(cursorTables.getString(startTimeIndex));
-                        endGameTime19 = cursorTables.getString(endTimeIndex);
+                        btnTableHead = btnTableHead.findViewWithTag("btnTableHead19");
                         break;
                     }
                 }
+
+                // меняем фон кнопки каждого стола, в зависимости от типа стола
+                if (cursorTables.getString(typeIndex).equals("pool")) {
+                    btnTableHead.setBackgroundResource(R.drawable.bol_pool1);
+                    btnTableHead.setPadding(28, 0, 0, 0);
+                } else if (cursorTables.getString(typeIndex).equals("pyramid")) {
+                    btnTableHead.setBackgroundResource(R.drawable.bol_pyramide2);
+                    btnTableHead.setPadding(28, 0, 0, 0);
+                }
+
             } while (cursorTables.moveToNext());
         } else {
             Log.d("Gas", "0 rows");
@@ -269,98 +225,12 @@ public class CommonActivity extends AppCompatActivity implements View.OnClickLis
         cursorTables.close();
     }
 
-    private void initBtn() {
-        tvAdminName = findViewById(R.id.tvAdminName);
-        tvTime = findViewById(R.id.tvTime);
-        btnAdd = findViewById(R.id.btnAdd);
-        // статусы столов
-        btnStatus1 = findViewById(R.id.btnStatus1);
-        btnStatus2 = findViewById(R.id.btnStatus2);
-        btnStatus3 = findViewById(R.id.btnStatus3);
-        btnStatus4 = findViewById(R.id.btnStatus4);
-        btnStatus5 = findViewById(R.id.btnStatus5);
-        btnStatus6 = findViewById(R.id.btnStatus6);
-        btnStatus7 = findViewById(R.id.btnStatus7);
-        btnStatus8 = findViewById(R.id.btnStatus8);
-        btnStatus9 = findViewById(R.id.btnStatus9);
-        btnStatus10 = findViewById(R.id.btnStatus10);
-        btnStatus11 = findViewById(R.id.btnStatus11);
-        btnStatus12 = findViewById(R.id.btnStatus12);
-        btnStatus13 = findViewById(R.id.btnStatus13);
-        btnStatus14 = findViewById(R.id.btnStatus14);
-        btnStatus15 = findViewById(R.id.btnStatus15);
-        btnStatus16 = findViewById(R.id.btnStatus16);
-        btnStatus17 = findViewById(R.id.btnStatus17);
-        btnStatus18 = findViewById(R.id.btnStatus18);
-        btnStatus19 = findViewById(R.id.btnStatus19);
-        // время старта
-        btnStartGameTime1 = findViewById(R.id.btnStartTime1);
-        btnStartGameTime2 = findViewById(R.id.btnStartTime2);
-        btnStartGameTime3 = findViewById(R.id.btnStartTime3);
-        btnStartGameTime4 = findViewById(R.id.btnStartTime4);
-        btnStartGameTime5 = findViewById(R.id.btnStartTime5);
-        btnStartGameTime6 = findViewById(R.id.btnStartTime6);
-        btnStartGameTime7 = findViewById(R.id.btnStartTime7);
-        btnStartGameTime8 = findViewById(R.id.btnStartTime8);
-        btnStartGameTime9 = findViewById(R.id.btnStartTime9);
-        btnStartGameTime10 = findViewById(R.id.btnStartTime10);
-        btnStartGameTime11 = findViewById(R.id.btnStartTime11);
-        btnStartGameTime12 = findViewById(R.id.btnStartTime12);
-        btnStartGameTime13 = findViewById(R.id.btnStartTime13);
-        btnStartGameTime14 = findViewById(R.id.btnStartTime14);
-        btnStartGameTime15 = findViewById(R.id.btnStartTime15);
-        btnStartGameTime16 = findViewById(R.id.btnStartTime16);
-        btnStartGameTime17 = findViewById(R.id.btnStartTime17);
-        btnStartGameTime18 = findViewById(R.id.btnStartTime18);
-        btnStartGameTime19 = findViewById(R.id.btnStartTime19);
-        // осталось времени до конца
-        btnduration1 = findViewById(R.id.btnDuration1);
-        btnduration2 = findViewById(R.id.btnDuration2);
-        btnduration3 = findViewById(R.id.btnDuration3);
-        btnduration4 = findViewById(R.id.btnDuration4);
-        btnduration5 = findViewById(R.id.btnDuration5);
-        btnduration6 = findViewById(R.id.btnDuration6);
-        btnduration7 = findViewById(R.id.btnDuration7);
-        btnduration8 = findViewById(R.id.btnDuration8);
-        btnduration9 = findViewById(R.id.btnDuration9);
-        btnduration10 = findViewById(R.id.btnDuration10);
-        btnduration11 = findViewById(R.id.btnDuration11);
-        btnduration12 = findViewById(R.id.btnDuration12);
-        btnduration13 = findViewById(R.id.btnDuration13);
-        btnduration14 = findViewById(R.id.btnDuration14);
-        btnduration15 = findViewById(R.id.btnDuration15);
-        btnduration16 = findViewById(R.id.btnDuration16);
-        btnduration17 = findViewById(R.id.btnDuration17);
-        btnduration18 = findViewById(R.id.btnDuration18);
-        btnduration19 = findViewById(R.id.btnDuration19);
-        // возможность резерва
-        btnReserve1 = findViewById(R.id.btnReserve1);
-        btnReserve2 = findViewById(R.id.btnReserve2);
-        btnReserve3 = findViewById(R.id.btnReserve3);
-        btnReserve4 = findViewById(R.id.btnReserve4);
-        btnReserve5 = findViewById(R.id.btnReserve5);
-        btnReserve6 = findViewById(R.id.btnReserve6);
-        btnReserve7 = findViewById(R.id.btnReserve7);
-        btnReserve8 = findViewById(R.id.btnReserve8);
-        btnReserve9 = findViewById(R.id.btnReserve9);
-        btnReserve10 = findViewById(R.id.btnReserve10);
-        btnReserve11 = findViewById(R.id.btnReserve11);
-        btnReserve12 = findViewById(R.id.btnReserve12);
-        btnReserve13 = findViewById(R.id.btnReserve13);
-        btnReserve14 = findViewById(R.id.btnReserve14);
-        btnReserve15 = findViewById(R.id.btnReserve15);
-        btnReserve16 = findViewById(R.id.btnReserve16);
-        btnReserve17 = findViewById(R.id.btnReserve17);
-        btnReserve18 = findViewById(R.id.btnReserve18);
-        btnReserve19 = findViewById(R.id.btnReserve19);
-    }
-
-    private void calculateduration(String curTime) {
+   /* private void calculateduration(String curTime) {
         LocalTime currentTime = LocalTime.parse(curTime);  // текущее время
         // узнаем продолжительность игры 1 стола
         // у нас есть время начала и текущее
-        if ((!btnStartGameTime1.getText().toString().equals(""))/* &&
-                (!endGameTime1.equals(""))*/) {  // если мы забираем не пустое значение
+        if ((!btnStartGameTime1.getText().toString().equals(""))*//* &&
+                (!endGameTime1.equals(""))*//*) {  // если мы забираем не пустое значение
             // забираем время начала и конца игры
             startGameLocalTime = LocalTime.parse(btnStartGameTime1.getText().toString());
             endGameLocalTime = LocalTime.parse(endGameTime1);
@@ -742,17 +612,17 @@ public class CommonActivity extends AppCompatActivity implements View.OnClickLis
             btnStatus19.setBackgroundResource(R.drawable.btn_style_free);
             btnStatus19.setText("Свободен");
         }
-    }
+    }*/
 
-    private String convertMinuteToHour(long allMinutes) {
+    /*private String convertMinuteToHour(long allMinutes) {
         long hourFinish = allMinutes / 60;
         long minFinish = allMinutes % 60;
         if (hourFinish == 0) {
             return "" + minFinish + " мин";
         } else return hourFinish + " ч\n" + minFinish + " мин";
-    }
+    }*/
 
-    private void reserveToday() {
+    /*private void reserveToday() {
         // нам нужно загрузить с Таблиц каждого стола данные о резервах на сегодня
 
         // получаем данные c табл "table 1"
@@ -788,5 +658,119 @@ public class CommonActivity extends AppCompatActivity implements View.OnClickLis
             Log.d("Gas", "0 rows");
         }
         cursorTable.close();
+    }*/
+
+
+
+
+
+
+    public void addBtnTableHead() {
+        linTableHead = findViewById(R.id.linTableHead);
+        LinearLayout.LayoutParams marginBtnTable;
+
+
+        btnDate = new Button(linTableHead.getContext());
+        btnDate.setLayoutParams(new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT));
+
+        btnDate.setText("...");
+        btnDate.setTextSize(30);
+        btnDate.setWidth(option.convertDpToPixels(this, 75));
+        btnDate.setHeight(option.convertDpToPixels(this, 75));
+
+        marginBtnTable = (LinearLayout.LayoutParams) btnDate.getLayoutParams();
+        marginBtnTable.setMargins(0, 0, marginLength, 0);
+
+        linTableHead.addView(btnDate);
+
+        for (int i = 0; i < tableCount; i++) {
+            btnTableHead = new Button(linTableHead.getContext());
+            btnTableHead.setLayoutParams(new LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.WRAP_CONTENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT));
+
+            btnTableHead.setTag("btnTableHead" + (1 + i));
+            btnTableHead.setText((i + 1) + "");
+            btnTableHead.setTextSize(30);
+            btnTableHead.setWidth(option.convertDpToPixels(this, 75));
+            btnTableHead.setHeight(option.convertDpToPixels(this, 75));
+
+            marginBtnTable = (LinearLayout.LayoutParams) btnTableHead.getLayoutParams();
+            marginBtnTable.setMargins(0, 0, marginLength, 0);
+
+            linTableHead.addView(btnTableHead);
+        }
+    }
+
+    public void addBtnHour() {
+        linTableTimeHead = findViewById(R.id.linTableTimeHead);
+
+
+        linHour = new LinearLayout(linTableTimeHead.getContext());
+        linHour.setLayoutParams(new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT));
+        linHour.setOrientation(LinearLayout.HORIZONTAL);
+
+
+        int hourRight = 11;
+        for (int i = 0; i < hourCount; i++, hourRight ++) {
+            if (hourRight == 24) {
+                hourRight = 0;
+            }
+
+            btnTime = new Button(linHour.getContext());
+            btnTime.setLayoutParams(new LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.WRAP_CONTENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT));
+
+            btnTime.setTag("btnTime" + hourRight);
+            btnTime.setText(hourRight + ":00");
+            btnTime.setTextSize(20);
+            btnTime.setWidth(option.convertDpToPixels(this, 75));
+            btnTime.setHeight(option.convertDpToPixels(this, 75));
+
+            LinearLayout.LayoutParams marginBtnTable = (LinearLayout.LayoutParams) btnTime.getLayoutParams();
+            marginBtnTable.setMargins(0, 0, marginLength, 0);
+
+            linHour.addView(btnTime);
+        }
+        linTableTimeHead.addView(linHour);
+    }
+
+    public void addBtnCommon() {
+        linTableTime = findViewById(R.id.linTableTimeHead);
+
+        for (int i = 0; i < tableCount; i++) {
+            linTable = new LinearLayout(linTableTime.getContext());
+            linTable.setLayoutParams(new LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.WRAP_CONTENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT));
+            linTable.setOrientation(LinearLayout.HORIZONTAL);
+
+            int hourRight = 11;
+            for (int j = 0; j < hourCount; j++, hourRight ++) {
+                if (hourRight == 24) {
+                    hourRight = 0;
+                }
+
+                btnTable = new Button(linTable.getContext());
+                btnTable.setLayoutParams(new LinearLayout.LayoutParams(
+                        LinearLayout.LayoutParams.WRAP_CONTENT,
+                        LinearLayout.LayoutParams.WRAP_CONTENT));
+
+                btnTable.setTag("btnTable" + hourRight);
+                btnTable.setWidth(option.convertDpToPixels(this, 75));
+                btnTable.setHeight(option.convertDpToPixels(this, 75));
+
+                LinearLayout.LayoutParams marginBtnTable = (LinearLayout.LayoutParams) btnTable.getLayoutParams();
+                marginBtnTable.setMargins(0, 0, marginLength, 0);
+
+                linTable.addView(btnTable);
+            }
+            linTableTime.addView(linTable);
+        }
     }
 }
