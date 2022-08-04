@@ -19,6 +19,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import java.text.SimpleDateFormat;
+import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.Date;
@@ -47,17 +48,25 @@ public class CommonActivity extends AppCompatActivity implements View.OnClickLis
     List<Button> btnTimeTagsList = new ArrayList<>();
     Button[][] btnTableTagArray = new Button[19][24];
 
-    // для выбора даты
-    int DIALOG_DATE = 1;
-    int myYear = 2022;
-    int myMonth = 7;
-    int myDay = 1;
-
     // БД
     DBHelper dbHelper;
     SQLiteDatabase database;
     ContentValues contentValues;
     Cursor cursorTables, cursorTable;
+
+    // задаем начальное значение для выбора даты
+    int DIALOG_DATE = 1;
+    int myYear;
+    int myMonth;
+    int myDay;
+    {
+        // задаем начальное значение для выбора даты
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.ENGLISH);
+        LocalDate currentDate = LocalDate.parse(dateFormat.format(new Date()));
+        myDay = currentDate.getDayOfMonth();
+        myMonth = currentDate.getMonthValue()-1;
+        myYear = currentDate.getYear();
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
