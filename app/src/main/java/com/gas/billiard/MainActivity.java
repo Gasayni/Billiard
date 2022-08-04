@@ -65,9 +65,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         btnEnter = findViewById(R.id.btnEnter);
         btnEnter.setOnClickListener(this);
-
-        btnTestDB = findViewById(R.id.btnTestDB);
-        btnTestDB.setOnClickListener(this);
     }
 
     @SuppressLint("NonConstantResourceId")
@@ -101,11 +98,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     toast.setGravity(Gravity.CENTER, 0, 0);
                     toast.show();
                 }
-                break;
-            }
-            case R.id.btnTestDB: {
-                intent = new Intent("next_activity");
-                startActivity(intent);
                 break;
             }
         }

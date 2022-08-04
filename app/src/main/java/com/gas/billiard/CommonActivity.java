@@ -1,16 +1,20 @@
 package com.gas.billiard;
 
 import android.annotation.SuppressLint;
+import android.app.DatePickerDialog;
+import android.app.Dialog;
 import android.content.ContentValues;
 import android.content.Intent;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Color;
+import android.os.Handler;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.DatePicker;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
@@ -20,6 +24,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+import java.util.concurrent.TimeUnit;
 
 public class CommonActivity extends AppCompatActivity implements View.OnClickListener {
     private Date currentTime;
@@ -35,10 +40,18 @@ public class CommonActivity extends AppCompatActivity implements View.OnClickLis
     LinearLayout linTable, linHour, linTableTime, linTableTimeHead, linTableHead;
     private final int hourCount = 18;
     private final int tableCount = 19;
-    Button btnDate, btnTableHead, btnTime, btnTable;
+    Button btnAdd, btnDate, btnTableHead, btnTime, btnTable;
     private int marginLength;
-    // листы для тегов
+    // листы для тегов (нужны, чтобы запоминать теги)
     List<Button> btnTableHeadTagsList = new ArrayList<>();
+    List<Button> btnTimeTagsList = new ArrayList<>();
+    Button[][] btnTableTagArray = new Button[19][24];
+
+    // для выбора даты
+    int DIALOG_DATE = 1;
+    int myYear = 2022;
+    int myMonth = 7;
+    int myDay = 1;
 
     // БД
     DBHelper dbHelper;
@@ -59,13 +72,19 @@ public class CommonActivity extends AppCompatActivity implements View.OnClickLis
 
         // покажем текущее время
         tvTime = findViewById(R.id.tvTime);
-//        actualTime();
+        actualTime();
 
         // работа с БД
         dbHelper = new DBHelper(this);
         database = dbHelper.getWritableDatabase();
         contentValues = new ContentValues();
         choseTypeTable();
+
+        // выбираем дату
+        btnDate = btnDate.findViewWithTag("btnChoseDate");
+        btnDate.setOnClickListener(this);
+        btnAdd = findViewById(R.id.btnAdd);
+        btnAdd.setOnClickListener(this);
 
         // нам нужно загрузить с Таблиц каждого стола данные о резервах на сегодня
 //        reserveToday();
@@ -74,32 +93,25 @@ public class CommonActivity extends AppCompatActivity implements View.OnClickLis
     @SuppressLint("NonConstantResourceId")
     @Override
     public void onClick(View view) {
-        Intent intent;
-        /*switch (view.getId()) {
+        /*Intent intent;
+        switch (view.getId()) {
             // переключаемся на редактор резерва
-            case R.id.btnDuration1: {
-                intent = new Intent("TimeEditActivity");
-                intent.putExtra("tableNumber", "1");
-                intent.putExtra("startTime", "19:00");
-                intent.putExtra("endTime", "21:00");
-                startActivity(intent);
-                break;
-            }
-            case R.id.btnReserve1: {
-                intent = new Intent("ReserveEdit");
-                intent.putExtra("tableNumber", "1");
-                startActivity(intent);
-                break;
-            }
             case R.id.btnAdd: {
                 intent = new Intent("newOrderActivity");
                 startActivity(intent);
                 break;
             }
         }*/
+
+        // кнопки по тегам
+        switch (view.getTag().toString()) {
+            case "btnChoseDate": {
+                showDialog(DIALOG_DATE);
+            }
+        }
     }
 
-    /*private void actualTime() {
+    private void actualTime() {
         // каждую секунду обновляет время
         final Handler handler = new Handler();
         new Thread(() -> {
@@ -112,11 +124,11 @@ public class CommonActivity extends AppCompatActivity implements View.OnClickLis
                 currentTime = new Date();
                 tvTime.setText(timeFormat.format(currentTime));
                 // также обращаемся каждую минуту к калькулятору оставшегося времени
-                calculateduration(timeFormat.format(currentTime));
-                actualTime();  // мис рекурсия
+//                calculateduration(timeFormat.format(currentTime));
+                actualTime();  // мисис рекурсия
             });
         }).start();
-    }*/
+    }
 
     private void choseTypeTable() {
         // получаем данные c табл "tables"
@@ -225,12 +237,143 @@ public class CommonActivity extends AppCompatActivity implements View.OnClickLis
         cursorTables.close();
     }
 
-   /* private void calculateduration(String curTime) {
+    private void choseTable() {
+        // получаем данные c каждой табл "table"
+
+        cursorTables = database.query(DBHelper.TABLES,
+                null, null, null,
+                null, null, null);
+        if (cursorTables.moveToFirst()) {
+            int numberTableIndex = cursorTables.getColumnIndex(DBHelper.KEY_ID);
+            int typeIndex = cursorTables.getColumnIndex(DBHelper.KEY_TYPE);
+            int descriptionIndex = cursorTables.getColumnIndex(DBHelper.KEY_DESCRIPTION);
+            int i = 0;
+            do {
+                // находим кнопки столов
+                switch (cursorTables.getInt(numberTableIndex)) {
+                    case 1: {
+                        btnTableHead = btnTableHeadTagsList.get(i).findViewWithTag("btnTableHead1");
+                        break;
+                    }
+                    case 2: {
+                        btnTableHead = btnTableHeadTagsList.get(i).findViewWithTag("btnTableHead2");
+                        break;
+                    }
+                    case 3: {
+                        btnTableHead = btnTableHeadTagsList.get(i).findViewWithTag("btnTableHead3");
+                        break;
+                    }
+                    case 4: {
+                        btnTableHead = btnTableHeadTagsList.get(i).findViewWithTag("btnTableHead4");
+                        break;
+                    }
+                    case 5: {
+                        btnTableHead = btnTableHeadTagsList.get(i).findViewWithTag("btnTableHead5");
+                        break;
+                    }
+                    case 6: {
+                        btnTableHead = btnTableHeadTagsList.get(i).findViewWithTag("btnTableHead6");
+                        break;
+                    }
+                    case 7: {
+                        btnTableHead = btnTableHeadTagsList.get(i).findViewWithTag("btnTableHead7");
+                        break;
+                    }
+                    case 8: {
+                        btnTableHead = btnTableHeadTagsList.get(i).findViewWithTag("btnTableHead8");
+                        break;
+                    }
+                    case 9: {
+                        btnTableHead = btnTableHeadTagsList.get(i).findViewWithTag("btnTableHead9");
+                        break;
+                    }
+                    case 10: {
+                        btnTableHead = btnTableHeadTagsList.get(i).findViewWithTag("btnTableHead10");
+                        break;
+                    }
+                    case 11: {
+                        btnTableHead = btnTableHeadTagsList.get(i).findViewWithTag("btnTableHead11");
+                        break;
+                    }
+                    case 12: {
+                        btnTableHead = btnTableHeadTagsList.get(i).findViewWithTag("btnTableHead12");
+                        break;
+                    }
+                    case 13: {
+                        btnTableHead = btnTableHeadTagsList.get(i).findViewWithTag("btnTableHead13");
+                        break;
+                    }
+                    case 14: {
+                        btnTableHead = btnTableHeadTagsList.get(i).findViewWithTag("btnTableHead14");
+                        break;
+                    }
+                    case 15: {
+                        btnTableHead = btnTableHeadTagsList.get(i).findViewWithTag("btnTableHead15");
+                        break;
+                    }
+                    case 16: {
+                        btnTableHead = btnTableHeadTagsList.get(i).findViewWithTag("btnTableHead16");
+                        break;
+                    }
+                    case 17: {
+                        btnTableHead = btnTableHeadTagsList.get(i).findViewWithTag("btnTableHead17");
+                        break;
+                    }
+                    case 18: {
+                        btnTableHead = btnTableHeadTagsList.get(i).findViewWithTag("btnTableHead18");
+                        break;
+                    }
+                    case 19: {
+                        btnTableHead = btnTableHeadTagsList.get(i).findViewWithTag("btnTableHead19");
+                        break;
+                    }
+                }
+
+                // меняем фон кнопки каждого стола, в зависимости от типа стола
+                if (cursorTables.getString(typeIndex).equals("pool")) {
+                    btnTableHead.setBackgroundResource(R.drawable.bol_pool1);
+                } else if (cursorTables.getString(typeIndex).equals("pyramid")) {
+                    btnTableHead.setBackgroundResource(R.drawable.bol_pyramide1);
+                    btnTableHead.setTextColor(Color.WHITE);
+                }
+                i++;
+
+            } while (cursorTables.moveToNext());
+        } else {
+            Log.d("Gas", "0 rows");
+        }
+        cursorTables.close();
+    }
+
+
+    protected Dialog onCreateDialog(int id) {
+        if (id == DIALOG_DATE) {
+            DatePickerDialog tpd = new DatePickerDialog(this, myCallBack, myYear, myMonth, myDay);
+            return tpd;
+        }
+        return super.onCreateDialog(id);
+    }
+
+    DatePickerDialog.OnDateSetListener myCallBack = new DatePickerDialog.OnDateSetListener() {
+
+        public void onDateSet(DatePicker view, int year, int monthOfYear,
+                              int dayOfMonth) {
+            myYear = year;
+            myMonth = monthOfYear;
+            myDay = dayOfMonth;
+            btnDate.setText(myDay + "." + myMonth + "." + myYear);
+        }
+    };
+
+
+
+
+    /* private void calculateduration(String curTime) {
         LocalTime currentTime = LocalTime.parse(curTime);  // текущее время
         // узнаем продолжительность игры 1 стола
         // у нас есть время начала и текущее
-        if ((!btnStartGameTime1.getText().toString().equals(""))*//* &&
-                (!endGameTime1.equals(""))*//*) {  // если мы забираем не пустое значение
+        if ((!btnStartGameTime1.getText().toString().equals(""))*/
+    /*) {  // если мы забираем не пустое значение
             // забираем время начала и конца игры
             startGameLocalTime = LocalTime.parse(btnStartGameTime1.getText().toString());
             endGameLocalTime = LocalTime.parse(endGameTime1);
@@ -676,8 +819,9 @@ public class CommonActivity extends AppCompatActivity implements View.OnClickLis
                 option.convertDpToPixels(this, 75)));
 
         btnDate.setTag("btnChoseDate");
-        btnDate.setText("...");
-        btnDate.setTextSize(20);
+        // задаем сегодняшнюю дату
+        btnDate.setText(dateFormat.format(new Date()));
+        btnDate.setTextSize(15);
 
         marginBtnTable = (LinearLayout.LayoutParams) btnDate.getLayoutParams();
         marginBtnTable.setMargins(0, 0, marginLength, 0);
@@ -724,6 +868,7 @@ public class CommonActivity extends AppCompatActivity implements View.OnClickLis
                     LinearLayout.LayoutParams.WRAP_CONTENT));
 
             btnTime.setTag("btnTime" + hourRight);
+            btnTimeTagsList.add(btnTableHead);
             btnTime.setText(hourRight + ":00");
             btnTime.setTextSize(20);
             btnTime.setWidth(option.convertDpToPixels(this, 75));
@@ -759,6 +904,7 @@ public class CommonActivity extends AppCompatActivity implements View.OnClickLis
                         LinearLayout.LayoutParams.WRAP_CONTENT));
 
                 btnTable.setTag("btnTable" + hourRight);
+                btnTableTagArray[i][j] = btnTable;
                 btnTable.setWidth(option.convertDpToPixels(this, 75));
                 btnTable.setHeight(option.convertDpToPixels(this, 75));
 
