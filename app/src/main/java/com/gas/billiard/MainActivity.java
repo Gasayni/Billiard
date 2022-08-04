@@ -33,7 +33,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     List<String> adminsList = new ArrayList<>();
     List<String> passList = new ArrayList<>();
 
-    @SuppressLint("ClickableViewAccessibility")
+    @SuppressLint({"ClickableViewAccessibility", "SetTextI18n"})
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -55,8 +55,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             return false;
         });
         actvAdmin.setAdapter(adapter);
+        actvAdmin.setText("Алена");   // проверка
 
         etPas = findViewById(R.id.etPas);
+        etPas.setText("1111");        // проверка
 
         btnSetting = findViewById(R.id.btnSetting);
         btnSetting.setOnClickListener(this);

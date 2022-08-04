@@ -1,13 +1,11 @@
 package com.gas.billiard;
 
-import static java.time.temporal.ChronoUnit.MINUTES;
-
 import android.annotation.SuppressLint;
 import android.content.ContentValues;
 import android.content.Intent;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
-import android.os.Handler;
+import android.graphics.Color;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -22,7 +20,6 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
-import java.util.concurrent.TimeUnit;
 
 public class CommonActivity extends AppCompatActivity implements View.OnClickListener {
     private Date currentTime;
@@ -40,6 +37,8 @@ public class CommonActivity extends AppCompatActivity implements View.OnClickLis
     private final int tableCount = 19;
     Button btnDate, btnTableHead, btnTime, btnTable;
     private int marginLength;
+    // листы для тегов
+    List<Button> btnTableHeadTagsList = new ArrayList<>();
 
     // БД
     DBHelper dbHelper;
@@ -66,7 +65,7 @@ public class CommonActivity extends AppCompatActivity implements View.OnClickLis
         dbHelper = new DBHelper(this);
         database = dbHelper.getWritableDatabase();
         contentValues = new ContentValues();
-//        choseTypeTable();
+        choseTypeTable();
 
         // нам нужно загрузить с Таблиц каждого стола данные о резервах на сегодня
 //        reserveToday();
@@ -128,83 +127,84 @@ public class CommonActivity extends AppCompatActivity implements View.OnClickLis
             int numberTableIndex = cursorTables.getColumnIndex(DBHelper.KEY_ID);
             int typeIndex = cursorTables.getColumnIndex(DBHelper.KEY_TYPE);
             int descriptionIndex = cursorTables.getColumnIndex(DBHelper.KEY_DESCRIPTION);
+            int i = 0;
             do {
-                // находим каждый кнопки столов
+                // находим кнопки столов
                 switch (cursorTables.getInt(numberTableIndex)) {
                     case 1: {
-                        btnTableHead = btnTableHead.findViewWithTag("btnTableHead1");
+                        btnTableHead = btnTableHeadTagsList.get(i).findViewWithTag("btnTableHead1");
                         break;
                     }
                     case 2: {
-                        btnTableHead = btnTableHead.findViewWithTag("btnTableHead2");
+                        btnTableHead = btnTableHeadTagsList.get(i).findViewWithTag("btnTableHead2");
                         break;
                     }
                     case 3: {
-                        btnTableHead = btnTableHead.findViewWithTag("btnTableHead3");
+                        btnTableHead = btnTableHeadTagsList.get(i).findViewWithTag("btnTableHead3");
                         break;
                     }
                     case 4: {
-                        btnTableHead = btnTableHead.findViewWithTag("btnTableHead4");
+                        btnTableHead = btnTableHeadTagsList.get(i).findViewWithTag("btnTableHead4");
                         break;
                     }
                     case 5: {
-                        btnTableHead = btnTableHead.findViewWithTag("btnTableHead5");
+                        btnTableHead = btnTableHeadTagsList.get(i).findViewWithTag("btnTableHead5");
                         break;
                     }
                     case 6: {
-                        btnTableHead = btnTableHead.findViewWithTag("btnTableHead6");
+                        btnTableHead = btnTableHeadTagsList.get(i).findViewWithTag("btnTableHead6");
                         break;
                     }
                     case 7: {
-                        btnTableHead = btnTableHead.findViewWithTag("btnTableHead7");
+                        btnTableHead = btnTableHeadTagsList.get(i).findViewWithTag("btnTableHead7");
                         break;
                     }
                     case 8: {
-                        btnTableHead = btnTableHead.findViewWithTag("btnTableHead8");
+                        btnTableHead = btnTableHeadTagsList.get(i).findViewWithTag("btnTableHead8");
                         break;
                     }
                     case 9: {
-                        btnTableHead = btnTableHead.findViewWithTag("btnTableHead9");
+                        btnTableHead = btnTableHeadTagsList.get(i).findViewWithTag("btnTableHead9");
                         break;
                     }
                     case 10: {
-                        btnTableHead = btnTableHead.findViewWithTag("btnTableHead10");
+                        btnTableHead = btnTableHeadTagsList.get(i).findViewWithTag("btnTableHead10");
                         break;
                     }
                     case 11: {
-                        btnTableHead = btnTableHead.findViewWithTag("btnTableHead11");
+                        btnTableHead = btnTableHeadTagsList.get(i).findViewWithTag("btnTableHead11");
                         break;
                     }
                     case 12: {
-                        btnTableHead = btnTableHead.findViewWithTag("btnTableHead12");
+                        btnTableHead = btnTableHeadTagsList.get(i).findViewWithTag("btnTableHead12");
                         break;
                     }
                     case 13: {
-                        btnTableHead = btnTableHead.findViewWithTag("btnTableHead13");
+                        btnTableHead = btnTableHeadTagsList.get(i).findViewWithTag("btnTableHead13");
                         break;
                     }
                     case 14: {
-                        btnTableHead = btnTableHead.findViewWithTag("btnTableHead14");
+                        btnTableHead = btnTableHeadTagsList.get(i).findViewWithTag("btnTableHead14");
                         break;
                     }
                     case 15: {
-                        btnTableHead = btnTableHead.findViewWithTag("btnTableHead15");
+                        btnTableHead = btnTableHeadTagsList.get(i).findViewWithTag("btnTableHead15");
                         break;
                     }
                     case 16: {
-                        btnTableHead = btnTableHead.findViewWithTag("btnTableHead16");
+                        btnTableHead = btnTableHeadTagsList.get(i).findViewWithTag("btnTableHead16");
                         break;
                     }
                     case 17: {
-                        btnTableHead = btnTableHead.findViewWithTag("btnTableHead17");
+                        btnTableHead = btnTableHeadTagsList.get(i).findViewWithTag("btnTableHead17");
                         break;
                     }
                     case 18: {
-                        btnTableHead = btnTableHead.findViewWithTag("btnTableHead18");
+                        btnTableHead = btnTableHeadTagsList.get(i).findViewWithTag("btnTableHead18");
                         break;
                     }
                     case 19: {
-                        btnTableHead = btnTableHead.findViewWithTag("btnTableHead19");
+                        btnTableHead = btnTableHeadTagsList.get(i).findViewWithTag("btnTableHead19");
                         break;
                     }
                 }
@@ -212,11 +212,11 @@ public class CommonActivity extends AppCompatActivity implements View.OnClickLis
                 // меняем фон кнопки каждого стола, в зависимости от типа стола
                 if (cursorTables.getString(typeIndex).equals("pool")) {
                     btnTableHead.setBackgroundResource(R.drawable.bol_pool1);
-                    btnTableHead.setPadding(28, 0, 0, 0);
                 } else if (cursorTables.getString(typeIndex).equals("pyramid")) {
-                    btnTableHead.setBackgroundResource(R.drawable.bol_pyramide2);
-                    btnTableHead.setPadding(28, 0, 0, 0);
+                    btnTableHead.setBackgroundResource(R.drawable.bol_pyramide1);
+                    btnTableHead.setTextColor(Color.WHITE);
                 }
+                i++;
 
             } while (cursorTables.moveToNext());
         } else {
@@ -672,30 +672,27 @@ public class CommonActivity extends AppCompatActivity implements View.OnClickLis
 
         btnDate = new Button(linTableHead.getContext());
         btnDate.setLayoutParams(new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.WRAP_CONTENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT));
+                option.convertDpToPixels(this, 75),
+                option.convertDpToPixels(this, 75)));
 
+        btnDate.setTag("btnChoseDate");
         btnDate.setText("...");
-        btnDate.setTextSize(30);
-        btnDate.setWidth(option.convertDpToPixels(this, 75));
-        btnDate.setHeight(option.convertDpToPixels(this, 75));
+        btnDate.setTextSize(20);
 
         marginBtnTable = (LinearLayout.LayoutParams) btnDate.getLayoutParams();
         marginBtnTable.setMargins(0, 0, marginLength, 0);
 
         linTableHead.addView(btnDate);
-
         for (int i = 0; i < tableCount; i++) {
             btnTableHead = new Button(linTableHead.getContext());
             btnTableHead.setLayoutParams(new LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.WRAP_CONTENT,
-                    LinearLayout.LayoutParams.WRAP_CONTENT));
+                    option.convertDpToPixels(this, 75),
+                    option.convertDpToPixels(this, 75)));
 
             btnTableHead.setTag("btnTableHead" + (1 + i));
+            btnTableHeadTagsList.add(btnTableHead);
             btnTableHead.setText((i + 1) + "");
-            btnTableHead.setTextSize(30);
-            btnTableHead.setWidth(option.convertDpToPixels(this, 75));
-            btnTableHead.setHeight(option.convertDpToPixels(this, 75));
+            btnTableHead.setTextSize(16);
 
             marginBtnTable = (LinearLayout.LayoutParams) btnTableHead.getLayoutParams();
             marginBtnTable.setMargins(0, 0, marginLength, 0);
