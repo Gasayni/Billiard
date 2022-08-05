@@ -8,6 +8,7 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Color;
+import android.graphics.drawable.Drawable;
 import android.os.Handler;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -52,7 +53,7 @@ public class CommonActivity extends AppCompatActivity implements View.OnClickLis
     DBHelper dbHelper;
     SQLiteDatabase database;
     ContentValues contentValues;
-    Cursor cursorTables, cursorTable;
+    Cursor cursorTables, cursorOrders;
 
     // задаем начальное значение для выбора даты
     int DIALOG_DATE = 1;
@@ -74,6 +75,11 @@ public class CommonActivity extends AppCompatActivity implements View.OnClickLis
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_common);
 
+        // работа с БД
+        dbHelper = new DBHelper(this);
+        database = dbHelper.getWritableDatabase();
+        contentValues = new ContentValues();
+
         // сначала отрисуем кнопки шапки часов
         marginLength = option.convertDpToPixels(this, 2);
         addBtnHour();
@@ -86,23 +92,20 @@ public class CommonActivity extends AppCompatActivity implements View.OnClickLis
         btnAdd = findViewById(R.id.btnAdd);
         btnAdd.setOnClickListener(this);
 
-        // смотрим изначальные условия
-//        choseTable();
-        // отрисовываем таблицу заказов на изначальную дату
-        addBtnCommon();
-
         // покажем текущее время
         tvTime = findViewById(R.id.tvTime);
         actualTime();
 
-        // работа с БД
-        dbHelper = new DBHelper(this);
-        database = dbHelper.getWritableDatabase();
-        contentValues = new ContentValues();
+        // отрисовываем таблицу заказов на изначальную дату
+        addBtnCommon();
         choseTypeTable();
+        choseTable();
+
 
         // нам нужно загрузить с Таблиц каждого стола данные о резервах на сегодня
 //        reserveToday();
+
+
     }
 
     @SuppressLint("NonConstantResourceId")
@@ -125,6 +128,7 @@ public class CommonActivity extends AppCompatActivity implements View.OnClickLis
                 showDialog(DIALOG_DATE);
                 // при изменении даты, нужно, чтобы обновлялась и таблица резерва
             }
+            choseTable();
         }
     }
 
@@ -169,8 +173,6 @@ public class CommonActivity extends AppCompatActivity implements View.OnClickLis
                     btnTableHead.setBackgroundResource(R.drawable.bol_pyramide1);
                     btnTableHead.setTextColor(Color.WHITE);
                 }
-                i++;
-
             } while (cursorTables.moveToNext());
         } else {
             Log.d("Gas", "0 rows");
@@ -178,54 +180,51 @@ public class CommonActivity extends AppCompatActivity implements View.OnClickLis
         cursorTables.close();
     }
 
-//    private void choseTable() {
-//        // нужно, чтобы при загрузке и при изменении даты показывались данные (подкрашивались кнопки) по времени
-//        // у нас есть БД, с которой м. просто брать данные
-//        // 1. нужно найти все резервы в БД на указанную дату
-//        // 2. нужно создать 12 стилей кнопки, чтобы эмитировать разгрузку резерва по минутам
-//        // у нас же уже есть визуализатор - addBtnCommon
-//
-//
-//        // теперь нужно по этой дате посмотреть резервы на всех столах
-//
-//
-//        // получаем данные c табл "ORDERS"
-//        cursorTables = database.query(DBHelper.ORDERS,
-//                null, null, null,
-//                null, null, null);
-//        if (cursorTables.moveToFirst()) {
-//            int numberTableIndex = cursorTables.getColumnIndex(DBHelper.KEY_ID);
-//            int numTableIndex = cursorTables.getColumnIndex(DBHelper.KEY_NUM_TABLE);
-//            int reserveDateIndex = cursorTables.getColumnIndex(DBHelper.KEY_RESERVE_DATE);
-//            int reserveTimeIndex = cursorTables.getColumnIndex(DBHelper.KEY_RESERVE_TIME);
-//            int durationIndex = cursorTables.getColumnIndex(DBHelper.KEY_DURATION);
-//            int clientIndex = cursorTables.getColumnIndex(DBHelper.KEY_CLIENT);
-//            int employeeIndex = cursorTables.getColumnIndex(DBHelper.KEY_EMPLOYEE);
-//            int orderDateIndex = cursorTables.getColumnIndex(DBHelper.KEY_ORDER_DATE);
-//            int orderTimeIndex = cursorTables.getColumnIndex(DBHelper.KEY_ORDER_TIME);
-//            int rateIndex = cursorTables.getColumnIndex(DBHelper.KEY_RATE);
-//            int descriptionIndex = cursorTables.getColumnIndex(DBHelper.KEY_DESCRIPTION);
-//            do {
-//                // находим все заказы на указанный день
-//                if (cursorTables.getString(reserveDateIndex).equals(btnDate.getText().toString())) {
-//                    // смотрим какой это стол
-//                    int i = cursorTables.getInt(numberTableIndex);
-//                    // находим кнопку по времени резерва, воспользуемся спец. методом
-//                    int j = indexTimeMethod(cursorTables.getString(reserveTimeIndex));
-//                    btnTable = btnTableTagArray[i][j].findViewWithTag("btnTable." +
-//                            i + "."
-//                            + hourMethod(cursorTables.getString(reserveTimeIndex)));
-//                }
-//            } while (cursorTables.moveToNext());
-//        } else {
-//            Log.d("Gas", "0 rows");
-//        }
-//        cursorTables.close();
-//
-//
-//        // просто добавить туда условия
-//        addBtnCommon();
-//    }
+    private void choseTable() {
+        // нужно, чтобы при загрузке и при изменении даты показывались данные (подкрашивались кнопки) по времени
+        // получаем данные c табл "ORDERS"
+        cursorOrders = database.query(DBHelper.ORDERS,
+                null, null, null,
+                null, null, null);
+        if (cursorOrders.moveToFirst()) {
+            int idIndex = cursorOrders.getColumnIndex(DBHelper.KEY_ID);
+            int numTableIndex = cursorOrders.getColumnIndex(DBHelper.KEY_NUM_TABLE);
+            int reserveDateIndex = cursorOrders.getColumnIndex(DBHelper.KEY_RESERVE_DATE);
+            int reserveTimeIndex = cursorOrders.getColumnIndex(DBHelper.KEY_RESERVE_TIME);
+            int durationIndex = cursorOrders.getColumnIndex(DBHelper.KEY_DURATION);
+            int clientIndex = cursorOrders.getColumnIndex(DBHelper.KEY_CLIENT);
+            int employeeIndex = cursorOrders.getColumnIndex(DBHelper.KEY_EMPLOYEE);
+            int orderDateIndex = cursorOrders.getColumnIndex(DBHelper.KEY_ORDER_DATE);
+            int orderTimeIndex = cursorOrders.getColumnIndex(DBHelper.KEY_ORDER_TIME);
+            int rateIndex = cursorOrders.getColumnIndex(DBHelper.KEY_RATE);
+            int descriptionIndex = cursorOrders.getColumnIndex(DBHelper.KEY_DESCRIPTION);
+            do {
+                // инициализируем все кнопки
+                // смотрим какой это стол
+                int i = cursorOrders.getInt(numTableIndex);
+                // находим кнопку по времени резерва, воспользуемся спец. методом
+                int j = indexTimeMethod(cursorOrders.getString(reserveTimeIndex));
+                // т.к. массив начинается с 0, а номера столов с 1 ...
+                // [i-1][j-1], где i-номер стола, j-время
+                btnTable = btnTableTagArray[i-1][j];
+
+                // находим все заказы на указанный день
+                if (cursorOrders.getString(reserveDateIndex).equals(btnDate.getText().toString())) {
+                    btnTable.setBackgroundResource(R.drawable.btn_style_6);
+                    btnTable.setTextSize(12);
+                    btnTable.setText(cursorOrders.getString(clientIndex));
+                }
+
+            } while (cursorOrders.moveToNext());
+        } else {
+            Log.d("Gas", "0 rows");
+        }
+        cursorOrders.close();
+
+
+        // просто добавить туда условия
+        addBtnCommon();
+    }
 
     private Integer indexTimeMethod(String time) {
         // метод принимает время и возвращает номер 2-й позиции в btnTableTagArray
@@ -324,18 +323,17 @@ public class CommonActivity extends AppCompatActivity implements View.OnClickLis
 
             btnTime = new Button(linHour.getContext());
             btnTime.setLayoutParams(new LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.WRAP_CONTENT,
-                    LinearLayout.LayoutParams.WRAP_CONTENT));
+                    option.convertDpToPixels(this, 100),
+                    option.convertDpToPixels(this, 75)));
 
             btnTime.setTag("btnTime" + hourRight);
             btnTimeTagsList.add(btnTableHead);
             btnTime.setText(hourRight + ":00");
             btnTime.setTextSize(20);
-            btnTime.setWidth(option.convertDpToPixels(this, 75));
-            btnTime.setHeight(option.convertDpToPixels(this, 75));
+            btnTime.setClickable(false);
 
             LinearLayout.LayoutParams marginBtnTable = (LinearLayout.LayoutParams) btnTime.getLayoutParams();
-            marginBtnTable.setMargins(0, 0, marginLength, 0);
+//            marginBtnTable.setMargins(0, 0, marginLength, 0);
 
             linHour.addView(btnTime);
         }
@@ -352,6 +350,7 @@ public class CommonActivity extends AppCompatActivity implements View.OnClickLis
                     LinearLayout.LayoutParams.WRAP_CONTENT));
             linTable.setOrientation(LinearLayout.HORIZONTAL);
 
+
             int hourRight = 11;
             for (int j = 0; j < hourCount; j++, hourRight++) {
                 if (hourRight == 24) {
@@ -360,17 +359,18 @@ public class CommonActivity extends AppCompatActivity implements View.OnClickLis
 
                 btnTable = new Button(linTable.getContext());
                 btnTable.setLayoutParams(new LinearLayout.LayoutParams(
-                        LinearLayout.LayoutParams.WRAP_CONTENT,
-                        LinearLayout.LayoutParams.WRAP_CONTENT));
+                        option.convertDpToPixels(this, 100),
+                        option.convertDpToPixels(this, 75)));
 
                 btnTable.setTag("btnTable." + (i+1) + "." + hourRight);
                 btnTableTagArray[i][j] = btnTable;
-                btnTable.setWidth(option.convertDpToPixels(this, 75));
-                btnTable.setHeight(option.convertDpToPixels(this, 75));
+                btnTable.setBackgroundResource(R.drawable.btn_style_4);
+                btnTable.setClickable(false);
 
                 LinearLayout.LayoutParams marginBtnTable = (LinearLayout.LayoutParams) btnTable.getLayoutParams();
-                marginBtnTable.setMargins(0, 0, marginLength, 0);
+//                marginBtnTable.setMargins(0, 0, marginLength, 0);
 
+                linTable.removeView(btnTable);
                 linTable.addView(btnTable);
             }
             linTableTime.removeView(linTable);

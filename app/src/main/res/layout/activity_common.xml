@@ -77,10 +77,10 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:layout_gravity="center"
-            android:layout_marginRight="64dp"
+            android:layout_marginRight="52dp"
             android:gravity="center"
             android:hint="Текущее время"
-            android:textSize="20sp" />
+            android:textSize="24sp" />
     </LinearLayout>
 
     <LinearLayout
