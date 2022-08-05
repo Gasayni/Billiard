@@ -59,12 +59,13 @@ public class CommonActivity extends AppCompatActivity implements View.OnClickLis
     int myYear;
     int myMonth;
     int myDay;
+
     {
         // задаем начальное значение для выбора даты
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.ENGLISH);
         LocalDate currentDate = LocalDate.parse(dateFormat.format(new Date()));
         myDay = currentDate.getDayOfMonth();
-        myMonth = currentDate.getMonthValue()-1;
+        myMonth = currentDate.getMonthValue() - 1;
         myYear = currentDate.getYear();
     }
 
@@ -73,10 +74,21 @@ public class CommonActivity extends AppCompatActivity implements View.OnClickLis
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_common);
 
-        // сначала создадим все кнопки
+        // сначала отрисуем кнопки шапки часов
         marginLength = option.convertDpToPixels(this, 2);
-        addBtnTableHead();
         addBtnHour();
+        // также отрисуем кнопку выбора даты и шапки столов
+        addBtnTableHead();
+
+        // выбираем дату
+        btnDate = btnDate.findViewWithTag("btnChoseDate");
+        btnDate.setOnClickListener(this);
+        btnAdd = findViewById(R.id.btnAdd);
+        btnAdd.setOnClickListener(this);
+
+        // смотрим изначальные условия
+//        choseTable();
+        // отрисовываем таблицу заказов на изначальную дату
         addBtnCommon();
 
         // покажем текущее время
@@ -89,12 +101,6 @@ public class CommonActivity extends AppCompatActivity implements View.OnClickLis
         contentValues = new ContentValues();
         choseTypeTable();
 
-        // выбираем дату
-        btnDate = btnDate.findViewWithTag("btnChoseDate");
-        btnDate.setOnClickListener(this);
-        btnAdd = findViewById(R.id.btnAdd);
-        btnAdd.setOnClickListener(this);
-
         // нам нужно загрузить с Таблиц каждого стола данные о резервах на сегодня
 //        reserveToday();
     }
@@ -102,20 +108,22 @@ public class CommonActivity extends AppCompatActivity implements View.OnClickLis
     @SuppressLint("NonConstantResourceId")
     @Override
     public void onClick(View view) {
-        /*Intent intent;
+        Intent intent;
         switch (view.getId()) {
             // переключаемся на редактор резерва
             case R.id.btnAdd: {
                 intent = new Intent("newOrderActivity");
                 startActivity(intent);
+                // при добавлении нового резерва, также нужно обновить таблицу резерва
                 break;
             }
-        }*/
+        }
 
         // кнопки по тегам
         switch (view.getTag().toString()) {
             case "btnChoseDate": {
                 showDialog(DIALOG_DATE);
+                // при изменении даты, нужно, чтобы обновлялась и таблица резерва
             }
         }
     }
@@ -148,87 +156,11 @@ public class CommonActivity extends AppCompatActivity implements View.OnClickLis
             int numberTableIndex = cursorTables.getColumnIndex(DBHelper.KEY_ID);
             int typeIndex = cursorTables.getColumnIndex(DBHelper.KEY_TYPE);
             int descriptionIndex = cursorTables.getColumnIndex(DBHelper.KEY_DESCRIPTION);
-            int i = 0;
             do {
-                // находим кнопки столов
-                switch (cursorTables.getInt(numberTableIndex)) {
-                    case 1: {
-                        btnTableHead = btnTableHeadTagsList.get(i).findViewWithTag("btnTableHead1");
-                        break;
-                    }
-                    case 2: {
-                        btnTableHead = btnTableHeadTagsList.get(i).findViewWithTag("btnTableHead2");
-                        break;
-                    }
-                    case 3: {
-                        btnTableHead = btnTableHeadTagsList.get(i).findViewWithTag("btnTableHead3");
-                        break;
-                    }
-                    case 4: {
-                        btnTableHead = btnTableHeadTagsList.get(i).findViewWithTag("btnTableHead4");
-                        break;
-                    }
-                    case 5: {
-                        btnTableHead = btnTableHeadTagsList.get(i).findViewWithTag("btnTableHead5");
-                        break;
-                    }
-                    case 6: {
-                        btnTableHead = btnTableHeadTagsList.get(i).findViewWithTag("btnTableHead6");
-                        break;
-                    }
-                    case 7: {
-                        btnTableHead = btnTableHeadTagsList.get(i).findViewWithTag("btnTableHead7");
-                        break;
-                    }
-                    case 8: {
-                        btnTableHead = btnTableHeadTagsList.get(i).findViewWithTag("btnTableHead8");
-                        break;
-                    }
-                    case 9: {
-                        btnTableHead = btnTableHeadTagsList.get(i).findViewWithTag("btnTableHead9");
-                        break;
-                    }
-                    case 10: {
-                        btnTableHead = btnTableHeadTagsList.get(i).findViewWithTag("btnTableHead10");
-                        break;
-                    }
-                    case 11: {
-                        btnTableHead = btnTableHeadTagsList.get(i).findViewWithTag("btnTableHead11");
-                        break;
-                    }
-                    case 12: {
-                        btnTableHead = btnTableHeadTagsList.get(i).findViewWithTag("btnTableHead12");
-                        break;
-                    }
-                    case 13: {
-                        btnTableHead = btnTableHeadTagsList.get(i).findViewWithTag("btnTableHead13");
-                        break;
-                    }
-                    case 14: {
-                        btnTableHead = btnTableHeadTagsList.get(i).findViewWithTag("btnTableHead14");
-                        break;
-                    }
-                    case 15: {
-                        btnTableHead = btnTableHeadTagsList.get(i).findViewWithTag("btnTableHead15");
-                        break;
-                    }
-                    case 16: {
-                        btnTableHead = btnTableHeadTagsList.get(i).findViewWithTag("btnTableHead16");
-                        break;
-                    }
-                    case 17: {
-                        btnTableHead = btnTableHeadTagsList.get(i).findViewWithTag("btnTableHead17");
-                        break;
-                    }
-                    case 18: {
-                        btnTableHead = btnTableHeadTagsList.get(i).findViewWithTag("btnTableHead18");
-                        break;
-                    }
-                    case 19: {
-                        btnTableHead = btnTableHeadTagsList.get(i).findViewWithTag("btnTableHead19");
-                        break;
-                    }
-                }
+                // инициализируем каждую кнопку шапки стола
+                int i = cursorTables.getInt(numberTableIndex);
+                btnTableHead = btnTableHeadTagsList.get(i-1).findViewWithTag("btnTableHead" + i);
+
 
                 // меняем фон кнопки каждого стола, в зависимости от типа стола
                 if (cursorTables.getString(typeIndex).equals("pool")) {
@@ -246,112 +178,73 @@ public class CommonActivity extends AppCompatActivity implements View.OnClickLis
         cursorTables.close();
     }
 
-    private void choseTable() {
-        // получаем данные c каждой табл "table"
+//    private void choseTable() {
+//        // нужно, чтобы при загрузке и при изменении даты показывались данные (подкрашивались кнопки) по времени
+//        // у нас есть БД, с которой м. просто брать данные
+//        // 1. нужно найти все резервы в БД на указанную дату
+//        // 2. нужно создать 12 стилей кнопки, чтобы эмитировать разгрузку резерва по минутам
+//        // у нас же уже есть визуализатор - addBtnCommon
+//
+//
+//        // теперь нужно по этой дате посмотреть резервы на всех столах
+//
+//
+//        // получаем данные c табл "ORDERS"
+//        cursorTables = database.query(DBHelper.ORDERS,
+//                null, null, null,
+//                null, null, null);
+//        if (cursorTables.moveToFirst()) {
+//            int numberTableIndex = cursorTables.getColumnIndex(DBHelper.KEY_ID);
+//            int numTableIndex = cursorTables.getColumnIndex(DBHelper.KEY_NUM_TABLE);
+//            int reserveDateIndex = cursorTables.getColumnIndex(DBHelper.KEY_RESERVE_DATE);
+//            int reserveTimeIndex = cursorTables.getColumnIndex(DBHelper.KEY_RESERVE_TIME);
+//            int durationIndex = cursorTables.getColumnIndex(DBHelper.KEY_DURATION);
+//            int clientIndex = cursorTables.getColumnIndex(DBHelper.KEY_CLIENT);
+//            int employeeIndex = cursorTables.getColumnIndex(DBHelper.KEY_EMPLOYEE);
+//            int orderDateIndex = cursorTables.getColumnIndex(DBHelper.KEY_ORDER_DATE);
+//            int orderTimeIndex = cursorTables.getColumnIndex(DBHelper.KEY_ORDER_TIME);
+//            int rateIndex = cursorTables.getColumnIndex(DBHelper.KEY_RATE);
+//            int descriptionIndex = cursorTables.getColumnIndex(DBHelper.KEY_DESCRIPTION);
+//            do {
+//                // находим все заказы на указанный день
+//                if (cursorTables.getString(reserveDateIndex).equals(btnDate.getText().toString())) {
+//                    // смотрим какой это стол
+//                    int i = cursorTables.getInt(numberTableIndex);
+//                    // находим кнопку по времени резерва, воспользуемся спец. методом
+//                    int j = indexTimeMethod(cursorTables.getString(reserveTimeIndex));
+//                    btnTable = btnTableTagArray[i][j].findViewWithTag("btnTable." +
+//                            i + "."
+//                            + hourMethod(cursorTables.getString(reserveTimeIndex)));
+//                }
+//            } while (cursorTables.moveToNext());
+//        } else {
+//            Log.d("Gas", "0 rows");
+//        }
+//        cursorTables.close();
+//
+//
+//        // просто добавить туда условия
+//        addBtnCommon();
+//    }
 
-        cursorTables = database.query(DBHelper.TABLES,
-                null, null, null,
-                null, null, null);
-        if (cursorTables.moveToFirst()) {
-            int numberTableIndex = cursorTables.getColumnIndex(DBHelper.KEY_ID);
-            int typeIndex = cursorTables.getColumnIndex(DBHelper.KEY_TYPE);
-            int descriptionIndex = cursorTables.getColumnIndex(DBHelper.KEY_DESCRIPTION);
-            int i = 0;
-            do {
-                // находим кнопки столов
-                switch (cursorTables.getInt(numberTableIndex)) {
-                    case 1: {
-                        btnTableHead = btnTableHeadTagsList.get(i).findViewWithTag("btnTableHead1");
-                        break;
-                    }
-                    case 2: {
-                        btnTableHead = btnTableHeadTagsList.get(i).findViewWithTag("btnTableHead2");
-                        break;
-                    }
-                    case 3: {
-                        btnTableHead = btnTableHeadTagsList.get(i).findViewWithTag("btnTableHead3");
-                        break;
-                    }
-                    case 4: {
-                        btnTableHead = btnTableHeadTagsList.get(i).findViewWithTag("btnTableHead4");
-                        break;
-                    }
-                    case 5: {
-                        btnTableHead = btnTableHeadTagsList.get(i).findViewWithTag("btnTableHead5");
-                        break;
-                    }
-                    case 6: {
-                        btnTableHead = btnTableHeadTagsList.get(i).findViewWithTag("btnTableHead6");
-                        break;
-                    }
-                    case 7: {
-                        btnTableHead = btnTableHeadTagsList.get(i).findViewWithTag("btnTableHead7");
-                        break;
-                    }
-                    case 8: {
-                        btnTableHead = btnTableHeadTagsList.get(i).findViewWithTag("btnTableHead8");
-                        break;
-                    }
-                    case 9: {
-                        btnTableHead = btnTableHeadTagsList.get(i).findViewWithTag("btnTableHead9");
-                        break;
-                    }
-                    case 10: {
-                        btnTableHead = btnTableHeadTagsList.get(i).findViewWithTag("btnTableHead10");
-                        break;
-                    }
-                    case 11: {
-                        btnTableHead = btnTableHeadTagsList.get(i).findViewWithTag("btnTableHead11");
-                        break;
-                    }
-                    case 12: {
-                        btnTableHead = btnTableHeadTagsList.get(i).findViewWithTag("btnTableHead12");
-                        break;
-                    }
-                    case 13: {
-                        btnTableHead = btnTableHeadTagsList.get(i).findViewWithTag("btnTableHead13");
-                        break;
-                    }
-                    case 14: {
-                        btnTableHead = btnTableHeadTagsList.get(i).findViewWithTag("btnTableHead14");
-                        break;
-                    }
-                    case 15: {
-                        btnTableHead = btnTableHeadTagsList.get(i).findViewWithTag("btnTableHead15");
-                        break;
-                    }
-                    case 16: {
-                        btnTableHead = btnTableHeadTagsList.get(i).findViewWithTag("btnTableHead16");
-                        break;
-                    }
-                    case 17: {
-                        btnTableHead = btnTableHeadTagsList.get(i).findViewWithTag("btnTableHead17");
-                        break;
-                    }
-                    case 18: {
-                        btnTableHead = btnTableHeadTagsList.get(i).findViewWithTag("btnTableHead18");
-                        break;
-                    }
-                    case 19: {
-                        btnTableHead = btnTableHeadTagsList.get(i).findViewWithTag("btnTableHead19");
-                        break;
-                    }
-                }
+    private Integer indexTimeMethod(String time) {
+        // метод принимает время и возвращает номер 2-й позиции в btnTableTagArray
+        LocalTime timeLoc = LocalTime.parse(time);  // переданное время
+        // получили переданный час
+        int hour = timeLoc.getHour();
+        // теперь сравниваем
+        int result;
+        // сложная тараканиха по индексу
+        if (hour > 10 && hour < 24) result = hour - 11;
+        else result = hour + 13;
+        return result;
+    }
 
-                // меняем фон кнопки каждого стола, в зависимости от типа стола
-                if (cursorTables.getString(typeIndex).equals("pool")) {
-                    btnTableHead.setBackgroundResource(R.drawable.bol_pool1);
-                } else if (cursorTables.getString(typeIndex).equals("pyramid")) {
-                    btnTableHead.setBackgroundResource(R.drawable.bol_pyramide1);
-                    btnTableHead.setTextColor(Color.WHITE);
-                }
-                i++;
-
-            } while (cursorTables.moveToNext());
-        } else {
-            Log.d("Gas", "0 rows");
-        }
-        cursorTables.close();
+    private Integer hourMethod(String time) {
+        // этот метод будет принимать время и возвращать часы
+        // все просто
+        LocalTime timeLoc = LocalTime.parse(time);  // переданное время
+        return timeLoc.getHour();
     }
 
 
@@ -373,448 +266,6 @@ public class CommonActivity extends AppCompatActivity implements View.OnClickLis
             btnDate.setText(myDay + "." + myMonth + "." + myYear);
         }
     };
-
-
-
-
-    /* private void calculateduration(String curTime) {
-        LocalTime currentTime = LocalTime.parse(curTime);  // текущее время
-        // узнаем продолжительность игры 1 стола
-        // у нас есть время начала и текущее
-        if ((!btnStartGameTime1.getText().toString().equals(""))*/
-    /*) {  // если мы забираем не пустое значение
-            // забираем время начала и конца игры
-            startGameLocalTime = LocalTime.parse(btnStartGameTime1.getText().toString());
-            endGameLocalTime = LocalTime.parse(endGameTime1);
-
-            // текущее время д.б больше времени старта игры и меньше времени окончания игры
-            if ((currentTime.isAfter(startGameLocalTime)) && (endGameLocalTime.isAfter(currentTime))) {
-                // кнопка принимает красный фон
-                btnStatus1.setBackgroundResource(R.drawable.btn_style_busy);
-                btnStatus1.setText("Занят");
-                btnduration1.setText(convertMinuteToHour(startGameLocalTime.until(currentTime, MINUTES)));
-            } else {
-                // кнопка принимает зеленый фон
-                btnStatus1.setBackgroundResource(R.drawable.btn_style_free);
-                btnStatus1.setText("*Свободен");
-            }
-        } else {
-            // кнопка принимает зеленый фон
-            btnStatus2.setBackgroundResource(R.drawable.btn_style_free);
-            btnStatus2.setText("Свободен");
-        }
-
-        // аналогично продолжительность 2 стола
-        if (!btnStartGameTime2.getText().toString().equals("")) {
-            startGameLocalTime = LocalTime.parse(btnStartGameTime2.getText().toString());
-            endGameLocalTime = LocalTime.parse(endGameTime2);
-
-            if ((currentTime.isAfter(startGameLocalTime)) && (endGameLocalTime.isAfter(currentTime))) {
-                // кнопка принимает красный фон
-                btnStatus2.setBackgroundResource(R.drawable.btn_style_busy);
-                btnStatus2.setText("Занят");
-                btnduration2.setText(convertMinuteToHour(startGameLocalTime.until(currentTime, MINUTES)));
-            } else {
-                // кнопка принимает зеленый фон
-                btnStatus2.setBackgroundResource(R.drawable.btn_style_free);
-                btnStatus2.setText("*Свободен");
-            }
-        } else {
-            // кнопка принимает зеленый фон
-            btnStatus2.setBackgroundResource(R.drawable.btn_style_free);
-            btnStatus2.setText("Свободен");
-        }
-
-        // аналогично продолжительность 3 стола
-        if (!btnStartGameTime3.getText().toString().equals("")) {
-            startGameLocalTime = LocalTime.parse(btnStartGameTime3.getText().toString());
-            endGameLocalTime = LocalTime.parse(endGameTime3);
-            if ((currentTime.isAfter(startGameLocalTime)) && (endGameLocalTime.isAfter(currentTime))) {
-                // кнопка принимает красный фон
-                btnStatus3.setBackgroundResource(R.drawable.btn_style_busy);
-                btnStatus3.setText("Занят");
-                btnduration3.setText(convertMinuteToHour(startGameLocalTime.until(currentTime, MINUTES)));
-            } else {
-                // кнопка принимает зеленый фон
-                btnStatus3.setBackgroundResource(R.drawable.btn_style_free);
-                btnStatus3.setText("*Свободен");
-            }
-        } else {
-            // кнопка принимает зеленый фон
-            btnStatus3.setBackgroundResource(R.drawable.btn_style_free);
-            btnStatus3.setText("Свободен");
-        }
-
-        // аналогично продолжительность 4 стола
-        if (!btnStartGameTime4.getText().toString().equals("")) {
-            startGameLocalTime = LocalTime.parse(btnStartGameTime4.getText().toString());
-            endGameLocalTime = LocalTime.parse(endGameTime4);
-            if ((currentTime.isAfter(startGameLocalTime)) && (endGameLocalTime.isAfter(currentTime))) {
-                // кнопка принимает красный фон
-                btnStatus4.setBackgroundResource(R.drawable.btn_style_busy);
-                btnStatus4.setText("Занят");
-                btnduration4.setText(convertMinuteToHour(startGameLocalTime.until(currentTime, MINUTES)));
-            } else {
-                // кнопка принимает зеленый фон
-                btnStatus4.setBackgroundResource(R.drawable.btn_style_free);
-                btnStatus4.setText("*Свободен");
-            }
-        } else {
-            // кнопка принимает зеленый фон
-            btnStatus4.setBackgroundResource(R.drawable.btn_style_free);
-            btnStatus4.setText("Свободен");
-        }
-
-        // аналогично продолжительность 5 стола
-        if (!btnStartGameTime5.getText().toString().equals("")) {
-            startGameLocalTime = LocalTime.parse(btnStartGameTime5.getText().toString());
-            endGameLocalTime = LocalTime.parse(endGameTime5);
-            if ((currentTime.isAfter(startGameLocalTime)) && (endGameLocalTime.isAfter(currentTime))) {
-                // кнопка принимает красный фон
-                btnStatus5.setBackgroundResource(R.drawable.btn_style_busy);
-                btnStatus5.setText("Занят");
-                btnduration5.setText(convertMinuteToHour(startGameLocalTime.until(currentTime, MINUTES)));
-            } else {
-                // кнопка принимает зеленый фон
-                btnStatus5.setBackgroundResource(R.drawable.btn_style_free);
-                btnStatus5.setText("*Свободен");
-            }
-        } else {
-            // кнопка принимает зеленый фон
-            btnStatus5.setBackgroundResource(R.drawable.btn_style_free);
-            btnStatus5.setText("Свободен");
-        }
-
-        // аналогично продолжительность 6 стола
-        if (!btnStartGameTime6.getText().toString().equals("")) {
-            startGameLocalTime = LocalTime.parse(btnStartGameTime6.getText().toString());
-            endGameLocalTime = LocalTime.parse(endGameTime6);
-            if ((currentTime.isAfter(startGameLocalTime)) && (endGameLocalTime.isAfter(currentTime))) {
-                // кнопка принимает красный фон
-                btnStatus6.setBackgroundResource(R.drawable.btn_style_busy);
-                btnStatus6.setText("Занят");
-                btnduration6.setText(convertMinuteToHour(startGameLocalTime.until(currentTime, MINUTES)));
-            } else {
-                // кнопка принимает зеленый фон
-                btnStatus6.setBackgroundResource(R.drawable.btn_style_free);
-                btnStatus6.setText("*Свободен");
-            }
-        } else {
-            // кнопка принимает зеленый фон
-            btnStatus6.setBackgroundResource(R.drawable.btn_style_free);
-            btnStatus6.setText("Свободен");
-        }
-
-        // аналогично продолжительность 7 стола
-        if (!btnStartGameTime7.getText().toString().equals("")) {
-            startGameLocalTime = LocalTime.parse(btnStartGameTime7.getText().toString());
-            endGameLocalTime = LocalTime.parse(endGameTime7);
-            if ((currentTime.isAfter(startGameLocalTime)) && (endGameLocalTime.isAfter(currentTime))) {
-                // кнопка принимает красный фон
-                btnStatus7.setBackgroundResource(R.drawable.btn_style_busy);
-                btnStatus7.setText("Занят");
-                btnduration7.setText(convertMinuteToHour(startGameLocalTime.until(currentTime, MINUTES)));
-            } else {
-                // кнопка принимает зеленый фон
-                btnStatus7.setBackgroundResource(R.drawable.btn_style_free);
-                btnStatus7.setText("*Свободен");
-            }
-        } else {
-            // кнопка принимает зеленый фон
-            btnStatus7.setBackgroundResource(R.drawable.btn_style_free);
-            btnStatus7.setText("Свободен");
-        }
-
-        // аналогично продолжительность 8 стола
-        if (!btnStartGameTime8.getText().toString().equals("")) {
-            startGameLocalTime = LocalTime.parse(btnStartGameTime8.getText().toString());
-            endGameLocalTime = LocalTime.parse(endGameTime8);
-            if ((currentTime.isAfter(startGameLocalTime)) && (endGameLocalTime.isAfter(currentTime))) {
-                // кнопка принимает красный фон
-                btnStatus8.setBackgroundResource(R.drawable.btn_style_busy);
-                btnStatus8.setText("Занят");
-                btnduration8.setText(convertMinuteToHour(startGameLocalTime.until(currentTime, MINUTES)));
-            } else {
-                // кнопка принимает зеленый фон
-                btnStatus8.setBackgroundResource(R.drawable.btn_style_free);
-                btnStatus8.setText("*Свободен");
-            }
-        } else {
-            // кнопка принимает зеленый фон
-            btnStatus8.setBackgroundResource(R.drawable.btn_style_free);
-            btnStatus8.setText("Свободен");
-        }
-
-        // аналогично продолжительность 9 стола
-        if (!btnStartGameTime9.getText().toString().equals("")) {
-            startGameLocalTime = LocalTime.parse(btnStartGameTime9.getText().toString());
-            endGameLocalTime = LocalTime.parse(endGameTime9);
-            if ((currentTime.isAfter(startGameLocalTime)) && (endGameLocalTime.isAfter(currentTime))) {
-                // кнопка принимает красный фон
-                btnStatus9.setBackgroundResource(R.drawable.btn_style_busy);
-                btnStatus9.setText("Занят");
-                btnduration9.setText(convertMinuteToHour(startGameLocalTime.until(currentTime, MINUTES)));
-            } else {
-                // кнопка принимает зеленый фон
-                btnStatus9.setBackgroundResource(R.drawable.btn_style_free);
-                btnStatus9.setText("*Свободен");
-            }
-        } else {
-            // кнопка принимает зеленый фон
-            btnStatus9.setBackgroundResource(R.drawable.btn_style_free);
-            btnStatus9.setText("Свободен");
-        }
-
-        // аналогично продолжительность 10 стола
-        if (!btnStartGameTime10.getText().toString().equals("")) {
-            startGameLocalTime = LocalTime.parse(btnStartGameTime10.getText().toString());
-            endGameLocalTime = LocalTime.parse(endGameTime10);
-            if ((currentTime.isAfter(startGameLocalTime)) && (endGameLocalTime.isAfter(currentTime))) {
-                // кнопка принимает красный фон
-                btnStatus10.setBackgroundResource(R.drawable.btn_style_busy);
-                btnStatus10.setText("Занят");
-                btnduration10.setText(convertMinuteToHour(startGameLocalTime.until(currentTime, MINUTES)));
-            } else {
-                // кнопка принимает зеленый фон
-                btnStatus10.setBackgroundResource(R.drawable.btn_style_free);
-                btnStatus10.setText("*Свободен");
-            }
-        } else {
-            // кнопка принимает зеленый фон
-            btnStatus10.setBackgroundResource(R.drawable.btn_style_free);
-            btnStatus10.setText("Свободен");
-        }
-
-        // аналогично продолжительность 11 стола
-        if (!btnStartGameTime11.getText().toString().equals("")) {
-            startGameLocalTime = LocalTime.parse(btnStartGameTime11.getText().toString());
-            endGameLocalTime = LocalTime.parse(endGameTime11);
-            if ((currentTime.isAfter(startGameLocalTime)) && (endGameLocalTime.isAfter(currentTime))) {
-                // кнопка принимает красный фон
-                btnStatus11.setBackgroundResource(R.drawable.btn_style_busy);
-                btnStatus11.setText("Занят");
-                btnduration11.setText(convertMinuteToHour(startGameLocalTime.until(currentTime, MINUTES)));
-            } else {
-                // кнопка принимает зеленый фон
-                btnStatus11.setBackgroundResource(R.drawable.btn_style_free);
-                btnStatus11.setText("*Свободен");
-            }
-        } else {
-            // кнопка принимает зеленый фон
-            btnStatus11.setBackgroundResource(R.drawable.btn_style_free);
-            btnStatus11.setText("Свободен");
-        }
-
-        // аналогично продолжительность 12 стола
-        if (!btnStartGameTime12.getText().toString().equals("")) {
-            startGameLocalTime = LocalTime.parse(btnStartGameTime12.getText().toString());
-            endGameLocalTime = LocalTime.parse(endGameTime12);
-            if ((currentTime.isAfter(startGameLocalTime)) && (endGameLocalTime.isAfter(currentTime))) {
-                // кнопка принимает красный фон
-                btnStatus12.setBackgroundResource(R.drawable.btn_style_busy);
-                btnStatus12.setText("Занят");
-                btnduration12.setText(convertMinuteToHour(startGameLocalTime.until(currentTime, MINUTES)));
-            } else {
-                // кнопка принимает зеленый фон
-                btnStatus12.setBackgroundResource(R.drawable.btn_style_free);
-                btnStatus12.setText("*Свободен");
-            }
-        } else {
-            // кнопка принимает зеленый фон
-            btnStatus12.setBackgroundResource(R.drawable.btn_style_free);
-            btnStatus12.setText("Свободен");
-        }
-
-        // аналогично продолжительность 13 стола
-        if (!btnStartGameTime13.getText().toString().equals("")) {
-            startGameLocalTime = LocalTime.parse(btnStartGameTime13.getText().toString());
-            endGameLocalTime = LocalTime.parse(endGameTime13);
-            if ((currentTime.isAfter(startGameLocalTime)) && (endGameLocalTime.isAfter(currentTime))) {
-                // кнопка принимает красный фон
-                btnStatus13.setBackgroundResource(R.drawable.btn_style_busy);
-                btnStatus13.setText("Занят");
-                btnduration13.setText(convertMinuteToHour(startGameLocalTime.until(currentTime, MINUTES)));
-            } else {
-                // кнопка принимает зеленый фон
-                btnStatus13.setBackgroundResource(R.drawable.btn_style_free);
-                btnStatus13.setText("*Свободен");
-            }
-        } else {
-            // кнопка принимает зеленый фон
-            btnStatus13.setBackgroundResource(R.drawable.btn_style_free);
-            btnStatus13.setText("Свободен");
-        }
-
-        // аналогично продолжительность 14 стола
-        if (!btnStartGameTime14.getText().toString().equals("")) {
-            startGameLocalTime = LocalTime.parse(btnStartGameTime14.getText().toString());
-            endGameLocalTime = LocalTime.parse(endGameTime14);
-            if ((currentTime.isAfter(startGameLocalTime)) && (endGameLocalTime.isAfter(currentTime))) {
-                // кнопка принимает красный фон
-                btnStatus14.setBackgroundResource(R.drawable.btn_style_busy);
-                btnStatus14.setText("Занят");
-                btnduration14.setText(convertMinuteToHour(startGameLocalTime.until(currentTime, MINUTES)));
-            } else {
-                // кнопка принимает зеленый фон
-                btnStatus14.setBackgroundResource(R.drawable.btn_style_free);
-                btnStatus14.setText("*Свободен");
-            }
-        } else {
-            // кнопка принимает зеленый фон
-            btnStatus14.setBackgroundResource(R.drawable.btn_style_free);
-            btnStatus14.setText("Свободен");
-        }
-
-        // аналогично продолжительность 15 стола
-        if (!btnStartGameTime15.getText().toString().equals("")) {
-            startGameLocalTime = LocalTime.parse(btnStartGameTime15.getText().toString());
-            endGameLocalTime = LocalTime.parse(endGameTime15);
-            if ((currentTime.isAfter(startGameLocalTime)) && (endGameLocalTime.isAfter(currentTime))) {
-                // кнопка принимает красный фон
-                btnStatus15.setBackgroundResource(R.drawable.btn_style_busy);
-                btnStatus15.setText("Занят");
-                btnduration15.setText(convertMinuteToHour(startGameLocalTime.until(currentTime, MINUTES)));
-            } else {
-                // кнопка принимает зеленый фон
-                btnStatus15.setBackgroundResource(R.drawable.btn_style_free);
-                btnStatus15.setText("*Свободен");
-            }
-        } else {
-            // кнопка принимает зеленый фон
-            btnStatus15.setBackgroundResource(R.drawable.btn_style_free);
-            btnStatus15.setText("Свободен");
-        }
-
-        // аналогично продолжительность 16 стола
-        if (!btnStartGameTime16.getText().toString().equals("")) {
-            startGameLocalTime = LocalTime.parse(btnStartGameTime16.getText().toString());
-            endGameLocalTime = LocalTime.parse(endGameTime16);
-            if ((currentTime.isAfter(startGameLocalTime)) && (endGameLocalTime.isAfter(currentTime))) {
-                // кнопка принимает красный фон
-                btnStatus16.setBackgroundResource(R.drawable.btn_style_busy);
-                btnStatus16.setText("Занят");
-                btnduration16.setText(convertMinuteToHour(startGameLocalTime.until(currentTime, MINUTES)));
-            } else {
-                // кнопка принимает зеленый фон
-                btnStatus16.setBackgroundResource(R.drawable.btn_style_free);
-                btnStatus16.setText("*Свободен");
-            }
-        } else {
-            // кнопка принимает зеленый фон
-            btnStatus16.setBackgroundResource(R.drawable.btn_style_free);
-            btnStatus16.setText("Свободен");
-        }
-
-        // аналогично продолжительность 17 стола
-        if (!btnStartGameTime17.getText().toString().equals("")) {
-            startGameLocalTime = LocalTime.parse(btnStartGameTime17.getText().toString());
-            endGameLocalTime = LocalTime.parse(endGameTime17);
-            if ((currentTime.isAfter(startGameLocalTime)) && (endGameLocalTime.isAfter(currentTime))) {
-                // кнопка принимает красный фон
-                btnStatus17.setBackgroundResource(R.drawable.btn_style_busy);
-                btnStatus17.setText("Занят");
-                btnduration17.setText(convertMinuteToHour(startGameLocalTime.until(currentTime, MINUTES)));
-            } else {
-                // кнопка принимает зеленый фон
-                btnStatus17.setBackgroundResource(R.drawable.btn_style_free);
-                btnStatus17.setText("*Свободен");
-            }
-        } else {
-            // кнопка принимает зеленый фон
-            btnStatus17.setBackgroundResource(R.drawable.btn_style_free);
-            btnStatus17.setText("Свободен");
-        }
-
-        // аналогично продолжительность 18 стола
-        if (!btnStartGameTime18.getText().toString().equals("")) {
-            startGameLocalTime = LocalTime.parse(btnStartGameTime18.getText().toString());
-            endGameLocalTime = LocalTime.parse(endGameTime18);
-            if ((currentTime.isAfter(startGameLocalTime)) && (endGameLocalTime.isAfter(currentTime))) {
-                // кнопка принимает красный фон
-                btnStatus18.setBackgroundResource(R.drawable.btn_style_busy);
-                btnStatus18.setText("Занят");
-                btnduration18.setText(convertMinuteToHour(startGameLocalTime.until(currentTime, MINUTES)));
-            } else {
-                // кнопка принимает зеленый фон
-                btnStatus18.setBackgroundResource(R.drawable.btn_style_free);
-                btnStatus18.setText("*Свободен");
-            }
-        } else {
-            // кнопка принимает зеленый фон
-            btnStatus18.setBackgroundResource(R.drawable.btn_style_free);
-            btnStatus18.setText("Свободен");
-        }
-
-        // аналогично продолжительность 19 стола
-        if (!btnStartGameTime19.getText().toString().equals("")) {
-            startGameLocalTime = LocalTime.parse(btnStartGameTime19.getText().toString());
-            endGameLocalTime = LocalTime.parse(endGameTime19);
-            if ((currentTime.isAfter(startGameLocalTime)) && (endGameLocalTime.isAfter(currentTime))) {
-                // кнопка принимает красный фон
-                btnStatus19.setBackgroundResource(R.drawable.btn_style_busy);
-                btnStatus19.setText("Занят");
-                btnduration19.setText(convertMinuteToHour(startGameLocalTime.until(currentTime, MINUTES)));
-            } else {
-                // кнопка принимает зеленый фон
-                btnStatus19.setBackgroundResource(R.drawable.btn_style_free);
-                btnStatus19.setText("*Свободен");
-            }
-        } else {
-            // кнопка принимает зеленый фон
-            btnStatus19.setBackgroundResource(R.drawable.btn_style_free);
-            btnStatus19.setText("Свободен");
-        }
-    }*/
-
-    /*private String convertMinuteToHour(long allMinutes) {
-        long hourFinish = allMinutes / 60;
-        long minFinish = allMinutes % 60;
-        if (hourFinish == 0) {
-            return "" + minFinish + " мин";
-        } else return hourFinish + " ч\n" + minFinish + " мин";
-    }*/
-
-    /*private void reserveToday() {
-        // нам нужно загрузить с Таблиц каждого стола данные о резервах на сегодня
-
-        // получаем данные c табл "table 1"
-        cursorTable = database.query(DBHelper.TABLE_1,
-                null, null, null,
-                null, null, null);
-        if (cursorTable.moveToFirst()) {
-            int numberTableIndex = cursorTable.getColumnIndex(DBHelper.KEY_ID);
-            int startDateIndex = cursorTable.getColumnIndex(DBHelper.KEY_START_DATE);
-            int startTimeIndex = cursorTable.getColumnIndex(DBHelper.KEY_START_TIME);
-            int endDateIndex = cursorTable.getColumnIndex(DBHelper.KEY_END_DATE);
-            int endTimeIndex = cursorTable.getColumnIndex(DBHelper.KEY_END_TIME);
-            int clientIndex = cursorTable.getColumnIndex(DBHelper.KEY_CLIENT);
-            int employeeIndex = cursorTable.getColumnIndex(DBHelper.KEY_EMPLOYEE);
-            int rateIndex = cursorTable.getColumnIndex(DBHelper.KEY_RATE);
-            int dateOrderIndex = cursorTable.getColumnIndex(DBHelper.KEY_DATE_ORDER);
-            int timeOrderIndex = cursorTable.getColumnIndex(DBHelper.KEY_TIME_ORDER);
-            int descriptionIndex = cursorTable.getColumnIndex(DBHelper.KEY_DESCRIPTION);
-            do {
-                // находим все сегодняшние резервы
-                // если дата сегодняшняя, то заносим времена в лист сегодняшних резервов
-                if (cursorTable.getString(startDateIndex).equals(today)) {
-                    todayReserveList.add(cursorTable.getString(startTimeIndex));
-                    Log.i("Gas", "заносим в лист сегодняшних резервов: = "
-                            + cursorTable.getString(startTimeIndex));
-
-                }
-                Log.i("Gas", "endGameTime1 = " + endGameTime1);
-                break;
-
-            } while (cursorTable.moveToNext());
-        } else {
-            Log.d("Gas", "0 rows");
-        }
-        cursorTable.close();
-    }*/
-
-
-
-
 
 
     public void addBtnTableHead() {
@@ -866,7 +317,7 @@ public class CommonActivity extends AppCompatActivity implements View.OnClickLis
 
 
         int hourRight = 11;
-        for (int i = 0; i < hourCount; i++, hourRight ++) {
+        for (int i = 0; i < hourCount; i++, hourRight++) {
             if (hourRight == 24) {
                 hourRight = 0;
             }
@@ -902,7 +353,7 @@ public class CommonActivity extends AppCompatActivity implements View.OnClickLis
             linTable.setOrientation(LinearLayout.HORIZONTAL);
 
             int hourRight = 11;
-            for (int j = 0; j < hourCount; j++, hourRight ++) {
+            for (int j = 0; j < hourCount; j++, hourRight++) {
                 if (hourRight == 24) {
                     hourRight = 0;
                 }
@@ -912,7 +363,7 @@ public class CommonActivity extends AppCompatActivity implements View.OnClickLis
                         LinearLayout.LayoutParams.WRAP_CONTENT,
                         LinearLayout.LayoutParams.WRAP_CONTENT));
 
-                btnTable.setTag("btnTable" + hourRight);
+                btnTable.setTag("btnTable." + (i+1) + "." + hourRight);
                 btnTableTagArray[i][j] = btnTable;
                 btnTable.setWidth(option.convertDpToPixels(this, 75));
                 btnTable.setHeight(option.convertDpToPixels(this, 75));
@@ -922,6 +373,7 @@ public class CommonActivity extends AppCompatActivity implements View.OnClickLis
 
                 linTable.addView(btnTable);
             }
+            linTableTime.removeView(linTable);
             linTableTime.addView(linTable);
         }
     }

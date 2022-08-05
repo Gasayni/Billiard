@@ -15,32 +15,33 @@ public class DBHelper extends SQLiteOpenHelper {
     public static String DB_NAME = "billiard.db";
     private static String DB_PATH = "";
     public static final int DB_VERSION = 2;
-    public static String TABLE_1 = "table1";
+
+    public static String ORDERS = "orders";
     public static String TABLES = "tables";
     public static String RATES = "rates";
     public static String CLIENTS = "clients";
     public static String EMPLOYEES = "employees";
 
     public static final String KEY_ID = "_id";
+    public static final String KEY_NUM_TABLE = "num_table";
     public static final String KEY_TYPE = "type";
     public static final String KEY_STATUS = "status";
     public static final String KEY_RATE = "rate";
-    public static final String KEY_START_TIME = "start_time";
-    public static final String KEY_END_TIME = "end_time";
-    public static final String KEY_START_DATE = "start_date";
-    public static final String KEY_END_DATE = "end_date";
+    public static final String KEY_RESERVE_TIME = "time_reserve";
+    public static final String KEY_DURATION = "duration";
+    public static final String KEY_RESERVE_DATE = "date_reserve";
     public static final String KEY_DESCRIPTION = "description";
 
     public static final String KEY_EMPLOYEE = "employee";
     public static final String KEY_CLIENT = "client";
-    public static final String KEY_TIME_ORDER = "time_order";
-    public static final String KEY_DATE_ORDER = "date_order";
+    public static final String KEY_ORDER_TIME = "time_order";
+    public static final String KEY_ORDER_DATE = "date_order";
 
     public static final String KEY_PRICE = "price";
     public static final String KEY_RATING = "rating";
     public static final String KEY_FIRST_NAME = "first_name";
     public static final String KEY_SECOND_NAME = "second_name";
-    public static final String KEY_COUNT_ORDERS = "count_orders";
+    public static final String KEY_ORDERS_COUNT_PER_CLIENT = "count_orders";
 
     public static final String KEY_PASS = "pass";
 
