@@ -9,12 +9,12 @@
 
     <Button
         android:id="@+id/btnSetting"
-        android:layout_width="300sp"
-        android:layout_height="100sp"
+        android:layout_width="120dp"
+        android:layout_height="60dp"
         android:layout_alignParentRight="true"
         android:background="@drawable/btn_style_1"
         android:text="@string/setting"
-        android:textSize="30sp" />
+        android:textSize="16sp" />
 
     <TextView
         android:id="@+id/tvAdmin"
@@ -22,14 +22,14 @@
         android:layout_height="wrap_content"
         android:layout_below="@id/btnSetting"
         android:layout_centerHorizontal="true"
-        android:layout_marginTop="204dp"
+        android:layout_marginTop="64dp"
         android:text="@string/administrator"
-        android:textSize="40sp" />
+        android:textSize="30sp" />
 
     <AutoCompleteTextView
         android:id="@+id/actvAdmin"
-        android:layout_width="400sp"
-        android:layout_height="100sp"
+        android:layout_width="400dp"
+        android:layout_height="40dp"
         android:layout_below="@id/tvAdmin"
         android:layout_centerHorizontal="true"
         android:layout_marginTop="16dp"
@@ -39,7 +39,7 @@
         android:gravity="center"
         android:hint="Выберите админа"
         android:textIsSelectable="true"
-        android:textSize="30sp">
+        android:textSize="20sp">
 
     </AutoCompleteTextView>
 
@@ -49,14 +49,14 @@
         android:layout_height="wrap_content"
         android:layout_below="@id/actvAdmin"
         android:layout_centerHorizontal="true"
-        android:layout_marginTop="64dp"
+        android:layout_marginTop="32dp"
         android:text="@string/password"
-        android:textSize="40sp" />
+        android:textSize="30sp" />
 
     <EditText
         android:id="@+id/etPas"
-        android:layout_width="400sp"
-        android:layout_height="100sp"
+        android:layout_width="400dp"
+        android:layout_height="40dp"
         android:layout_below="@id/tvPass"
         android:layout_centerHorizontal="true"
         android:layout_marginTop="16dp"
@@ -64,20 +64,20 @@
         android:gravity="center"
         android:hint="введите пароль"
         android:inputType="numberPassword"
-        android:textSize="30sp" />
+        android:textSize="20sp" />
 
     <Button
         android:id="@+id/btnEnter"
-        android:layout_width="300sp"
-        android:layout_height="100sp"
+        android:layout_width="120dp"
+        android:layout_height="60dp"
         android:layout_below="@id/etPas"
         android:layout_centerHorizontal="true"
-        android:layout_marginTop="64dp"
+        android:layout_marginTop="32dp"
         android:background="@drawable/btn_style_1"
         android:clickable="true"
         android:focusable="true"
         android:gravity="center"
         android:text="@string/login"
-        android:textSize="30sp" />
+        android:textSize="16sp" />
 
 </RelativeLayout>

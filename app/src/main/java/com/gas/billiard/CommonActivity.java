@@ -9,6 +9,7 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
+import android.os.Build;
 import android.os.Handler;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -33,6 +34,7 @@ public class CommonActivity extends AppCompatActivity implements View.OnClickLis
     private final SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm", Locale.ENGLISH);
     private Date currentDate = new Date();
     private final SimpleDateFormat dateFormat = new SimpleDateFormat("dd.MM.yyyy", Locale.ENGLISH);
+//    private final SimpleDateFormat dateFormat1 = new SimpleDateFormat("dd\nMM\nyyyy", Locale.ENGLISH);
     String today = dateFormat.format(currentDate);
     List<String> todayReserveList = new ArrayList<>();
     LocalTime startGameLocalTime, endGameLocalTime;
@@ -47,7 +49,7 @@ public class CommonActivity extends AppCompatActivity implements View.OnClickLis
     // листы для тегов (нужны, чтобы запоминать теги)
     List<Button> btnTableHeadTagsList = new ArrayList<>();
     List<Button> btnTimeTagsList = new ArrayList<>();
-    Button[][] btnTableTagArray = new Button[19][24];
+    Button[][] btnTableTagArray = new Button[tableCount][hourCount];
 
     // БД
     DBHelper dbHelper;
@@ -64,10 +66,19 @@ public class CommonActivity extends AppCompatActivity implements View.OnClickLis
     {
         // задаем начальное значение для выбора даты
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.ENGLISH);
-        LocalDate currentDate = LocalDate.parse(dateFormat.format(new Date()));
-        myDay = currentDate.getDayOfMonth();
-        myMonth = currentDate.getMonthValue() - 1;
-        myYear = currentDate.getYear();
+        LocalDate currentDate = null;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            currentDate = LocalDate.parse(dateFormat.format(new Date()));
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            myDay = currentDate.getDayOfMonth();
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            myMonth = currentDate.getMonthValue() - 1;
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            myYear = currentDate.getYear();
+        }
     }
 
     @Override
@@ -128,7 +139,6 @@ public class CommonActivity extends AppCompatActivity implements View.OnClickLis
                 showDialog(DIALOG_DATE);
                 // при изменении даты, нужно, чтобы обновлялась и таблица резерва
             }
-            choseTable();
         }
     }
 
@@ -181,6 +191,11 @@ public class CommonActivity extends AppCompatActivity implements View.OnClickLis
     }
 
     private void choseTable() {
+        Log.i("Gas", "");
+        Log.i("Gas", " ...//... ");
+
+        // очищаем таблицу
+        clearBtnCommon();
         // нужно, чтобы при загрузке и при изменении даты показывались данные (подкрашивались кнопки) по времени
         // получаем данные c табл "ORDERS"
         cursorOrders = database.query(DBHelper.ORDERS,
@@ -199,7 +214,7 @@ public class CommonActivity extends AppCompatActivity implements View.OnClickLis
             int rateIndex = cursorOrders.getColumnIndex(DBHelper.KEY_RATE);
             int descriptionIndex = cursorOrders.getColumnIndex(DBHelper.KEY_DESCRIPTION);
             do {
-                // инициализируем все кнопки
+                // меняем нужные кнопки
                 // смотрим какой это стол
                 int i = cursorOrders.getInt(numTableIndex);
                 // находим кнопку по времени резерва, воспользуемся спец. методом
@@ -208,10 +223,16 @@ public class CommonActivity extends AppCompatActivity implements View.OnClickLis
                 // [i-1][j-1], где i-номер стола, j-время
                 btnTable = btnTableTagArray[i-1][j];
 
+
+                Log.i("Gas", "btnDate.getText().toString() = "
+                        + btnDate.getText().toString());
+                Log.i("Gas", "cursorOrders.getString(reserveDateIndex) = "
+                        + cursorOrders.getString(reserveDateIndex));
+
                 // находим все заказы на указанный день
                 if (cursorOrders.getString(reserveDateIndex).equals(btnDate.getText().toString())) {
+                    Log.i("Gas", "даты идентичны");
                     btnTable.setBackgroundResource(R.drawable.btn_style_6);
-                    btnTable.setTextSize(12);
                     btnTable.setText(cursorOrders.getString(clientIndex));
                 }
 
@@ -221,16 +242,21 @@ public class CommonActivity extends AppCompatActivity implements View.OnClickLis
         }
         cursorOrders.close();
 
-
-        // просто добавить туда условия
-        addBtnCommon();
+        // нужно, чтобы обновлялось
+//        addBtnCommon();
     }
 
     private Integer indexTimeMethod(String time) {
         // метод принимает время и возвращает номер 2-й позиции в btnTableTagArray
-        LocalTime timeLoc = LocalTime.parse(time);  // переданное время
+        LocalTime timeLoc = null;  // переданное время
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+            timeLoc = LocalTime.parse(time);
+        }
         // получили переданный час
-        int hour = timeLoc.getHour();
+        int hour = 0;
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+            hour = timeLoc.getHour();
+        }
         // теперь сравниваем
         int result;
         // сложная тараканиха по индексу
@@ -242,8 +268,13 @@ public class CommonActivity extends AppCompatActivity implements View.OnClickLis
     private Integer hourMethod(String time) {
         // этот метод будет принимать время и возвращать часы
         // все просто
-        LocalTime timeLoc = LocalTime.parse(time);  // переданное время
-        return timeLoc.getHour();
+        LocalTime timeLoc = null;  // переданное время
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            timeLoc = LocalTime.parse(time);
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            return timeLoc.getHour();
+        } else return -1;
     }
 
 
@@ -260,9 +291,18 @@ public class CommonActivity extends AppCompatActivity implements View.OnClickLis
         public void onDateSet(DatePicker view, int year, int monthOfYear,
                               int dayOfMonth) {
             myYear = year;
-            myMonth = monthOfYear;
+            myMonth = monthOfYear + 1;
             myDay = dayOfMonth;
-            btnDate.setText(myDay + "." + myMonth + "." + myYear);
+            String myMonthSt, myDaySt;
+            if (myMonth < 10) myMonthSt = "0" + myMonth;
+            else myMonthSt = "" + myMonth;
+            if (myDay < 10) myDaySt = "0" + myDay;
+            else myDaySt = "" + myDay;
+
+            btnDate.setText(myDaySt + "." + myMonthSt + "." + myYear);
+
+            choseTable();
+
         }
     };
 
@@ -274,13 +314,14 @@ public class CommonActivity extends AppCompatActivity implements View.OnClickLis
 
         btnDate = new Button(linTableHead.getContext());
         btnDate.setLayoutParams(new LinearLayout.LayoutParams(
-                option.convertDpToPixels(this, 75),
-                option.convertDpToPixels(this, 75)));
+                option.convertDpToPixels(this, 40),
+                option.convertDpToPixels(this, 40)));
 
         btnDate.setTag("btnChoseDate");
         // задаем сегодняшнюю дату
         btnDate.setText(dateFormat.format(new Date()));
-        btnDate.setTextSize(15);
+        btnDate.setTextSize(14);
+        btnDate.setBackgroundResource(R.drawable.btn_style_4);
 
         marginBtnTable = (LinearLayout.LayoutParams) btnDate.getLayoutParams();
         marginBtnTable.setMargins(0, 0, marginLength, 0);
@@ -289,13 +330,13 @@ public class CommonActivity extends AppCompatActivity implements View.OnClickLis
         for (int i = 0; i < tableCount; i++) {
             btnTableHead = new Button(linTableHead.getContext());
             btnTableHead.setLayoutParams(new LinearLayout.LayoutParams(
-                    option.convertDpToPixels(this, 75),
-                    option.convertDpToPixels(this, 75)));
+                    option.convertDpToPixels(this, 40),
+                    option.convertDpToPixels(this, 40)));
 
             btnTableHead.setTag("btnTableHead" + (1 + i));
             btnTableHeadTagsList.add(btnTableHead);
             btnTableHead.setText((i + 1) + "");
-            btnTableHead.setTextSize(16);
+            btnTableHead.setTextSize(10);
 
             marginBtnTable = (LinearLayout.LayoutParams) btnTableHead.getLayoutParams();
             marginBtnTable.setMargins(0, 0, marginLength, 0);
@@ -323,13 +364,13 @@ public class CommonActivity extends AppCompatActivity implements View.OnClickLis
 
             btnTime = new Button(linHour.getContext());
             btnTime.setLayoutParams(new LinearLayout.LayoutParams(
-                    option.convertDpToPixels(this, 100),
-                    option.convertDpToPixels(this, 75)));
+                    option.convertDpToPixels(this, 50),
+                    option.convertDpToPixels(this, 40)));
 
             btnTime.setTag("btnTime" + hourRight);
             btnTimeTagsList.add(btnTableHead);
             btnTime.setText(hourRight + ":00");
-            btnTime.setTextSize(20);
+            btnTime.setTextSize(10);
             btnTime.setClickable(false);
 
             LinearLayout.LayoutParams marginBtnTable = (LinearLayout.LayoutParams) btnTime.getLayoutParams();
@@ -359,13 +400,14 @@ public class CommonActivity extends AppCompatActivity implements View.OnClickLis
 
                 btnTable = new Button(linTable.getContext());
                 btnTable.setLayoutParams(new LinearLayout.LayoutParams(
-                        option.convertDpToPixels(this, 100),
-                        option.convertDpToPixels(this, 75)));
+                        option.convertDpToPixels(this, 50),
+                        option.convertDpToPixels(this, 40)));
 
                 btnTable.setTag("btnTable." + (i+1) + "." + hourRight);
                 btnTableTagArray[i][j] = btnTable;
                 btnTable.setBackgroundResource(R.drawable.btn_style_4);
                 btnTable.setClickable(false);
+                btnTable.setTextSize(10);
 
                 LinearLayout.LayoutParams marginBtnTable = (LinearLayout.LayoutParams) btnTable.getLayoutParams();
 //                marginBtnTable.setMargins(0, 0, marginLength, 0);
@@ -375,6 +417,16 @@ public class CommonActivity extends AppCompatActivity implements View.OnClickLis
             }
             linTableTime.removeView(linTable);
             linTableTime.addView(linTable);
+        }
+    }
+
+    public void clearBtnCommon() {
+        for (int i = 0; i < tableCount; i++) {
+            for (int j = 0; j < hourCount; j++) {
+                Button btnTable = btnTableTagArray[i][j];
+                btnTable.setBackgroundResource(R.drawable.btn_style_4);
+                btnTable.setText("");
+            }
         }
     }
 }
