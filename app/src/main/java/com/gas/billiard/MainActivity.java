@@ -24,7 +24,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     EditText etPas;
     Button btnEnter;
     Button btnSetting;
-    Button btnTestDB;
+
     // БД
     DBHelper dbHelper;
     SQLiteDatabase database;

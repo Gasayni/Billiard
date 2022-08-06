@@ -131,15 +131,6 @@ public class CommonActivity extends AppCompatActivity implements View.OnClickLis
             }
         }
 
-        // кнопки по тегам
-        switch (view.getTag().toString()) {
-            case "btnChoseDate": {
-                showDialog(DIALOG_DATE);
-                // при изменении даты, нужно, чтобы обновлялась и таблица резерва
-                break;
-            }
-        }
-
 
        /* int i = cursorOrders.getInt(numTableIndex);
         int j = indexTimeMethod(cursorOrders.getString(reserveTimeIndex));
@@ -168,6 +159,14 @@ public class CommonActivity extends AppCompatActivity implements View.OnClickLis
     }
 
     private void choseTypeTable() {
+        // заодно слушаем кнопку с выбором даты
+        btnDate.findViewWithTag("btnChoseDate");
+        btnDate.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View view) {
+                showDialog(DIALOG_DATE);
+            }
+        });
+
         // получаем данные c табл "tables"
         cursorTables = database.query(DBHelper.TABLES,
                 null, null, null,
@@ -191,11 +190,8 @@ public class CommonActivity extends AppCompatActivity implements View.OnClickLis
 
                 btnTableHead.setOnClickListener(new View.OnClickListener() {
                     public void onClick(View view) {
-                        Intent intent = new Intent("settingActivity");
+                        Intent intent = new Intent("tableActivity");
                         startActivity(intent);
-                        // Perform action on click
-                        btnTableHead.setText("555");
-//                        Log.i("Gas", "onClick");
                     }
                 });
 
