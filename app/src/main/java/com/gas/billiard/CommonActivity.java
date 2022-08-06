@@ -59,8 +59,8 @@ public class CommonActivity extends AppCompatActivity implements View.OnClickLis
 
     // задаем начальное значение для выбора даты
     int DIALOG_DATE = 1;
-    int myYear;
-    int myMonth;
+    int myYear = 2022;
+    int myMonth = 8;
     int myDay;
 
     {
@@ -115,8 +115,6 @@ public class CommonActivity extends AppCompatActivity implements View.OnClickLis
 
         // нам нужно загрузить с Таблиц каждого стола данные о резервах на сегодня
 //        reserveToday();
-
-
     }
 
     @SuppressLint("NonConstantResourceId")
@@ -138,8 +136,16 @@ public class CommonActivity extends AppCompatActivity implements View.OnClickLis
             case "btnChoseDate": {
                 showDialog(DIALOG_DATE);
                 // при изменении даты, нужно, чтобы обновлялась и таблица резерва
+                break;
             }
         }
+
+
+       /* int i = cursorOrders.getInt(numTableIndex);
+        int j = indexTimeMethod(cursorOrders.getString(reserveTimeIndex));
+        // т.к. массив начинается с 0, а номера столов с 1 ...
+        // [i-1][j-1], где i-номер стола, j-время
+        btnTable = btnTableTagArray[i-1][j];*/
     }
 
     private void actualTime() {
@@ -175,7 +181,6 @@ public class CommonActivity extends AppCompatActivity implements View.OnClickLis
                 int i = cursorTables.getInt(numberTableIndex);
                 btnTableHead = btnTableHeadTagsList.get(i-1).findViewWithTag("btnTableHead" + i);
 
-
                 // меняем фон кнопки каждого стола, в зависимости от типа стола
                 if (cursorTables.getString(typeIndex).equals("pool")) {
                     btnTableHead.setBackgroundResource(R.drawable.bol_pool1);
@@ -183,6 +188,17 @@ public class CommonActivity extends AppCompatActivity implements View.OnClickLis
                     btnTableHead.setBackgroundResource(R.drawable.bol_pyramide1);
                     btnTableHead.setTextColor(Color.WHITE);
                 }
+
+                btnTableHead.setOnClickListener(new View.OnClickListener() {
+                    public void onClick(View view) {
+                        Intent intent = new Intent("settingActivity");
+                        startActivity(intent);
+                        // Perform action on click
+                        btnTableHead.setText("555");
+//                        Log.i("Gas", "onClick");
+                    }
+                });
+
             } while (cursorTables.moveToNext());
         } else {
             Log.d("Gas", "0 rows");
@@ -320,7 +336,7 @@ public class CommonActivity extends AppCompatActivity implements View.OnClickLis
         btnDate.setTag("btnChoseDate");
         // задаем сегодняшнюю дату
         btnDate.setText(dateFormat.format(new Date()));
-        btnDate.setTextSize(14);
+        btnDate.setTextSize(8);
         btnDate.setBackgroundResource(R.drawable.btn_style_4);
 
         marginBtnTable = (LinearLayout.LayoutParams) btnDate.getLayoutParams();
@@ -337,6 +353,8 @@ public class CommonActivity extends AppCompatActivity implements View.OnClickLis
             btnTableHeadTagsList.add(btnTableHead);
             btnTableHead.setText((i + 1) + "");
             btnTableHead.setTextSize(10);
+            /*btnTableHead.setOnClickListener(this);
+            btnTableHead.setClickable(true);*/
 
             marginBtnTable = (LinearLayout.LayoutParams) btnTableHead.getLayoutParams();
             marginBtnTable.setMargins(0, 0, marginLength, 0);
