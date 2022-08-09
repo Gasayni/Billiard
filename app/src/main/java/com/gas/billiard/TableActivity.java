@@ -36,6 +36,8 @@ public class TableActivity extends AppCompatActivity {
     ContentValues contentValues;
     Cursor cursorTables, cursorOrders;
 
+    int getNumTable;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -54,8 +56,15 @@ public class TableActivity extends AppCompatActivity {
 
         ivTableType = findViewById(R.id.ivTableType);
         linTable = findViewById(R.id.linTable);
+
+        // Получаем название заголовка
+        Intent getIntent = getIntent();
+        getNumTable = getIntent.getIntExtra("numTable", 0);
+
         addBtnTable();
         choseTable();
+
+
     }
 
     @SuppressLint("SetTextI18n")
@@ -92,21 +101,20 @@ public class TableActivity extends AppCompatActivity {
             int descriptionIndex = cursorTables.getColumnIndex(DBHelper.KEY_DESCRIPTION);
             do {
                 // инициализируем каждую кнопку шапки стола
-                int i = cursorTables.getInt(numberTableIndex);
-                btnTable = btnTableTagsList.get(i-1);
+                int numTable = cursorTables.getInt(numberTableIndex);
+                btnTable = btnTableTagsList.get(numTable-1);
                 typeTableList.add(cursorTables.getString(typeIndex));
-
 
                 btnTable.setOnClickListener(new View.OnClickListener() {
                     public void onClick(View view) {
-                        // меняем имя стола
-                        tvNameTable.setText("Стол № " + i);
+                        // меняем стол
+                        tvNameTable.setText("Стол № " + numTable);
 
                         // меняем картинку, в зависимости от типа стола
-                        if (typeTableList.get(i-1).equals("pool")) {
+                        if (typeTableList.get(numTable-1).equals("pool")) {
                             ivTableType.setImageResource(R.drawable.table_pool);
                             tvTypeTable.setText("Американский пул");
-                        } else if (typeTableList.get(i-1).equals("pyramid")) {
+                        } else if (typeTableList.get(numTable-1).equals("pyramid")) {
                             ivTableType.setImageResource(R.drawable.table_pyramide);
                             tvTypeTable.setText("Русская пирамида");
                         }
@@ -118,5 +126,21 @@ public class TableActivity extends AppCompatActivity {
             Log.d("Gas", "0 rows");
         }
         cursorTables.close();
+
+        // вызваем изначально изменения, в зависимости от нажатой кнопки
+        firstChangeTableActivity();
+    }
+
+    public void firstChangeTableActivity() {
+        // меняем стол
+        tvNameTable.setText("Стол № " + getNumTable);
+        // меняем картинку, в зависимости от типа стола
+        if (typeTableList.get(getNumTable-1).equals("pool")) {
+            ivTableType.setImageResource(R.drawable.table_pool);
+            tvTypeTable.setText("Американский пул");
+        } else if (typeTableList.get(getNumTable-1).equals("pyramid")) {
+            ivTableType.setImageResource(R.drawable.table_pyramide);
+            tvTypeTable.setText("Русская пирамида");
+        }
     }
 }

@@ -41,7 +41,9 @@ public class DBHelper extends SQLiteOpenHelper {
     public static final String KEY_RATING = "rating";
     public static final String KEY_FIRST_NAME = "first_name";
     public static final String KEY_SECOND_NAME = "second_name";
-    public static final String KEY_ORDERS_COUNT_PER_CLIENT = "count_orders";
+    public static final String KEY_PHONE = "phone";
+    public static final String KEY_ORDERS_COUNT = "orders_count_per_client";
+    public static final String KEY_SPENT = "spent";
 
     public static final String KEY_PASS = "pass";
 

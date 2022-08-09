@@ -11,33 +11,95 @@
         android:id="@+id/tvHead"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:textSize="20sp"
+        android:gravity="center"
         android:hint="Название таблицы БД (заголовок)"
-        android:gravity="center"/>
+        android:textSize="20sp" />
+
+    <HorizontalScrollView
+        android:id="@+id/scrollHorizontalCommon"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_below="@id/tvHead"
+        android:layout_marginTop="8dp"
+        android:layout_marginBottom="50dp"
+        android:padding="8dp"
+        android:scrollbars="none">
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:orientation="vertical">
+
+            <LinearLayout
+                android:id="@+id/linColumns"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal" />
+
+
+            <ScrollView
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_marginTop="16dp"
+                android:scrollbars="none">
+
+                <LinearLayout
+                    android:id="@+id/linHead"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:id="@+id/tvData"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:hint="111"
+                        android:textSize="24sp" />
+
+                </LinearLayout>
+
+
+            </ScrollView>
+
+        </LinearLayout>
+
+    </HorizontalScrollView>
+
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_below="@id/tvHead"
-        android:orientation="horizontal">
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:gravity="center">
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+        <Button
+            android:id="@+id/btnAdd"
+            android:layout_width="120dp"
+            android:layout_height="40dp"
+            android:background="@drawable/btn_style_2"
             android:gravity="center"
-            android:layout_weight="1"
-            android:hint="цена / ч"
-            android:textSize="20sp" />
+            android:text="Добавить"
+            android:textSize="10sp" />
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+        <Button
+            android:id="@+id/btnAdd1"
+            android:layout_width="120dp"
+            android:layout_height="40dp"
+            android:background="@drawable/btn_style_6"
             android:gravity="center"
-            android:layout_weight="1"
-            android:hint="тип скидки"
-            android:textSize="20sp" />
+            android:text="Удалить"
+            android:textSize="10sp" />
+
+        <Button
+            android:id="@+id/btnAdd2"
+            android:layout_width="120dp"
+            android:layout_height="40dp"
+            android:background="@drawable/btn_style_2"
+            android:gravity="center"
+            android:text="Изменить"
+            android:textSize="10sp" />
+
     </LinearLayout>
-
-
 
 </RelativeLayout>
