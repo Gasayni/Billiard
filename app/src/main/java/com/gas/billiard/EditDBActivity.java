@@ -100,7 +100,7 @@ public class EditDBActivity extends AppCompatActivity implements View.OnClickLis
             btnColumns.setTag("btnColumns" + (i + 1));
             btnColumns.setText(nameBtnColumns.get(i));
             btnColumnsTagsList.add(btnColumns);
-            btnColumns.setTextSize(16);
+            btnColumns.setTextSize(14);
 
             LinearLayout.LayoutParams marginBtnTable = (LinearLayout.LayoutParams) btnColumns.getLayoutParams();
             marginBtnTable.setMargins(0, 0, marginLength, 0);

@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:gravity="center_horizontal"
+    android:padding="32dp"
+    tools:context=".DialogActivity">
+
+    <NumberPicker
+        android:id="@+id/numberPicker1"
+        android:layout_width="wrap_content"
+        android:layout_height="100dp"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="16dp" />
+
+    <LinearLayout
+        android:id="@+id/linTime"
+        android:layout_width="200sp"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/numberPicker1"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="8dp"
+        android:gravity="center"
+        android:orientation="horizontal">
+
+        <Button
+            android:id="@+id/btnSet"
+            android:layout_width="match_parent"
+            android:layout_height="60dp"
+            android:layout_marginRight="8dp"
+            android:layout_weight="1"
+            android:background="@drawable/btn_style_1"
+            android:clickable="true"
+            android:focusable="true"
+            android:gravity="center"
+            android:hint="Выбрать"
+            android:textSize="14sp" />
+
+    </LinearLayout>
+
+</RelativeLayout>

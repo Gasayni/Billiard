@@ -14,8 +14,11 @@
         android:theme="@style/Theme.Billiard"
         tools:targetApi="31">
         <activity
+            android:name=".DialogActivity"
+            android:exported="false" />
+        <activity
             android:name=".EditDBActivity"
-            android:exported="false" >
+            android:exported="false">
             <intent-filter>
                 <action android:name="editDBActivity" />
 

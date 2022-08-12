@@ -52,7 +52,7 @@ public class CommonActivity extends AppCompatActivity implements View.OnClickLis
     LinearLayout linTable, linHour, linTableTime, linTableTimeHead, linTableHead;
     private final int hourCount = 18;
     private final int tableCount = 19;
-    Button btnAdd, btnDate, btnTableHead, btnTime, btnTable;
+    Button btnAdd, btnDate, btnDate1, btnTableHead, btnTime, btnTable;
     private int marginLength;
     // листы для тегов (нужны, чтобы запоминать теги)
     List<Button> btnTableHeadTagsList = new ArrayList<>();
@@ -71,21 +71,19 @@ public class CommonActivity extends AppCompatActivity implements View.OnClickLis
     int myMonth = 8;
     int myDay;
 
+    final Calendar currentDateCalendar = Calendar.getInstance();
+    String currentMonthSt, currentDaySt;
+
     {
-        // задаем начальное значение для выбора даты
-        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.ENGLISH);
-        LocalDate currentDate = null;
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            currentDate = LocalDate.parse(dateFormat.format(new Date()));
-            myDay = currentDate.getDayOfMonth();
-            myMonth = currentDate.getMonthValue() - 1;
-            myYear = currentDate.getYear();
-        } else {
-            String[] dateAr = dateFormat.format(new Date()).split("-");
-            myDay = Integer.parseInt(dateAr[2]);
-            myMonth = Integer.parseInt(dateAr[1]) - 1;
-            myYear = Integer.parseInt(dateAr[0]);
-        }
+        // Get Current Date
+        myYear = currentDateCalendar.get(Calendar.YEAR);
+        myMonth = currentDateCalendar.get(Calendar.MONTH);
+        myDay = currentDateCalendar.get(Calendar.DAY_OF_MONTH);
+
+        if (myMonth < 10) currentMonthSt = "0" + (myMonth + 1);
+        else currentMonthSt = "" + (myMonth + 1);
+        if (myDay < 10) currentDaySt = "0" + myDay;
+        else currentDaySt = "" + myDay;
     }
 
     @Override
@@ -104,9 +102,6 @@ public class CommonActivity extends AppCompatActivity implements View.OnClickLis
         // также отрисуем кнопку выбора даты и шапки столов
         addBtnTableHead();
 
-        // выбираем дату
-        btnDate = btnDate.findViewWithTag("btnChoseDate");
-        btnDate.setOnClickListener(this);
         btnAdd = findViewById(R.id.btnAdd);
         btnAdd.setOnClickListener(this);
 
@@ -116,6 +111,8 @@ public class CommonActivity extends AppCompatActivity implements View.OnClickLis
 
         // отрисовываем таблицу заказов на изначальную дату
         addBtnCommon();
+        addBtnHour();
+
         choseTypeTable();
         try {
             choseBtnCommon();
@@ -167,7 +164,13 @@ public class CommonActivity extends AppCompatActivity implements View.OnClickLis
         btnDate.findViewWithTag("btnChoseDate");
         btnDate.setOnClickListener(new View.OnClickListener() {
             public void onClick(View view) {
-                showDialog(DIALOG_DATE);
+                datePicker();
+            }
+        });
+        btnDate1.findViewWithTag("btnChoseDate1");
+        btnDate1.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View view) {
+                datePicker();
             }
         });
 
@@ -248,11 +251,6 @@ public class CommonActivity extends AppCompatActivity implements View.OnClickLis
                     String reserveTime = cursorOrders.getString(reserveTimeIndex);
                     int durationMinute = cursorOrders.getInt(durationIndex);
                     String client = cursorOrders.getString(clientIndex);
-
-                    // мы нашли кнопки кот. нужно как-то покрасить
-                    // теперь мы по идее должны идти по времени каждого стола и красить пока не закончится время
-
-
                     // красим кнопки
                     changeBtnCommon(indexNumTable, indexHourTable, reserveTime, durationMinute, client);
                 }
@@ -459,37 +457,6 @@ public class CommonActivity extends AppCompatActivity implements View.OnClickLis
         return result;
     }
 
-    protected Dialog onCreateDialog(int id) {
-        if (id == DIALOG_DATE) {
-            DatePickerDialog tpd = new DatePickerDialog(this, myCallBack, myYear, myMonth, myDay);
-            return tpd;
-        }
-        return super.onCreateDialog(id);
-    }
-
-    DatePickerDialog.OnDateSetListener myCallBack = new DatePickerDialog.OnDateSetListener() {
-
-        public void onDateSet(DatePicker view, int year, int monthOfYear, int dayOfMonth) {
-            myYear = year;
-            myMonth = monthOfYear + 1;
-            myDay = dayOfMonth;
-            String myMonthSt, myDaySt;
-            if (myMonth < 10) myMonthSt = "0" + myMonth;
-            else myMonthSt = "" + myMonth;
-            if (myDay < 10) myDaySt = "0" + myDay;
-            else myDaySt = "" + myDay;
-
-            btnDate.setText(myDaySt + "." + myMonthSt + "." + myYear);
-
-            try {
-                choseBtnCommon();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-
-        }
-    };
-
     public void addBtnTableHead() {
         linTableHead = findViewById(R.id.linTableHead);
         LinearLayout.LayoutParams marginBtnTable;
@@ -497,14 +464,14 @@ public class CommonActivity extends AppCompatActivity implements View.OnClickLis
 
         btnDate = new Button(linTableHead.getContext());
         btnDate.setLayoutParams(new LinearLayout.LayoutParams(
-                option.convertDpToPixels(this, 40),
-                option.convertDpToPixels(this, 40)));
+                option.convertDpToPixels(this, 80),
+                option.convertDpToPixels(this, 50)));
 
         btnDate.setTag("btnChoseDate");
         // задаем сегодняшнюю дату
         btnDate.setText(dateFormat.format(new Date()));
-        btnDate.setTextSize(8);
-        btnDate.setBackgroundResource(R.drawable.btn_style_4);
+        btnDate.setTextSize(14);
+        btnDate.setBackgroundResource(R.drawable.btn_style_2);
 
         marginBtnTable = (LinearLayout.LayoutParams) btnDate.getLayoutParams();
         marginBtnTable.setMargins(0, 0, marginLength, 0);
@@ -521,11 +488,28 @@ public class CommonActivity extends AppCompatActivity implements View.OnClickLis
             btnTableHead.setText((i + 1) + "");
             btnTableHead.setTextSize(10);
 
-            marginBtnTable = (LinearLayout.LayoutParams) btnTableHead.getLayoutParams();
-            marginBtnTable.setMargins(0, 0, marginLength, 0);
+//            marginBtnTable = (LinearLayout.LayoutParams) btnTableHead.getLayoutParams();
+//            marginBtnTable.setMargins(0, 0, marginLength, 0);
 
             linTableHead.addView(btnTableHead);
         }
+
+
+        btnDate1 = new Button(linTableHead.getContext());
+        btnDate1.setLayoutParams(new LinearLayout.LayoutParams(
+                option.convertDpToPixels(this, 80),
+                option.convertDpToPixels(this, 50)));
+
+        btnDate1.setTag("btnChoseDate1");
+        // задаем сегодняшнюю дату
+        btnDate1.setText(dateFormat.format(new Date()));
+        btnDate1.setTextSize(14);
+        btnDate1.setBackgroundResource(R.drawable.btn_style_2);
+
+        marginBtnTable = (LinearLayout.LayoutParams) btnDate1.getLayoutParams();
+        marginBtnTable.setMargins(0, 0, marginLength, 0);
+
+        linTableHead.addView(btnDate1);
     }
 
     public void addBtnHour() {
@@ -548,15 +532,15 @@ public class CommonActivity extends AppCompatActivity implements View.OnClickLis
             btnTime = new Button(linHour.getContext());
             btnTime.setLayoutParams(new LinearLayout.LayoutParams(
                     option.convertDpToPixels(this, 120),
-                    option.convertDpToPixels(this, 40)));
+                    option.convertDpToPixels(this, 50)));
 
             btnTime.setTag("btnTime" + hourRight);
             btnTimeTagsList.add(btnTableHead);
             btnTime.setText(hourRight + ":00");
-            btnTime.setTextSize(20);
+            btnTime.setTextSize(14);
             btnTime.setClickable(false);
 
-            LinearLayout.LayoutParams marginBtnTable = (LinearLayout.LayoutParams) btnTime.getLayoutParams();
+//            LinearLayout.LayoutParams marginBtnTable = (LinearLayout.LayoutParams) btnTime.getLayoutParams();
 //            marginBtnTable.setMargins(0, 0, marginLength, 0);
 
             linHour.addView(btnTime);
@@ -617,5 +601,35 @@ public class CommonActivity extends AppCompatActivity implements View.OnClickLis
                 btnTable.setText("");
             }
         }
+    }
+
+    private void datePicker() {
+
+        DatePickerDialog datePickerDialog = new DatePickerDialog(this,
+                new DatePickerDialog.OnDateSetListener() {
+
+                    @Override
+                    public void onDateSet(DatePicker view, int year, int monthOfYear, int dayOfMonth) {
+                        myYear = year;
+                        myMonth = monthOfYear;
+                        myDay = dayOfMonth;
+                        String myMonthSt, myDaySt;
+                        if (myMonth < 10) myMonthSt = "0" + (myMonth + 1);
+                        else myMonthSt = "" + (myMonth + 1);
+                        if (myDay < 10) myDaySt = "0" + myDay;
+                        else myDaySt = "" + myDay;
+
+                        btnDate.setText(myDaySt + "." + myMonthSt + "." + myYear);
+                        btnDate1.setText(myDaySt + "." + myMonthSt + "." + myYear);
+
+                        try {
+                            choseBtnCommon();
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+
+                    }
+                }, myYear, myMonth, myDay);
+        datePickerDialog.show();
     }
 }

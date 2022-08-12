@@ -13,7 +13,7 @@
         android:layout_height="wrap_content"
         android:gravity="center"
         android:hint="Название таблицы БД (заголовок)"
-        android:textSize="20sp" />
+        android:textSize="30sp" />
 
     <HorizontalScrollView
         android:id="@+id/scrollHorizontalCommon"
@@ -54,7 +54,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
                         android:hint="111"
-                        android:textSize="24sp" />
+                        android:textSize="16sp" />
 
                 </LinearLayout>
 

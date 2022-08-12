@@ -49,7 +49,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         actvAdmin.setShowSoftInputOnFocus(false);
         ArrayAdapter<String> adapter = new ArrayAdapter<>(
                 this, android.R.layout.simple_dropdown_item_1line, adminsList);
-        actvAdmin.setAdapter(adapter);
         actvAdmin.setOnTouchListener((v, event) -> {
             actvAdmin.showDropDown();
             return false;
