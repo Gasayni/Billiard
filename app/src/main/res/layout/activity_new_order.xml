@@ -22,7 +22,7 @@
             android:layout_height="match_parent"
             android:layout_weight="1"
             android:gravity="center"
-            android:hint="Американский \nпул"
+            android:hint="Американский \n пул"
             android:textColorHint="@color/grey"
             android:textColor="@color/black"
             android:textSize="16sp" />
@@ -53,7 +53,7 @@
         android:layout_height="wrap_content"
         android:layout_below="@id/linType"
         android:layout_centerHorizontal="true"
-        android:layout_marginTop="64dp"
+        android:layout_marginTop="32dp"
         android:gravity="center"
         android:orientation="horizontal">
 
@@ -61,8 +61,8 @@
             android:id="@+id/btnNewReserveDate"
             android:layout_width="match_parent"
             android:layout_height="60dp"
-            android:layout_weight="1"
             android:layout_marginRight="8dp"
+            android:layout_weight="1"
             android:background="@drawable/btn_style_1"
             android:clickable="true"
             android:focusable="true"
@@ -74,8 +74,8 @@
             android:id="@+id/btnNewReserveTime"
             android:layout_width="match_parent"
             android:layout_height="60dp"
-            android:layout_weight="1"
             android:layout_marginLeft="8dp"
+            android:layout_weight="1"
             android:background="@drawable/btn_style_1"
             android:clickable="true"
             android:focusable="true"
@@ -111,11 +111,11 @@
 
     <AutoCompleteTextView
         android:id="@+id/actvFreeTable"
-        android:layout_width="400dp"
+        android:layout_width="300dp"
         android:layout_height="40dp"
         android:layout_below="@id/linDuration"
         android:layout_centerHorizontal="true"
-        android:layout_marginTop="64dp"
+        android:layout_marginTop="32dp"
         android:clickable="true"
         android:ems="10"
         android:focusable="true"
@@ -123,17 +123,33 @@
         android:textIsSelectable="true"
         android:textSize="20sp" />
 
+    <AutoCompleteTextView
+        android:id="@+id/actvClient"
+        android:layout_width="300dp"
+        android:layout_height="40dp"
+        android:layout_below="@id/actvFreeTable"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="32dp"
+        android:clickable="true"
+        android:ems="10"
+        android:focusable="true"
+        android:gravity="center"
+        android:hint="Введите имя клиента"
+        android:textIsSelectable="true"
+        android:textSize="20sp" />
+
     <Button
         android:id="@+id/btnCreateReserve"
-        android:layout_width="240dp"
+        android:layout_width="300dp"
         android:layout_height="60dp"
-        android:layout_alignParentBottom="true"
+        android:layout_below="@id/actvClient"
         android:layout_centerHorizontal="true"
+        android:layout_marginTop="32dp"
         android:background="@drawable/btn_style_1"
         android:clickable="true"
         android:focusable="true"
         android:gravity="center"
-        android:text="Создать резерв"
-        android:textSize="14sp"
-        android:onClick="showDialogAlert" />
+        android:hint="Создать / Изменить \t резерв"
+        android:onClick="showDialogAlertCreateReserve"
+        android:textSize="14sp" />
 </RelativeLayout>

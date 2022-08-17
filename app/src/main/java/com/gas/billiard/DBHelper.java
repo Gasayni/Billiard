@@ -26,7 +26,7 @@ public class DBHelper extends SQLiteOpenHelper {
     public static final String KEY_NUM_TABLE = "num_table";
     public static final String KEY_TYPE = "type";
     public static final String KEY_STATUS = "status";
-    public static final String KEY_RATE = "rate";
+    public static final String KEY_TARIFF = "rate";
     public static final String KEY_RESERVE_TIME = "reserve_time";
     public static final String KEY_DURATION = "duration_minute";
     public static final String KEY_RESERVE_DATE = "reserve_date";

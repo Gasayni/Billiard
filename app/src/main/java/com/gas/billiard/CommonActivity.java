@@ -1,18 +1,13 @@
 package com.gas.billiard;
 
 import android.annotation.SuppressLint;
-import android.app.Activity;
 import android.app.DatePickerDialog;
-import android.app.Dialog;
 import android.content.ContentValues;
-import android.content.Context;
 import android.content.Intent;
-import android.content.res.AssetManager;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
-import android.os.Build;
 import android.os.Handler;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -20,19 +15,16 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.DatePicker;
-import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.text.SimpleDateFormat;
-import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
-import java.util.GregorianCalendar;
 import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.TimeUnit;
@@ -42,11 +34,7 @@ public class CommonActivity extends AppCompatActivity implements View.OnClickLis
     private final SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm", Locale.ENGLISH);
     private Date currentDate = new Date();
     private final SimpleDateFormat dateFormat = new SimpleDateFormat("dd.MM.yyyy", Locale.ENGLISH);
-    //    private final SimpleDateFormat dateFormat1 = new SimpleDateFormat("dd\nMM\nyyyy", Locale.ENGLISH);
-    String today = dateFormat.format(currentDate);
-    List<String> todayReserveList = new ArrayList<>();
-    LocalTime startGameLocalTime, endGameLocalTime;
-    private TextView tvTime, tvAdminName;
+    private TextView tvTime;
 
     OptionallyClass option = new OptionallyClass();
     LinearLayout linTable, linHour, linTableTime, linTableTimeHead, linTableHead;
@@ -58,6 +46,7 @@ public class CommonActivity extends AppCompatActivity implements View.OnClickLis
     List<Button> btnTableHeadTagsList = new ArrayList<>();
     List<Button> btnTimeTagsList = new ArrayList<>();
     Button[][] btnTableTagArray = new Button[tableCount][hourCount];
+    String adminName = "";
 
     // БД
     DBHelper dbHelper;
@@ -90,6 +79,9 @@ public class CommonActivity extends AppCompatActivity implements View.OnClickLis
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_common);
+
+        Intent getIntent = getIntent();
+        adminName = getIntent.getStringExtra("adminName");
 
         // работа с БД
         dbHelper = new DBHelper(this);
@@ -133,6 +125,7 @@ public class CommonActivity extends AppCompatActivity implements View.OnClickLis
             // переключаемся на редактор резерва
             case R.id.btnAdd: {
                 intent = new Intent("newOrderActivity");
+                intent.putExtra("adminName", adminName);
                 startActivity(intent);
                 // при добавлении нового резерва, также нужно обновить таблицу резерва
                 break;
@@ -233,7 +226,7 @@ public class CommonActivity extends AppCompatActivity implements View.OnClickLis
             int employeeIndex = cursorOrders.getColumnIndex(DBHelper.KEY_EMPLOYEE);
             int orderDateIndex = cursorOrders.getColumnIndex(DBHelper.KEY_ORDER_DATE);
             int orderTimeIndex = cursorOrders.getColumnIndex(DBHelper.KEY_ORDER_TIME);
-            int rateIndex = cursorOrders.getColumnIndex(DBHelper.KEY_RATE);
+            int rateIndex = cursorOrders.getColumnIndex(DBHelper.KEY_TARIFF);
             int descriptionIndex = cursorOrders.getColumnIndex(DBHelper.KEY_DESCRIPTION);
             do {
                 // меняем нужные кнопки

@@ -6,7 +6,7 @@ import android.app.DatePickerDialog;
 import android.app.Dialog;
 import android.app.TimePickerDialog;
 import android.content.ContentValues;
-import android.content.DialogInterface;
+import android.content.Intent;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Typeface;
@@ -33,18 +33,19 @@ import java.util.Map;
 
 public class NewOrderActivity extends AppCompatActivity implements NumberPicker.OnValueChangeListener,
         CompoundButton.OnCheckedChangeListener, View.OnClickListener {
-    private Map<Integer, String> numTypeTableMap = new HashMap<>();
-    private List<Integer> typeNumTableList = new ArrayList<>();
+    private final Map<Integer, String> numTypeTableMap = new HashMap<>();
+    private final List<Integer> typeNumTableList = new ArrayList<>();
     private List<Integer> finishNumTableList = new ArrayList<>();
-    private List<String> finishList = new ArrayList<>();
-    //    private List<Integer> falseNumTableList = new ArrayList<>();
-    private List<ReserveTable> checkList = new ArrayList<>();
+    private final List<String> finishList = new ArrayList<>();
+    private final List<ReserveTable> checkList = new ArrayList<>();
+    List<String> clientsList = new ArrayList<>();
     SwitchCompat switchTypeTable;
     TextView tvPyramid, tvPool;
     Typeface boldTypeface = Typeface.defaultFromStyle(Typeface.BOLD);
     Typeface normalTypeface = Typeface.defaultFromStyle(Typeface.NORMAL);
-    AutoCompleteTextView actvFreeTable;
+    AutoCompleteTextView actvFreeTable, actvClient;
     Button btnNewReserveTime, btnNewReserveDate, btnNewReserveDuration, btnCreateReserve;
+    int numTable = -1;
 
     String[] durationTimeArr = {"30 мин", "1 ч", "1 ч 30 мин", "2 ч", "2 ч 30 мин",
             "3 ч", "3 ч 30 мин", "4 ч", "4 ч 30 мин", "5 ч", "5 ч 30 мин", "6 ч"};
@@ -53,25 +54,24 @@ public class NewOrderActivity extends AppCompatActivity implements NumberPicker.
     DBHelper dbHelper;
     SQLiteDatabase database;
     ContentValues contentValues;
-    Cursor cursorTables, cursorOrders;
-
-    // задаем начальное значение для выбора времени (не важно какие)
-    int hourReserve = 11;
-    int minuteReserve = 0;
-    // задаем начальное значение для выбора даты
-    int yearReserve = 2022;
-    int monthReserve = 8;
-    int dayReserve;
+    Cursor cursorTables, cursorOrders, cursorClients;
 
     final Calendar currentDateCalendar = Calendar.getInstance();
-    String currentMonthSt, currentDaySt;
+    String currentMonthSt, currentDaySt, hourReserveSt, minuteReserveSt;
+    // задаем начальное значение для выбора времени (не важно какие)
+    int currentHour = currentDateCalendar.get(Calendar.HOUR_OF_DAY);
+    int currentMinute = currentDateCalendar.get(Calendar.MINUTE);
+    int hourReserve = 11;
+    int minuteReserve = 0;
+    // Get Current Date
+    int yearReserve = currentDateCalendar.get(Calendar.YEAR);
+    int monthReserve = currentDateCalendar.get(Calendar.MONTH);
+    int dayReserve = currentDateCalendar.get(Calendar.DAY_OF_MONTH);
+    String myMonthSt, myDaySt;
+    String btnNewReserveDateSt, btnNewReserveTimeSt;
+    String adminName = "";
 
     {
-        // Get Current Date
-        yearReserve = currentDateCalendar.get(Calendar.YEAR);
-        monthReserve = currentDateCalendar.get(Calendar.MONTH);
-        dayReserve = currentDateCalendar.get(Calendar.DAY_OF_MONTH);
-
         if (monthReserve < 10) currentMonthSt = "0" + (monthReserve + 1);
         else currentMonthSt = "" + (monthReserve + 1);
         if (dayReserve < 10) currentDaySt = "0" + dayReserve;
@@ -80,6 +80,9 @@ public class NewOrderActivity extends AppCompatActivity implements NumberPicker.
 
     String choseTypeTable = "";
     int durationNewReserve;
+
+    private int numReserveDB, numTableDB, durationMinuteDB;
+    private String typeDB, dateDB, timeDB, clientDB;
 
     @SuppressLint({"ClickableViewAccessibility", "SetTextI18n"})
     @Override
@@ -92,17 +95,18 @@ public class NewOrderActivity extends AppCompatActivity implements NumberPicker.
         database = dbHelper.getWritableDatabase();
         contentValues = new ContentValues();
 
+        initСlient();
+
         tvPyramid = findViewById(R.id.tvPyramid);
         tvPool = findViewById(R.id.tvPool);
 
         btnNewReserveTime = findViewById(R.id.btnNewReserveTime);
-        btnNewReserveTime.setText(hourReserve + ":0" + minuteReserve);
         btnNewReserveTime.setOnClickListener(this);
         btnNewReserveDate = findViewById(R.id.btnNewReserveDate);
-        btnNewReserveDate.setText(currentDaySt + "." + currentMonthSt + "." + yearReserve);
         btnNewReserveDate.setOnClickListener(this);
         btnNewReserveDuration = findViewById(R.id.btnNewReserveDuration);
         btnNewReserveDuration.setOnClickListener(this);
+        btnCreateReserve = findViewById(R.id.btnCreateReserve);
 
         switchTypeTable = findViewById(R.id.switchTypeTable);
         if (switchTypeTable != null) {
@@ -119,12 +123,35 @@ public class NewOrderActivity extends AppCompatActivity implements NumberPicker.
             return false;
         });
         actvFreeTable.setAdapter(adapter);
-        actvFreeTable.setHint("Выберите тип стола");
+        actvFreeTable.setHint("Выберите стол");
+
+        actvClient = findViewById(R.id.actvClient);
+        actvClient.setShowSoftInputOnFocus(false);
+        ArrayAdapter<String> adapterClient = new ArrayAdapter<>(
+                this, android.R.layout.simple_dropdown_item_1line, clientsList);
+        actvClient.setOnTouchListener((v, event) -> {
+            actvClient.showDropDown();
+            return false;
+        });
+        actvClient.setAdapter(adapterClient);
+
+        // загружаем данные с
+        Intent intent = getIntent();
+        numReserveDB = intent.getIntExtra("numReserve", -1);
+        numTableDB = intent.getIntExtra("numTable", -1);
+        typeDB = intent.getStringExtra("type");
+        dateDB = intent.getStringExtra("date");
+        timeDB = intent.getStringExtra("time");
+        clientDB = intent.getStringExtra("client");
+        durationMinuteDB = intent.getIntExtra("duration", -1);
+        clientDB = intent.getStringExtra("client");
+//        Intent getIntent = getIntent();
+        adminName = intent.getStringExtra("adminName");
+
+        // если наша активити была вызвана (изменить резерв)
+        checkWhoCallThisActivity();
 
         initTablesList();  // сразу находим подходящие столы с данными по умолчанию
-
-//        btnCreateReserve = findViewById(R.id.btnCreateReserve);
-//        btnCreateReserve.setOnClickListener(this);
     }
 
     @SuppressLint("NonConstantResourceId")
@@ -141,12 +168,37 @@ public class NewOrderActivity extends AppCompatActivity implements NumberPicker.
             }
             case R.id.btnNewReserveDuration: {
                 dialogShow();
+                break;
             }
-//            case R.id.btnCreateReserve: {
-//                showDialogAlert();
-//                break;
-//            }
         }
+    }
+
+    @SuppressLint("SetTextI18n")
+    private void checkWhoCallThisActivity() {
+        if (numReserveDB != -1) {
+            btnCreateReserve.setText("Изменить  резерв");
+            // задаем тип игры по умолчанию
+            btnNewReserveDate.setText(dateDB);
+            btnNewReserveTime.setText(timeDB);
+            if (durationMinuteDB < 60) btnNewReserveDuration.setText(durationMinuteDB + " мин");
+            else {
+                int hour = durationMinuteDB / 60;
+                int minute = durationMinuteDB % 60;
+                if (minute == 0) btnNewReserveDuration.setText(hour + " ч ");
+                else btnNewReserveDuration.setText(hour + " ч " + minute + " мин");
+            }
+            actvFreeTable.setText("Стол № " + numTableDB);
+            choseTypeTable = typeDB;
+            actvClient.setText(clientDB);
+        } else {
+            btnCreateReserve.setText("Создать  резерв");
+            btnNewReserveDate.setText(currentDaySt + "." + currentMonthSt + "." + yearReserve);
+            btnNewReserveTime.setText(hourReserve + ":" + minuteReserve);
+            actvFreeTable.setText("");
+        }
+        Log.i("Gas5", "btnNewReserveDateSt: " + btnNewReserveDateSt);
+        Log.i("Gas5", "btnNewReserveTimeSt: " + btnNewReserveTimeSt);
+
     }
 
     @Override
@@ -169,12 +221,11 @@ public class NewOrderActivity extends AppCompatActivity implements NumberPicker.
 
 
         actvFreeTable.setHint("Доступные столы");
-        actvFreeTable.setText("");
+        if (numTableDB == -1) {
+            actvFreeTable.setText("");
+        }
 
-        initTablesList();  // находим подходящие столы
-        /*ArrayAdapter<String> adapter = new ArrayAdapter<>(
-                this, android.R.layout.simple_dropdown_item_1line, finishFreeReserveNumTableList);
-        actvFreeTable.setAdapter(adapter);*/
+        initTablesList();
     }
 
     private void initTablesList() {
@@ -206,6 +257,31 @@ public class NewOrderActivity extends AppCompatActivity implements NumberPicker.
             // если не задан ни один сотрудника, то м. перейти в настройки его создания
             Log.d("Gas", "0 rows");
         }
+        cursorTables.close();
+    }
+
+    private void initСlient() {
+        // получаем данные c табл "EMPLOYEES"
+        cursorClients = database.query(DBHelper.CLIENTS,
+                null, null, null,
+                null, null, null);
+        if (cursorClients.moveToFirst()) {
+            int firstNameIndex = cursorClients.getColumnIndex(DBHelper.KEY_FIRST_NAME);
+            int secondNameIndex = cursorClients.getColumnIndex(DBHelper.KEY_SECOND_NAME);
+            int phoneIndex = cursorClients.getColumnIndex(DBHelper.KEY_PHONE);
+            int ordersCountIndex = cursorClients.getColumnIndex(DBHelper.KEY_ORDERS_COUNT);
+            int spentIndex = cursorClients.getColumnIndex(DBHelper.KEY_SPENT);
+            int ratingIndex = cursorClients.getColumnIndex(DBHelper.KEY_RATING);
+            int descriptionIndex = cursorClients.getColumnIndex(DBHelper.KEY_DESCRIPTION);
+            do {
+                // находим всех клиентов из бд
+                clientsList.add(cursorClients.getString(secondNameIndex) + " "
+                        + cursorClients.getString(firstNameIndex));
+            } while (cursorClients.moveToNext());
+        } else {
+            // если не задан ни один сотрудника, то м. перейти в настройки его создания
+            Log.d("Gas", "0 rows");
+        }
     }
 
     private void changeFreeTableTime() {
@@ -230,10 +306,6 @@ public class NewOrderActivity extends AppCompatActivity implements NumberPicker.
             int durationIndex = cursorOrders.getColumnIndex(DBHelper.KEY_DURATION);
             int clientIndex = cursorOrders.getColumnIndex(DBHelper.KEY_CLIENT);
             int employeeIndex = cursorOrders.getColumnIndex(DBHelper.KEY_EMPLOYEE);
-            int orderDateIndex = cursorOrders.getColumnIndex(DBHelper.KEY_ORDER_DATE);
-            int orderTimeIndex = cursorOrders.getColumnIndex(DBHelper.KEY_ORDER_TIME);
-            int rateIndex = cursorOrders.getColumnIndex(DBHelper.KEY_RATE);
-            int descriptionIndex = cursorOrders.getColumnIndex(DBHelper.KEY_DESCRIPTION);
 
             Log.i("Gas1", "typeNumTableList = " + typeNumTableList);
             do {
@@ -267,12 +339,14 @@ public class NewOrderActivity extends AppCompatActivity implements NumberPicker.
 
 
             Log.i("Gas1", "List checkList: " + checkList);
+
             checkFreeTimeReserve();
 
         } else {
             // если в БД нет заказов
             Log.d("Gas", "0 rows");
         }
+        cursorOrders.close();
     }
 
     private void checkFreeTimeReserve() {
@@ -290,13 +364,12 @@ public class NewOrderActivity extends AppCompatActivity implements NumberPicker.
 
         String newReserveStartTime = btnNewReserveTime.getText().toString();
         String[] newReserveStartTimeArr = newReserveStartTime.split(":");
-        int hourStartTimeNewReserve = Integer.parseInt(newReserveStartTimeArr[0]);
-        int minuteStartTimeNewReserve = Integer.parseInt(newReserveStartTimeArr[1]);
-        Log.i("Gas1", "желаем на часов = " + hourStartTimeNewReserve);
-        Log.i("Gas1", "на минут = " + minuteStartTimeNewReserve);
+        int hourStartNewReserve = Integer.parseInt(newReserveStartTimeArr[0]);
+        int minuteStartNewReserve = Integer.parseInt(newReserveStartTimeArr[1]);
+        Log.i("Gas1", "желаем на часов = " + hourStartNewReserve);
+        Log.i("Gas1", "на минут = " + minuteStartNewReserve);
 
         // проверяем выбрана ли продолжительность игры
-//        int durationNewReserve;
         if (btnNewReserveDuration.getText().toString().equals("")) durationNewReserve = 0;
         else {
             // получаем и переводим значения в минуты
@@ -312,36 +385,29 @@ public class NewOrderActivity extends AppCompatActivity implements NumberPicker.
         }
 
 
-        int hourFinishTimeNewReserve = hourStartTimeNewReserve + (minuteStartTimeNewReserve + durationNewReserve) / 60;
-        int minuteFinishNewReserve = (minuteStartTimeNewReserve + durationNewReserve) % 60;
-        Log.i("Gas1", "закончим играть в часов = " + hourFinishTimeNewReserve);
+        int hourFinishNewReserve = hourStartNewReserve + (minuteStartNewReserve + durationNewReserve) / 60;
+        int minuteFinishNewReserve = (minuteStartNewReserve + durationNewReserve) % 60;
+        Log.i("Gas1", "закончим играть в часов = " + hourFinishNewReserve);
         Log.i("Gas1", "в минут = " + minuteFinishNewReserve);
 
         Log.i("Gas1", "   Size checkList = " + checkList.size() + " (Кол-во заказов на выбранную дату)");
         Log.i("Gas1", "   Start cycle (начинаем цикл по этим заказам)");
         Map<Integer, Integer> numTable_leftMinute_Map = new HashMap<>();
         for (int i = 0; i < checkList.size(); i++) {
-            int numCheckTable = typeNumTableList.indexOf(checkList.get(i).getNumTable());
+            int numCheckTable = typeNumTableList.indexOf(checkList.get(i).getNumTable())/* + 1*/;
             Log.i("Gas1", " i = " + i);
             Log.i("Gas1", "NumTable = " + checkList.get(i).getNumTable());
 
-            int hourStartTimeOldReserve = checkList.get(i).getHour();
-            Log.i("Gas1", "Old hourStartTimeOldReserve = " + hourStartTimeOldReserve);
-            int minuteStartTimeOldReserve = checkList.get(i).getMinute();
-            Log.i("Gas1", "Old minuteStartTimeOldReserve = " + minuteStartTimeOldReserve);
+            int hourStartOldReserve = checkList.get(i).getHour();
+            Log.i("Gas1", "Old hourStartOldReserve = " + hourStartOldReserve);
+            int minuteStartOldReserve = checkList.get(i).getMinute();
+            Log.i("Gas1", "Old minuteStartOldReserve = " + minuteStartOldReserve);
             int durationMinuteOldReserve = checkList.get(i).getDuration();
             Log.i("Gas1", "Old durationMinuteOldReserve = " + durationMinuteOldReserve);
-            int hourFinishOldReserve = hourStartTimeOldReserve + (minuteStartTimeOldReserve + durationMinuteOldReserve) / 60;
+            int hourFinishOldReserve = hourStartOldReserve + (minuteStartOldReserve + durationMinuteOldReserve) / 60;
             Log.i("Gas1", "Old hourFinishOldReserve " + hourFinishOldReserve);
-            int minuteFinishOldReserve = (minuteStartTimeOldReserve + durationMinuteOldReserve) % 60;
+            int minuteFinishOldReserve = (minuteStartOldReserve + durationMinuteOldReserve) % 60;
             Log.i("Gas1", "Old minuteFinishOldReserve = " + minuteFinishOldReserve);
-
-
-            // посчитаем сколько остается минут до след. резерва (на сколько м. зарезервировать)
-            int leftMinute = ((hourStartTimeOldReserve - hourFinishTimeNewReserve) * 60) + minuteStartTimeOldReserve - minuteFinishNewReserve;
-            Log.i("Gas1", "Осталось минут до Old резерва leftMinute = " + leftMinute);
-
-            Log.i("Gas1", "leftMinute = " + leftMinute);
 
             // проверяем удален ли стол сразу
             // если не содержит номера стола (вместо номера стола там -1)
@@ -352,7 +418,14 @@ public class NewOrderActivity extends AppCompatActivity implements NumberPicker.
 
             // фильтр по времени
             // если время желаемого резерва раньше след.резерва, но не протыкает
-            if ((hourStartTimeNewReserve < hourStartTimeOldReserve) && (hourFinishTimeNewReserve <= hourStartTimeOldReserve)) {
+            if (((hourFinishNewReserve < hourStartOldReserve) ||
+                    (hourFinishNewReserve == hourStartOldReserve) && (minuteFinishNewReserve <= minuteStartOldReserve)) &&
+                    (hourStartNewReserve != hourStartOldReserve)) {
+                // посчитаем сколько остается минут до след. резерва (на сколько м. зарезервировать)
+                int leftMinute = ((hourStartOldReserve - hourFinishNewReserve) * 60) + minuteStartOldReserve - minuteFinishNewReserve;
+                Log.i("Gas1", "Осталось минут до Old резерва leftMinute = " + leftMinute);
+                Log.i("Gas1", "leftMinute = " + leftMinute);
+
                 Log.i("Gas1", "мой резерв заканчивается раньше, чем начинается старый");
                 if (leftMinute < 0) {
                     Log.i("Gas1", "но остается для игры меньше 30 минут, поэтому не подойдет");
@@ -363,11 +436,11 @@ public class NewOrderActivity extends AppCompatActivity implements NumberPicker.
                 } else {
                     // для резерва 30 мин и более
                     Log.i("Gas1", "30 мин и более");
-                    if (numTable_leftMinute_Map.containsKey(numCheckTable)) {
+                    if (numTable_leftMinute_Map.containsKey(numCheckTable + 1)) {
                         // если мапа уже содержала в себе индекс этого стола с временем
-                        Log.i("Gas1", "было " + numTable_leftMinute_Map.get(numCheckTable));
+                        Log.i("Gas1", "было " + numTable_leftMinute_Map.get(numCheckTable + 1));
                         Log.i("Gas1", "стало " + (durationNewReserve + leftMinute));
-                        if (numTable_leftMinute_Map.get(numCheckTable) > (durationNewReserve + leftMinute)) {
+                        if (numTable_leftMinute_Map.get(numCheckTable + 1) > (durationNewReserve + leftMinute)) {
                             // если значение(время) в мапе было больше чем осталось
                             Log.i("Gas1", "записываем время в мапу");
                             Log.i("Gas1", "key = " + (numCheckTable + 1));
@@ -380,7 +453,9 @@ public class NewOrderActivity extends AppCompatActivity implements NumberPicker.
                         numTable_leftMinute_Map.put(numCheckTable + 1, durationNewReserve + leftMinute);
                     }
                 }
-            } else if (hourFinishTimeNewReserve < hourStartTimeOldReserve) {
+            } else if (((hourStartNewReserve > hourFinishOldReserve) ||
+                    ((hourStartNewReserve == hourFinishOldReserve) && (minuteStartNewReserve >= minuteFinishOldReserve))) &&
+                    (hourStartNewReserve != hourStartOldReserve)) {
                 // если время начала желаемого.рез. после времени окончания проверяемого то тоже все ок
                 // тут нам ничего не нужно делать, потому что м.б. проблема с другим резервом
                 Log.i("Gas1", "Не мешает! Мой резерв начинается после окончания старого");
@@ -434,82 +509,70 @@ public class NewOrderActivity extends AppCompatActivity implements NumberPicker.
     }
 
     private void datePicker() {
-        DatePickerDialog datePickerDialog = new DatePickerDialog(this,
-                new DatePickerDialog.OnDateSetListener() {
+        DatePickerDialog datePickerDialog = new DatePickerDialog(this, new DatePickerDialog.OnDateSetListener() {
+            @SuppressLint("SetTextI18n")
+            @Override
+            public void onDateSet(DatePicker view, int year, int monthOfYear, int dayOfMonth) {
+                yearReserve = year;
+                monthReserve = monthOfYear;
+                dayReserve = dayOfMonth;
+                if (monthReserve < 10) myMonthSt = "0" + (monthReserve + 1);
+                else myMonthSt = "" + (monthReserve + 1);
+                if (dayReserve < 10)myDaySt = "0" + dayReserve;
+                else myDaySt = "" + dayReserve;
 
-                    @SuppressLint("SetTextI18n")
-                    @Override
-                    public void onDateSet(DatePicker view, int year, int monthOfYear, int dayOfMonth) {
-                        yearReserve = year;
-                        monthReserve = monthOfYear;
-                        dayReserve = dayOfMonth;
-                        String myMonthSt, myDaySt;
-                        if (monthReserve < 10) myMonthSt = "0" + (monthReserve + 1);
-                        else myMonthSt = "" + (monthReserve + 1);
-                        if (dayReserve < 10) myDaySt = "0" + dayReserve;
-                        else myDaySt = "" + dayReserve;
 
-                        btnNewReserveDate.setText(myDaySt + "." + myMonthSt + "." + yearReserve);
+                btnNewReserveDate.setText(myDaySt + "." + myMonthSt + "." + yearReserve);
 
-                        // обнуляем значения при изменении даты
-                        actvFreeTable.setHint("Доступные столы");
-                        actvFreeTable.setText("");
+                // обнуляем значения при изменении даты
+                actvFreeTable.setHint("Доступные столы");
+                if (numTableDB == -1) {
+                    actvFreeTable.setText("");
+                }
 
-                        initTablesList();  // находим подходящие столы
-                    }
-                }, yearReserve, monthReserve, dayReserve);
+                initTablesList();  // находим подходящие столы
+            }
+        }, yearReserve, monthReserve, dayReserve);
         datePickerDialog.show();
-
-//        initTablesList();  // находим подходящие столы
-
-        /*ArrayAdapter<String> adapter = new ArrayAdapter<>(
-                this, android.R.layout.simple_dropdown_item_1line, finishList);
-        actvFreeTable.setAdapter(adapter);*/
     }
 
     private void timePicker() {
         // Get Current Time
-        final Calendar c = Calendar.getInstance();
-        hourReserve = c.get(Calendar.HOUR_OF_DAY);
-//        minuteReserve = c.get(Calendar.MINUTE);
+        hourReserve = currentHour;
         minuteReserve = 0;
 
         // Launch Time Picker Dialog
-        TimePickerDialog timePickerDialog = new TimePickerDialog(this,
-                new TimePickerDialog.OnTimeSetListener() {
-                    @SuppressLint("SetTextI18n")
-                    @Override
-                    public void onTimeSet(TimePicker view, int hourOfDay, int minute) {
+        TimePickerDialog timePickerDialog = new TimePickerDialog(this, new TimePickerDialog.OnTimeSetListener() {
+            @SuppressLint("SetTextI18n")
+            @Override
+            public void onTimeSet(TimePicker view, int hourOfDay, int minute) {
+                hourReserve = hourOfDay;
+                minuteReserve = minute;
+                if (hourReserve < 10) hourReserveSt = "0" + hourReserve;
+                else hourReserveSt = "" + hourReserve;
+                if (minuteReserve < 10) minuteReserveSt = "0" + minuteReserve;
+                else minuteReserveSt = "" + minuteReserve;
 
-                        hourReserve = hourOfDay;
-                        minuteReserve = minute;
-                        String hourReserveSt = "" + hourOfDay;
-                        String minuteReserveSt = "" + minute;
-                        if (hourOfDay < 10) hourReserveSt = "0" + hourOfDay;
-                        if (minute < 10) minuteReserveSt = "0" + minute;
+                btnNewReserveTime.setText(hourReserveSt + ":" + minuteReserveSt);
 
-                        btnNewReserveTime.setText(hourReserveSt + ":" + minuteReserveSt);
+                // обнуляем значения при изменении времени
+                actvFreeTable.setHint("Доступные столы");
+                if (numTableDB == -1) {
+                    actvFreeTable.setText("");
+                }
 
-                        // обнуляем значения при изменении времени
-                        actvFreeTable.setHint("Доступные столы");
-                        actvFreeTable.setText("");
-
-                        initTablesList();  // находим подходящие столы
-                    }
-                }, hourReserve, minuteReserve, true);
+                initTablesList();  // находим подходящие столы
+            }
+        }, hourReserve, minuteReserve, true);
         timePickerDialog.show();
 
         initTablesList();  // находим подходящие столы
-
-        /*ArrayAdapter<String> adapter = new ArrayAdapter<>(
-                this, android.R.layout.simple_dropdown_item_1line, finishList);
-        actvFreeTable.setAdapter(adapter);*/
     }
 
     public void dialogShow() {
         final Dialog dialog = new Dialog(NewOrderActivity.this);
         dialog.setTitle("NumberPicker");
-        dialog.setContentView(R.layout.activity_dialog);
+        dialog.setContentView(R.layout.activity_dialog_number_picker);
         Button btnSet = (Button) dialog.findViewById(R.id.btnSet);
         final NumberPicker numberPicker = (NumberPicker) dialog.findViewById(R.id.numberPicker1);
 
@@ -526,7 +589,9 @@ public class NewOrderActivity extends AppCompatActivity implements NumberPicker.
                 dialog.dismiss();
 
                 actvFreeTable.setHint("Доступные столы");
-                actvFreeTable.setText("");
+                if (numTableDB == -1) {
+                    actvFreeTable.setText("");
+                }
 
                 initTablesList();  // находим подходящие столы
             }
@@ -538,47 +603,74 @@ public class NewOrderActivity extends AppCompatActivity implements NumberPicker.
         actvFreeTable.setAdapter(adapter);
     }
 
-    @Override
+    @Override // тут действия при предворительном выборе (прокрутке)
     public void onValueChange(NumberPicker picker, int oldVal, int newVal) {
         // тут действия при предворительном выборе (прокрутке)
         Log.i("Gas", "value is " + newVal);
     }
 
-    public void showDialogAlert(View view) {
-        // вытаскиваем выбранный номер стола
-        String[] numTableArr = actvFreeTable.getText().toString().split(" ");
-        int numTable = Integer.parseInt(numTableArr[2]);
-
-        AlertDialog.Builder builder = new AlertDialog.Builder(NewOrderActivity.this);
-        builder.setTitle("Создать резерв ?")
-                .setMessage("Номер стола, Тип игры, дата, время, продолжительность")
-                .setCancelable(true)  // разрешает/запрещает нажатие кнопки назад
-                .setNegativeButton("Отмена", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialogInterface, int i) {
-                        Toast.makeText(getApplicationContext(), "Резерв отменен", Toast.LENGTH_SHORT).show();
-                    }
-                })
-                .setPositiveButton("Создать", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialogInterface, int i) {
-                        Toast.makeText(getApplicationContext(), "Резерв создан", Toast.LENGTH_SHORT).show();
-                    }
-                })
-                .setOnCancelListener(new DialogInterface.OnCancelListener() {
-                    @Override
-                    public void onCancel(DialogInterface dialogInterface) {
-                        Toast.makeText(getApplicationContext(), "нажали назад", Toast.LENGTH_SHORT).show();
-                    }
-                });
-        // в зависимости от выбранного стола выбираем тип игры
-
-        if (numTypeTableMap.get(numTable).equals("pool")) {
-            builder.setIcon(R.drawable.bol_pool1);
+    public void showDialogAlertCreateReserve(View view) {
+        if (actvFreeTable.getText().toString().equals("")) {
+            Toast.makeText(NewOrderActivity.this, "Не выбран стол", Toast.LENGTH_SHORT).show();
         } else {
-            builder.setIcon(R.drawable.bol_pyramide1);
+            // вытаскиваем выбранный номер стола
+            String[] numTableArr = actvFreeTable.getText().toString().split(" ");
+            numTable = Integer.parseInt(numTableArr[2]);
+            String typeTable;
+            if (numTypeTableMap.get(numTable).equals("pool")) typeTable = "Американский пул";
+            else typeTable = "Русская пирамида";
+
+
+            AlertDialog.Builder builder = new AlertDialog.Builder(NewOrderActivity.this);
+            builder.setMessage("Стол № " + numTable +
+                            "\nТип игры: " + typeTable +
+                            "\nДата резерва: " + btnNewReserveDate.getText().toString() +
+                            "\nВремя резерва: " + btnNewReserveTime.getText().toString() +
+                            "\nПродолжительность: " + btnNewReserveDuration.getText().toString())
+                    .setCancelable(true)  // разрешает/запрещает нажатие кнопки назад
+                    .setNegativeButton("Отмена", (dialogInterface, i) -> Toast.makeText(getApplicationContext(),
+                            "Резерв отменен", Toast.LENGTH_SHORT).show())
+                    .setOnCancelListener(dialogInterface -> Toast.makeText(getApplicationContext(),
+                            "нажали назад", Toast.LENGTH_SHORT).show());
+            if (numReserveDB != -1) {
+                builder.setTitle("Изменить резерв?");
+                builder.setPositiveButton("Изменить", (dialogInterface, i) -> {
+                    createReserveMethod();
+                    Toast.makeText(getApplicationContext(), "Резерв изменен", Toast.LENGTH_SHORT).show();
+                });
+            } else {
+                builder.setTitle("Создать резерв?");
+                builder.setPositiveButton("Создать", (dialogInterface, i) -> {
+                    createReserveMethod();
+                    Toast.makeText(getApplicationContext(), "Резерв создан", Toast.LENGTH_SHORT).show();
+                });
+            }
+            // в зависимости от выбранного стола выбираем тип игры
+            if (numTypeTableMap.get(numTable).equals("pool")) builder.setIcon(R.drawable.bol_pool1);
+            else builder.setIcon(R.drawable.bol_pyramide1);
+
+            AlertDialog alert = builder.create();
+            alert.show();
         }
-        AlertDialog alert = builder.create();
-        alert.show();
+    }
+
+    private void createReserveMethod() {
+        // если хотим изменить запись, то просто передает тудатот же номер строки
+        if (numReserveDB != -1) {
+            database.delete(DBHelper.ORDERS, DBHelper.KEY_ID + "=" + numReserveDB, null);
+            contentValues.put(DBHelper.KEY_ID, numReserveDB);
+        }
+        contentValues.put(DBHelper.KEY_NUM_TABLE, numTable);
+        contentValues.put(DBHelper.KEY_RESERVE_DATE, btnNewReserveDate.getText().toString());
+        contentValues.put(DBHelper.KEY_RESERVE_TIME, btnNewReserveTime.getText().toString());
+        contentValues.put(DBHelper.KEY_DURATION, durationNewReserve);
+        contentValues.put(DBHelper.KEY_CLIENT, clientDB);
+        contentValues.put(DBHelper.KEY_EMPLOYEE, adminName);
+        contentValues.put(DBHelper.KEY_ORDER_DATE, btnNewReserveDate.getText().toString());
+        contentValues.put(DBHelper.KEY_ORDER_TIME, btnNewReserveTime.getText().toString());
+        contentValues.put(DBHelper.KEY_TARIFF, 5);
+        contentValues.put(DBHelper.KEY_DESCRIPTION, "Тестовый_01");
+
+        database.insert(DBHelper.ORDERS, null, contentValues);
     }
 }

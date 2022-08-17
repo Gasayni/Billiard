@@ -10,7 +10,7 @@ import android.widget.Button;
 import android.widget.Toast;
 
 public class SettingActivity extends AppCompatActivity implements View.OnClickListener {
-    Button btnTariff, btnEmployee, btnClient, btnBack;
+    Button btnTariff, btnEmployee, btnClient, btnBack, btnOrders, btnTables;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -21,8 +21,12 @@ public class SettingActivity extends AppCompatActivity implements View.OnClickLi
         btnTariff.setOnClickListener(this);
         btnEmployee = findViewById(R.id.btnEmployee);
         btnEmployee.setOnClickListener(this);
+        btnTables = findViewById(R.id.btnTables);
+        btnTables.setOnClickListener(this);
         btnClient = findViewById(R.id.btnClient);
         btnClient.setOnClickListener(this);
+        btnOrders = findViewById(R.id.btnOrders);
+        btnOrders.setOnClickListener(this);
         btnBack = findViewById(R.id.btnBack);
         btnBack.setOnClickListener(this);
     }
@@ -40,6 +44,13 @@ public class SettingActivity extends AppCompatActivity implements View.OnClickLi
                 startActivity(intent);
                 break;
             }
+            case R.id.btnTables: {
+                intent = new Intent("editDBActivity");
+                // передаем название заголовка
+                intent.putExtra("headName", "Столы");
+                startActivity(intent);
+                break;
+            }
             case R.id.btnEmployee: {
                 intent = new Intent("editDBActivity");
                 // передаем название заголовка
@@ -51,6 +62,13 @@ public class SettingActivity extends AppCompatActivity implements View.OnClickLi
                 intent = new Intent("editDBActivity");
                 // передаем название заголовка
                 intent.putExtra("headName", "Клиенты");
+                startActivity(intent);
+                break;
+            }
+            case R.id.btnOrders: {
+                intent = new Intent("editDBActivity");
+                // передаем название заголовка
+                intent.putExtra("headName", "Резервы");
                 startActivity(intent);
                 break;
             }

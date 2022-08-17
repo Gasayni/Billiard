@@ -54,7 +54,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             return false;
         });
         actvAdmin.setAdapter(adapter);
-        actvAdmin.setText("Алена");   // проверка
+//        actvAdmin.setText("Алена");   // проверка
 
         etPas = findViewById(R.id.etPas);
         etPas.setText("1111");        // проверка
@@ -125,10 +125,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 null, null, null);
         if (cursorEmployee.moveToFirst()) {
             int firstNameIndex = cursorEmployee.getColumnIndex(DBHelper.KEY_FIRST_NAME);
+            int secondNameIndex = cursorEmployee.getColumnIndex(DBHelper.KEY_SECOND_NAME);
             int passIndex = cursorEmployee.getColumnIndex(DBHelper.KEY_PASS);
             do {
                 // находим всех сотрудников из бд
-                adminsList.add(cursorEmployee.getString(firstNameIndex));
+                adminsList.add(cursorEmployee.getString(secondNameIndex) + " "
+                        + cursorEmployee.getString(firstNameIndex));
                 passList.add(cursorEmployee.getString(passIndex));
             } while (cursorEmployee.moveToNext());
         } else {
