@@ -12,7 +12,6 @@
         android:id="@+id/linType"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="32dp"
         android:layout_centerHorizontal="true"
         android:orientation="horizontal">
 
@@ -120,36 +119,56 @@
         android:ems="10"
         android:focusable="true"
         android:gravity="center"
+        android:hint="Стол"
         android:textIsSelectable="true"
         android:textSize="20sp" />
 
-    <AutoCompleteTextView
-        android:id="@+id/actvClient"
-        android:layout_width="300dp"
-        android:layout_height="40dp"
+    <LinearLayout
+        android:id="@+id/linClient"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
         android:layout_below="@id/actvFreeTable"
-        android:layout_centerHorizontal="true"
-        android:layout_marginTop="32dp"
-        android:clickable="true"
-        android:ems="10"
-        android:focusable="true"
-        android:gravity="center"
-        android:hint="Введите имя клиента"
-        android:textIsSelectable="true"
-        android:textSize="20sp" />
+        android:layout_marginTop="32dp">
+
+        <AutoCompleteTextView
+            android:id="@+id/actvClient"
+            android:layout_width="wrap_content"
+            android:layout_height="40dp"
+            android:layout_weight="1"
+            android:layout_centerHorizontal="true"
+            android:clickable="true"
+            android:ems="10"
+            android:focusable="true"
+            android:gravity="center"
+            android:hint="Клиент"
+            android:textSize="20sp" />
+
+
+        <Button
+            android:id="@+id/btnCreateClient"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:background="@drawable/btn_style_1"
+            android:clickable="true"
+            android:focusable="true"
+            android:gravity="center"
+            android:text="+"
+            android:textSize="16sp" />
+    </LinearLayout>
+
 
     <Button
         android:id="@+id/btnCreateReserve"
-        android:layout_width="300dp"
+        android:layout_width="200sp"
         android:layout_height="60dp"
-        android:layout_below="@id/actvClient"
+        android:layout_below="@id/linClient"
         android:layout_centerHorizontal="true"
         android:layout_marginTop="32dp"
         android:background="@drawable/btn_style_1"
         android:clickable="true"
         android:focusable="true"
         android:gravity="center"
-        android:hint="Создать / Изменить \t резерв"
+        android:hint="Создать резерв"
         android:onClick="showDialogAlertCreateReserve"
         android:textSize="14sp" />
 </RelativeLayout>

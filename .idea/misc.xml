@@ -17,11 +17,16 @@
         <entry key="..\:/Users/Gasayni/AndroidStudioProjects/Billiard/app/src/main/res/layout/activity_dialog_change_reserve.xml" value="0.2625" />
         <entry key="..\:/Users/Gasayni/AndroidStudioProjects/Billiard/app/src/main/res/layout/activity_dialog_delete_reserve.xml" value="0.26145833333333335" />
         <entry key="..\:/Users/Gasayni/AndroidStudioProjects/Billiard/app/src/main/res/layout/activity_dialog_number_picker.xml" value="0.2625" />
+        <entry key="..\:/Users/Gasayni/AndroidStudioProjects/Billiard/app/src/main/res/layout/activity_edit_db.xml" value="0.2630208333333333" />
         <entry key="..\:/Users/Gasayni/AndroidStudioProjects/Billiard/app/src/main/res/layout/activity_edit_dbactivity.xml" value="0.2630208333333333" />
         <entry key="..\:/Users/Gasayni/AndroidStudioProjects/Billiard/app/src/main/res/layout/activity_main.xml" value="0.24895833333333334" />
         <entry key="..\:/Users/Gasayni/AndroidStudioProjects/Billiard/app/src/main/res/layout/activity_new_order.xml" value="0.2630208333333333" />
         <entry key="..\:/Users/Gasayni/AndroidStudioProjects/Billiard/app/src/main/res/layout/activity_setting.xml" value="0.264" />
         <entry key="..\:/Users/Gasayni/AndroidStudioProjects/Billiard/app/src/main/res/layout/activity_table.xml" value="0.2630208333333333" />
+        <entry key="..\:/Users/Gasayni/AndroidStudioProjects/Billiard/app/src/main/res/layout/dialog_create_client.xml" value="0.2630208333333333" />
+        <entry key="..\:/Users/Gasayni/AndroidStudioProjects/Billiard/app/src/main/res/layout/dialog_number_picker.xml" value="0.2630208333333333" />
+        <entry key="..\:/Users/Gasayni/AndroidStudioProjects/Billiard/app/src/main/res/menu/menu_items.xml" value="0.5390625" />
+        <entry key="..\:/Users/Gasayni/AndroidStudioProjects/Billiard/app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml" value="0.1665" />
       </map>
     </option>
   </component>

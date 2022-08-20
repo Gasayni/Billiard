@@ -1,22 +1,28 @@
 package com.gas.billiard;
 
 import android.annotation.SuppressLint;
+import android.app.AlertDialog;
 import android.app.DatePickerDialog;
 import android.content.ContentValues;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.os.Handler;
+import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.DatePicker;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -32,7 +38,6 @@ import java.util.concurrent.TimeUnit;
 public class CommonActivity extends AppCompatActivity implements View.OnClickListener {
     private Date currentTime;
     private final SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm", Locale.ENGLISH);
-    private Date currentDate = new Date();
     private final SimpleDateFormat dateFormat = new SimpleDateFormat("dd.MM.yyyy", Locale.ENGLISH);
     private TextView tvTime;
 
@@ -55,9 +60,8 @@ public class CommonActivity extends AppCompatActivity implements View.OnClickLis
     Cursor cursorTables, cursorOrders;
 
     // задаем начальное значение для выбора даты
-    int DIALOG_DATE = 1;
-    int myYear = 2022;
-    int myMonth = 8;
+    int myYear;
+    int myMonth;
     int myDay;
 
     final Calendar currentDateCalendar = Calendar.getInstance();
@@ -79,6 +83,8 @@ public class CommonActivity extends AppCompatActivity implements View.OnClickLis
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_common);
+//        getSupportActionBar().setIcon(R.drawable.ic_launcher_foreground);
+
 
         Intent getIntent = getIntent();
         adminName = getIntent.getStringExtra("adminName");
@@ -111,10 +117,64 @@ public class CommonActivity extends AppCompatActivity implements View.OnClickLis
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
 
+    @Override
+    public void onBackPressed() {
+        // super.onBackPressed();
+        openQuitDialog();
+    }
 
-        // нам нужно загрузить с Таблиц каждого стола данные о резервах на сегодня
-//        reserveToday();
+    public void openQuitDialog() {
+        AlertDialog.Builder builderAlert = new AlertDialog.Builder(CommonActivity.this);
+        builderAlert.setTitle("Выход: Вы уверены?")
+                .setCancelable(true)  // разрешает/запрещает нажатие кнопки назад
+                .setPositiveButton("Да", ((dialogInterface, i) -> {
+                    Intent intent = new Intent(CommonActivity.this, MainActivity.class);
+                    // передаем название заголовка
+                    intent.putExtra("headName", "Резервы");
+                    startActivity(intent);
+                }));
+        builderAlert.setIcon(R.drawable.bol_pyramide1);
+
+        AlertDialog alertDialog = builderAlert.create();
+        alertDialog.show();
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.menu_items, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        Intent intent;
+        switch (item.getItemId()) {
+            // переключаемся на редактор резерва
+            case R.id.clients: {
+                intent = new Intent("editDBActivity");
+                // передаем название заголовка
+                intent.putExtra("headName", "Клиенты");
+                startActivity(intent);
+                break;
+            }
+            case R.id.reserves: {
+                intent = new Intent("editDBActivity");
+                // передаем название заголовка
+                intent.putExtra("headName", "Резервы");
+                startActivity(intent);
+                break;
+            }
+            case R.id.setting: {
+                intent = new Intent("settingActivity");
+                // передаем имя админа (взависимости от переданного имени, разные права доступа)
+                intent.putExtra("adminName", adminName);
+                startActivity(intent);
+                break;
+            }
+        }
+        return super.onOptionsItemSelected(item);
     }
 
     @SuppressLint("NonConstantResourceId")
@@ -319,7 +379,7 @@ public class CommonActivity extends AppCompatActivity implements View.OnClickLis
         // получаем входной поток
         InputStream inputStream = getAssets().open("reserve_0min.png");
         Drawable imageBtnCommon;
-                        // красим кнопки
+        // красим кнопки
         // Если минуты Резерва начинаются c начала часа или если эта последняя кнопка, то красим всегда с начала
         if ((reserveMinute == 0) || (endBtnFlag)) {
             Log.i("Gas", "минуты Резерва начинаются c начала часа");

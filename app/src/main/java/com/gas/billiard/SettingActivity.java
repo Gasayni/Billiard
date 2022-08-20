@@ -23,10 +23,6 @@ public class SettingActivity extends AppCompatActivity implements View.OnClickLi
         btnEmployee.setOnClickListener(this);
         btnTables = findViewById(R.id.btnTables);
         btnTables.setOnClickListener(this);
-        btnClient = findViewById(R.id.btnClient);
-        btnClient.setOnClickListener(this);
-        btnOrders = findViewById(R.id.btnOrders);
-        btnOrders.setOnClickListener(this);
         btnBack = findViewById(R.id.btnBack);
         btnBack.setOnClickListener(this);
     }
@@ -58,22 +54,8 @@ public class SettingActivity extends AppCompatActivity implements View.OnClickLi
                 startActivity(intent);
                 break;
             }
-            case R.id.btnClient: {
-                intent = new Intent("editDBActivity");
-                // передаем название заголовка
-                intent.putExtra("headName", "Клиенты");
-                startActivity(intent);
-                break;
-            }
-            case R.id.btnOrders: {
-                intent = new Intent("editDBActivity");
-                // передаем название заголовка
-                intent.putExtra("headName", "Резервы");
-                startActivity(intent);
-                break;
-            }
             case R.id.btnBack: {
-                intent = new Intent(SettingActivity.this, MainActivity.class);
+                intent = new Intent(SettingActivity.this, CommonActivity.class);
                 startActivity(intent);
                 break;
             }

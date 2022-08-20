@@ -12,6 +12,9 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
+import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -20,127 +23,116 @@ import android.widget.TextView;
 import java.util.ArrayList;
 import java.util.List;
 
-public class TableActivity extends AppCompatActivity {
-    OptionallyClass option = new OptionallyClass();
-    private final int tableCount = 19;
-    TextView tvNameTable, tvTypeTable;
-    ImageView ivTableType;
-    Button btnTable;
-    LinearLayout linTable;
-    List<Button> btnTableTagsList = new ArrayList<>();
+public class TableActivity extends AppCompatActivity implements View.OnClickListener{
+    TextView tvTypeTable, tvSum;
+    AutoCompleteTextView actvNameTable;
+    Button btnShowTableReserve;
     List<String> typeTableList = new ArrayList<>();
+    List<String> nameTableList = new ArrayList<>();
 
     // БД
     DBHelper dbHelper;
     SQLiteDatabase database;
     ContentValues contentValues;
-    Cursor cursorTables, cursorOrders;
+    Cursor cursorTables;
 
     int getNumTable;
+    String getClient;
 
+    @SuppressLint({"ClickableViewAccessibility", "SetTextI18n"})
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_table);
+
+        // Получаем название заголовка
+        Intent getIntent = getIntent();
+        getNumTable = getIntent.getIntExtra("numTable", 0);
 
         // работа с БД
         dbHelper = new DBHelper(this);
         database = dbHelper.getWritableDatabase();
         contentValues = new ContentValues();
 
-        tvNameTable = findViewById(R.id.tvNameTable);
-        tvNameTable.setTextColor(Color.BLACK);
+        initNameTableList();
 
         tvTypeTable = findViewById(R.id.tvTypeTable);
         tvTypeTable.setTextColor(Color.BLACK);
+        tvSum = findViewById(R.id.tvSum);
+        btnShowTableReserve = findViewById(R.id.btnShowTableReserve);
+        btnShowTableReserve.setOnClickListener(this);
 
-        ivTableType = findViewById(R.id.ivTableType);
-        linTable = findViewById(R.id.linTable);
-
-        // Получаем название заголовка
-        Intent getIntent = getIntent();
-        getNumTable = getIntent.getIntExtra("numTable", 0);
-
-        addBtnTable();
-        choseTable();
-
-
+        actvNameTable = findViewById(R.id.actvNameTable);
+        actvNameTable.setTextColor(Color.BLACK);
+        actvNameTable.setText("Стол № " + getNumTable);
+        actvNameTable.setShowSoftInputOnFocus(false);
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(
+                this, android.R.layout.simple_dropdown_item_1line, nameTableList);
+        actvNameTable.setOnTouchListener((v, event) -> {
+            actvNameTable.showDropDown();
+            return false;
+        });
+        actvNameTable.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
+                choseTable();
+            }
+        });
+        actvNameTable.setAdapter(adapter);
     }
 
-    @SuppressLint("SetTextI18n")
-    private void addBtnTable() {
-        int marginLength = option.convertDpToPixels(this, 6);
-
-        for (int i = 0; i < tableCount; i++) {
-            btnTable = new Button(linTable.getContext());
-
-            btnTable.setLayoutParams(new LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.WRAP_CONTENT,
-                    LinearLayout.LayoutParams.WRAP_CONTENT));
-
-            btnTable.setTag("btnInfoTable" + (1+i));
-            btnTableTagsList.add(btnTable);
-            btnTable.setText("Стол " + (i+1));
-            btnTable.setTextSize(12);
-            btnTable.setWidth(option.convertDpToPixels(this, 50));
-            btnTable.setHeight(option.convertDpToPixels(this, 25));
-            btnTable.setBackgroundResource(R.drawable.btn_style_4);
-
-            linTable.addView(btnTable);
-        }
-    }
-
-    private void choseTable() {
-        // получаем данные c табл "tables"
+    private void initNameTableList() {
+        // получаем данные c табл "EMPLOYEES"
         cursorTables = database.query(DBHelper.TABLES,
                 null, null, null,
                 null, null, null);
+        int numberTableIndex = cursorTables.getColumnIndex(DBHelper.KEY_ID);
+        int typeIndex = cursorTables.getColumnIndex(DBHelper.KEY_TYPE);
         if (cursorTables.moveToFirst()) {
-            int numberTableIndex = cursorTables.getColumnIndex(DBHelper.KEY_ID);
-            int typeIndex = cursorTables.getColumnIndex(DBHelper.KEY_TYPE);
-            int descriptionIndex = cursorTables.getColumnIndex(DBHelper.KEY_DESCRIPTION);
+            cursorTables.getColumnIndex(DBHelper.KEY_ID);
             do {
                 // инициализируем каждую кнопку шапки стола
-                int numTable = cursorTables.getInt(numberTableIndex);
-                btnTable = btnTableTagsList.get(numTable-1);
+                nameTableList.add("Стол № " + cursorTables.getInt(numberTableIndex));
                 typeTableList.add(cursorTables.getString(typeIndex));
-
-                btnTable.setOnClickListener(new View.OnClickListener() {
-                    public void onClick(View view) {
-                        // меняем стол
-                        tvNameTable.setText("Стол № " + numTable);
-
-                        // меняем картинку, в зависимости от типа стола
-                        if (typeTableList.get(numTable-1).equals("pool")) {
-                            ivTableType.setImageResource(R.drawable.table_pool);
-                            tvTypeTable.setText("Американский пул");
-                        } else if (typeTableList.get(numTable-1).equals("pyramid")) {
-                            ivTableType.setImageResource(R.drawable.table_pyramide);
-                            tvTypeTable.setText("Русская пирамида");
-                        }
-                    }
-                });
-
             } while (cursorTables.moveToNext());
         } else {
+            // если не задан ни один сотрудника, то м. перейти в настройки его создания
             Log.d("Gas", "0 rows");
         }
-        cursorTables.close();
-
-        // вызваем изначально изменения, в зависимости от нажатой кнопки
-        firstChangeTableActivity();
     }
 
-    public void firstChangeTableActivity() {
-        // меняем стол
-        tvNameTable.setText("Стол № " + getNumTable);
-        // меняем картинку, в зависимости от типа стола
-        if (typeTableList.get(getNumTable-1).equals("pool")) {
-            ivTableType.setImageResource(R.drawable.table_pool);
-            tvTypeTable.setText("Американский пул");
-        } else if (typeTableList.get(getNumTable-1).equals("pyramid")) {
-            ivTableType.setImageResource(R.drawable.table_pyramide);
-            tvTypeTable.setText("Русская пирамида");
+    @SuppressLint("ClickableViewAccessibility")
+    private void choseTable() {
+        // мы получаем выбранное значение
+        String nameTable = actvNameTable.getText().toString();
+        Log.i("Gas", "nameTable = " + nameTable);
+        for (int i = 0; i < nameTableList.size(); i++) {
+            if (nameTableList.get(i).equals(nameTable)) {
+                // меняем картинку, в зависимости от типа стола
+                if (typeTableList.get(i).equals("pool")) {
+                    tvSum.setBackgroundResource(R.drawable.table_pool);
+                    tvTypeTable.setText("Американский пул");
+                } else {
+                    tvSum.setBackgroundResource(R.drawable.table_pyramide);
+                    tvTypeTable.setText("Русская пирамида");
+                }
+            }
+        }
+    }
+
+    @SuppressLint("NonConstantResourceId")
+    @Override
+    public void onClick(View view) {
+        Intent intent, intent1;
+        switch (view.getId()) {
+            case R.id.btnShowTableReserve: {
+                intent = new Intent("editDBActivity");
+                // передаем название заголовка
+                intent.putExtra("headName", "Резервы");
+                intent.putExtra("getFilterNumTable", getNumTable);
+                startActivity(intent);
+                break;
+            }
         }
     }
 }

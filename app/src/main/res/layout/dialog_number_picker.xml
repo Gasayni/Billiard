@@ -7,21 +7,32 @@
     android:layout_height="match_parent"
     android:gravity="center_horizontal"
     android:padding="32dp"
-    tools:context=".DialogActivity">
+    tools:context=".NewOrderActivity">
 
-    <NumberPicker
-        android:id="@+id/numberPicker1"
-        android:layout_width="wrap_content"
+    <LinearLayout
+        android:id="@+id/linHead"
+        android:layout_width="match_parent"
         android:layout_height="100dp"
-        android:layout_alignParentTop="true"
         android:layout_centerHorizontal="true"
-        android:layout_marginTop="16dp" />
+        android:layout_marginTop="8dp"
+        android:gravity="center"
+        android:orientation="horizontal">
+
+        <NumberPicker
+            android:id="@+id/numberPicker"
+            android:layout_width="wrap_content"
+            android:layout_height="100dp"
+            android:layout_gravity="left"
+            android:layout_marginTop="16dp"
+            android:layout_marginRight="8dp" />
+
+    </LinearLayout>
 
     <LinearLayout
         android:id="@+id/linTime"
         android:layout_width="200sp"
         android:layout_height="wrap_content"
-        android:layout_below="@id/numberPicker1"
+        android:layout_below="@id/linHead"
         android:layout_centerHorizontal="true"
         android:layout_marginTop="8dp"
         android:gravity="center"

@@ -9,44 +9,22 @@
     tools:context=".SettingActivity">
 
     <Button
-        android:id="@+id/btnOrders"
-        android:layout_width="200dp"
-        android:layout_height="60dp"
-        android:layout_centerHorizontal="true"
-        android:layout_marginTop="32dp"
-        android:background="@drawable/btn_style_1"
-        android:text="Резервы"
-        android:textSize="20sp" />
-
-    <Button
         android:id="@+id/btnTables"
         android:layout_width="200dp"
         android:layout_height="60dp"
-        android:layout_below="@id/btnOrders"
+        android:layout_marginTop="64dp"
         android:layout_centerHorizontal="true"
-        android:layout_marginTop="20dp"
         android:background="@drawable/btn_style_1"
         android:text="Столы"
-        android:textSize="20sp" />
-
-    <Button
-        android:id="@+id/btnClient"
-        android:layout_width="200dp"
-        android:layout_height="60dp"
-        android:layout_below="@id/btnTables"
-        android:layout_centerHorizontal="true"
-        android:layout_marginTop="20dp"
-        android:background="@drawable/btn_style_1"
-        android:text="@string/client"
         android:textSize="20sp" />
 
     <Button
         android:id="@+id/btnEmployee"
         android:layout_width="200dp"
         android:layout_height="60dp"
-        android:layout_below="@id/btnClient"
+        android:layout_below="@id/btnTables"
         android:layout_centerHorizontal="true"
-        android:layout_marginTop="20dp"
+        android:layout_marginTop="32dp"
         android:background="@drawable/btn_style_1"
         android:text="@string/employee"
         android:textSize="20sp" />
@@ -55,9 +33,9 @@
         android:id="@+id/btnTariff"
         android:layout_width="200dp"
         android:layout_height="60dp"
-        android:layout_centerHorizontal="true"
         android:layout_below="@id/btnEmployee"
-        android:layout_marginTop="20dp"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="32dp"
         android:background="@drawable/btn_style_1"
         android:text="@string/tariff"
         android:textSize="20sp" />
@@ -68,7 +46,7 @@
         android:layout_height="60dp"
         android:layout_below="@id/btnTariff"
         android:layout_centerHorizontal="true"
-        android:layout_marginTop="20dp"
+        android:layout_marginTop="32dp"
         android:background="@drawable/btn_style_6"
         android:text="@string/back"
         android:textSize="30sp" />

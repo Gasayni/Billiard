@@ -42,6 +42,10 @@ public class EditDBActivity extends AppCompatActivity implements View.OnClickLis
     private String TABLE_DB;
 
     String sortTableName;
+    int getFilterNumTable;
+    String[] columnsArr  = {DBHelper.KEY_ID, DBHelper.KEY_NUM_TABLE, DBHelper.KEY_RESERVE_DATE,
+            DBHelper.KEY_RESERVE_TIME, DBHelper.KEY_DURATION, DBHelper.KEY_TARIFF,
+            DBHelper.KEY_CLIENT, DBHelper.KEY_EMPLOYEE, DBHelper.KEY_ORDER_DATE, DBHelper.KEY_ORDER_TIME};
 
     /*final Calendar currentDateCalendar = Calendar.getInstance();
     String currentMonthSt, currentDaySt, hourReserveSt, minuteReserveSt;
@@ -54,7 +58,7 @@ public class EditDBActivity extends AppCompatActivity implements View.OnClickLis
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_edit_dbactivity);
+        setContentView(R.layout.activity_edit_db);
 
         // работа с БД
         dbHelper = new DBHelper(this);
@@ -73,9 +77,20 @@ public class EditDBActivity extends AppCompatActivity implements View.OnClickLis
         // Получаем название заголовка
         Intent getIntent = getIntent();
         tvHead.setText(getIntent.getStringExtra("headName"));
+        getFilterNumTable = getIntent.getIntExtra("getFilterNumTable", -1);
 
         addBtnColumns();
-        editBtnColumns(null, null, null, null, null, DBHelper.KEY_ID);
+
+        Log.i("Gas6", "getFilterNumTable = " + getFilterNumTable);
+        // здесь будет фильтр по столам, если фильтр вызвали
+        if (getFilterNumTable == -1) {
+            editBtnColumns(null, null, null, null, null, DBHelper.KEY_ID);
+        } else {
+            String selection = DBHelper.KEY_NUM_TABLE + " = " + getFilterNumTable;
+            editBtnColumns(columnsArr, selection, null,
+                    null, null, null);
+        }
+
 
         if (tvHead.getText().toString().equals("Столы")) {
             Log.i("Gas5", "Столы столы");
@@ -160,6 +175,7 @@ public class EditDBActivity extends AppCompatActivity implements View.OnClickLis
     private void onClickSortMethod(Button btnColumns) {
         btnColumns.setOnClickListener(new View.OnClickListener() {
             public void onClick(View view) {
+                String selection = null;
                 // здесь будет сортировка в зависимости от нажатой кнопки
                 switch (tvHead.getText().toString()) {
                     case "Тарифы": {
@@ -203,27 +219,37 @@ public class EditDBActivity extends AppCompatActivity implements View.OnClickLis
                     }
                     case "Резервы": {
                         if (btnColumns.getTag().equals("btnColumns1")) {
+                            // Кнопка "Резерв"
                             sortTableName = DBHelper.KEY_ID;
                         } else if (btnColumns.getTag().equals("btnColumns2")) {
+                            // Кнопка "Стол"
+                            selection = DBHelper.KEY_NUM_TABLE + " = " + getFilterNumTable;
                             sortTableName = DBHelper.KEY_NUM_TABLE;
+                                    Здесь нужно сначала реализовать выбор стола а затем по выбранному номеру фильтровать
                         } else if (btnColumns.getTag().equals("btnColumns3")) {
+                            // Кнопка "Дата резерва"
                             sortTableName = DBHelper.KEY_RESERVE_DATE;
                         } else if (btnColumns.getTag().equals("btnColumns4")) {
+                            // Кнопка "Продолжительность"
                             sortTableName = DBHelper.KEY_DURATION;
                         } else if (btnColumns.getTag().equals("btnColumns5")) {
+                            // Кнопка "Клиент"
                             sortTableName = DBHelper.KEY_CLIENT;
                         } else if (btnColumns.getTag().equals("btnColumns6")) {
+                            // Кнопка "Администратор"
                             sortTableName = DBHelper.KEY_EMPLOYEE;
                         } else if (btnColumns.getTag().equals("btnColumns7")) {
+                            // Кнопка "Дата заказа"
                             sortTableName = DBHelper.KEY_ORDER_DATE;
                         } else if (btnColumns.getTag().equals("btnColumns8")) {
+                            // Кнопка "Тариф"
                             sortTableName = DBHelper.KEY_TARIFF;
                         }
                         break;
                     }
                 }
                 Log.i("Gas", "sortTableName = " + sortTableName);
-                editBtnColumns(null, null, null,
+                editBtnColumns(columnsArr, selection, null,
                         null, null, sortTableName);
             }
         });
@@ -376,7 +402,7 @@ public class EditDBActivity extends AppCompatActivity implements View.OnClickLis
 
     private void openDialogChangeReserve(View view) {
         LayoutInflater inflater = LayoutInflater.from(EditDBActivity.this);
-        View subView = inflater.inflate(R.layout.activity_dialog_change_reserve, null);
+        View subView = inflater.inflate(R.layout.dialog_chose_reserve, null);
         final EditText etNumReserve = (EditText) subView.findViewById(R.id.etNumReserve);
 
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
@@ -402,8 +428,8 @@ public class EditDBActivity extends AppCompatActivity implements View.OnClickLis
 
                             editBtnColumns(null, null, null,
                                     null, null, DBHelper.KEY_ID);
-                        }
-                        else Toast.makeText(EditDBActivity.this, "Этого резерва нет БД", Toast.LENGTH_SHORT).show();
+                        } else
+                            Toast.makeText(EditDBActivity.this, "Этого резерва нет БД", Toast.LENGTH_SHORT).show();
 
 
                     }
@@ -479,7 +505,7 @@ public class EditDBActivity extends AppCompatActivity implements View.OnClickLis
 
     private void openDialogDeleteReserve() {
         LayoutInflater inflater = LayoutInflater.from(EditDBActivity.this);
-        View subView = inflater.inflate(R.layout.activity_dialog_delete_reserve, null);
+        View subView = inflater.inflate(R.layout.dialog_chose_reserve, null);
         final EditText etNumReserve = (EditText) subView.findViewById(R.id.etNumReserve);
 
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
@@ -495,7 +521,8 @@ public class EditDBActivity extends AppCompatActivity implements View.OnClickLis
                             database.delete(DBHelper.ORDERS, DBHelper.KEY_ID + "=" + numReserveDB, null);
                             Toast.makeText(EditDBActivity.this, "Резерв " + numReserveDB + " удален.", Toast.LENGTH_LONG).show();
                             editBtnColumns(null, null, null, null, null, DBHelper.KEY_ID);
-                        } else Toast.makeText(EditDBActivity.this, "Этого резерва нет БД", Toast.LENGTH_SHORT).show();
+                        } else
+                            Toast.makeText(EditDBActivity.this, "Этого резерва нет БД", Toast.LENGTH_SHORT).show();
                     }
                 })
                 .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {

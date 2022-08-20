@@ -8,28 +8,18 @@
     android:padding="32dp"
     tools:context=".MainActivity">
 
-    <Button
-        android:id="@+id/btnSetting"
-        android:layout_width="120dp"
-        android:layout_height="60dp"
-        android:layout_alignParentRight="true"
-        android:background="@drawable/btn_style_1"
-        android:text="@string/setting"
-        android:textSize="16sp" />
-
     <TextView
         android:id="@+id/tvAdmin"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_below="@id/btnSetting"
         android:layout_centerHorizontal="true"
-        android:layout_marginTop="64dp"
+        android:layout_marginTop="128dp"
         android:text="@string/administrator"
         android:textSize="30sp" />
 
     <AutoCompleteTextView
         android:id="@+id/actvAdmin"
-        android:layout_width="400dp"
+        android:layout_width="wrap_content"
         android:layout_height="40dp"
         android:layout_below="@id/tvAdmin"
         android:layout_centerHorizontal="true"
@@ -56,7 +46,7 @@
 
     <EditText
         android:id="@+id/etPas"
-        android:layout_width="400dp"
+        android:layout_width="wrap_content"
         android:layout_height="40dp"
         android:layout_below="@id/tvPass"
         android:layout_centerHorizontal="true"

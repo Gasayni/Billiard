@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Billiard</string>
+    <string name="app_name">Semenov</string>
     <string name="administrator">Администратор</string>
     <string name="password">Пароль</string>
     <string name="setting">Настойки</string>
@@ -16,6 +16,6 @@
     <string name="startTime">Время\nначала</string>
     <string name="duration">длительность</string>
     <string name="statusToExtend">следующий\nрезерв</string>
-    <string name="reserve">Статус резерва\n на сегодня</string>
+    <string name="reserve">Резервы</string>
     <string name="back"><![CDATA[<]]></string>
 </resources>

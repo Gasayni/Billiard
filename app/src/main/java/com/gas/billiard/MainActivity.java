@@ -9,7 +9,9 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Gravity;
+import android.view.Menu;
 import android.view.View;
+import android.view.Window;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.Button;
@@ -20,16 +22,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
+    OptionallyClass optionallyClass = new OptionallyClass();
     AutoCompleteTextView actvAdmin;
     EditText etPas;
     Button btnEnter;
     Button btnSetting;
 
-    // БД
-    DBHelper dbHelper;
-    SQLiteDatabase database;
-    ContentValues contentValues;
-    Cursor cursorEmployee;
     List<String> adminsList = new ArrayList<>();
     List<String> passList = new ArrayList<>();
 
@@ -37,13 +35,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        getSupportActionBar().hide();
         setContentView(R.layout.activity_main);
 
-        // работа с БД
-        dbHelper = new DBHelper(this);
-        database = dbHelper.getWritableDatabase();
-        contentValues = new ContentValues();
-        initAdmins();
+        adminsList = optionallyClass.initAdmins(this, "adminsList");
+        passList = optionallyClass.initAdmins(this, "passList");
 
         actvAdmin = findViewById(R.id.actvAdmin);
         actvAdmin.setShowSoftInputOnFocus(false);
@@ -57,10 +53,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 //        actvAdmin.setText("Алена");   // проверка
 
         etPas = findViewById(R.id.etPas);
-        etPas.setText("1111");        // проверка
-
-        btnSetting = findViewById(R.id.btnSetting);
-        btnSetting.setOnClickListener(this);
+//        etPas.setText("1111");        // проверка
 
         btnEnter = findViewById(R.id.btnEnter);
         btnEnter.setOnClickListener(this);
@@ -71,20 +64,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     public void onClick(View view) {
         Intent intent;
         switch (view.getId()) {
-            case R.id.btnSetting: {
-                if (checkMethod()) {
-                    intent = new Intent("settingActivity");
-                    // передаем имя админа (взависимости от переданного имени, разные права доступа)
-                    intent.putExtra("adminName", actvAdmin.getText().toString());
-                    startActivity(intent);
-                } else {
-                    Toast toast = Toast.makeText(getApplicationContext(),
-                            "Ошибка авторизации", Toast.LENGTH_SHORT);
-                    toast.setGravity(Gravity.CENTER, 0, 0);
-                    toast.show();
-                }
-                break;
-            }
             case R.id.btnEnter: {
                 if (checkMethod()) {
                     intent = new Intent("commonActivity");
@@ -116,26 +95,5 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             }
         }
         return flag;
-    }
-
-    private void initAdmins() {
-        // получаем данные c табл "EMPLOYEES"
-        cursorEmployee = database.query(DBHelper.EMPLOYEES,
-                null, null, null,
-                null, null, null);
-        if (cursorEmployee.moveToFirst()) {
-            int firstNameIndex = cursorEmployee.getColumnIndex(DBHelper.KEY_FIRST_NAME);
-            int secondNameIndex = cursorEmployee.getColumnIndex(DBHelper.KEY_SECOND_NAME);
-            int passIndex = cursorEmployee.getColumnIndex(DBHelper.KEY_PASS);
-            do {
-                // находим всех сотрудников из бд
-                adminsList.add(cursorEmployee.getString(secondNameIndex) + " "
-                        + cursorEmployee.getString(firstNameIndex));
-                passList.add(cursorEmployee.getString(passIndex));
-            } while (cursorEmployee.moveToNext());
-        } else {
-            // если не задан ни один сотрудника, то м. перейти в настройки его создания
-            Log.d("Gas", "0 rows");
-        }
     }
 }
