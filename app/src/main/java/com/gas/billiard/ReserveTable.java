@@ -14,8 +14,9 @@ public class ReserveTable {
 
     private String client;
     private String employee;
+    private String tariff;
 
-    public ReserveTable(int idOrder, int numTable, String date, String time, int duration, String client, String employee) {
+    public ReserveTable(int idOrder, int numTable, String date, String time, int duration, String client, String employee, String tariff) {
         this.idOrder = idOrder;
         this.numTable = numTable;
         this.date = date;
@@ -23,6 +24,7 @@ public class ReserveTable {
         this.duration = duration;
         this.client = client;
         this.employee = employee;
+        this.tariff = tariff;
     }
 
     public int getHour() {
@@ -61,5 +63,9 @@ public class ReserveTable {
 
     public String getEmployee() {
         return employee;
+    }
+
+    public String getTariff() {
+        return tariff;
     }
 }

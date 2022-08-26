@@ -4,7 +4,6 @@ import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.app.DatePickerDialog;
 import android.content.ContentValues;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
@@ -22,21 +21,20 @@ import android.widget.Button;
 import android.widget.DatePicker;
 import android.widget.LinearLayout;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
 public class CommonActivity extends AppCompatActivity implements View.OnClickListener {
-    private Date currentTime;
     private final SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm", Locale.ENGLISH);
     private final SimpleDateFormat dateFormat = new SimpleDateFormat("dd.MM.yyyy", Locale.ENGLISH);
     private TextView tvTime;
@@ -63,6 +61,7 @@ public class CommonActivity extends AppCompatActivity implements View.OnClickLis
     int myYear;
     int myMonth;
     int myDay;
+    String dateReserveTomorrow;
 
     final Calendar currentDateCalendar = Calendar.getInstance();
     String currentMonthSt, currentDaySt;
@@ -110,8 +109,8 @@ public class CommonActivity extends AppCompatActivity implements View.OnClickLis
         // отрисовываем таблицу заказов на изначальную дату
         addBtnCommon();
         addBtnHour();
-
         choseTypeTable();
+
         try {
             choseBtnCommon();
         } catch (IOException e) {
@@ -121,7 +120,6 @@ public class CommonActivity extends AppCompatActivity implements View.OnClickLis
 
     @Override
     public void onBackPressed() {
-        // super.onBackPressed();
         openQuitDialog();
     }
 
@@ -185,6 +183,7 @@ public class CommonActivity extends AppCompatActivity implements View.OnClickLis
             // переключаемся на редактор резерва
             case R.id.btnAdd: {
                 intent = new Intent("newOrderActivity");
+                intent.putExtra("whoCall", "commonActivity");
                 intent.putExtra("adminName", adminName);
                 startActivity(intent);
                 // при добавлении нового резерва, также нужно обновить таблицу резерва
@@ -203,8 +202,7 @@ public class CommonActivity extends AppCompatActivity implements View.OnClickLis
                 e.printStackTrace();
             }
             handler.post(() -> {
-                currentTime = new Date();
-                tvTime.setText(timeFormat.format(currentTime));
+                tvTime.setText(timeFormat.format(new Date()));
                 // также обращаемся каждую минуту к калькулятору оставшегося времени
 //                calculateduration(timeFormat.format(currentTime));
                 actualTime();  // мисис рекурсия
@@ -241,9 +239,9 @@ public class CommonActivity extends AppCompatActivity implements View.OnClickLis
                 btnTableHead = btnTableHeadTagsList.get(numTable - 1).findViewWithTag("btnTableHead" + numTable);
 
                 // меняем фон кнопки каждого стола, в зависимости от типа стола
-                if (cursorTables.getString(typeIndex).equals("pool")) {
+                if (cursorTables.getString(typeIndex).equals("Американский пул")) {
                     btnTableHead.setBackgroundResource(R.drawable.bol_pool1);
-                } else if (cursorTables.getString(typeIndex).equals("pyramid")) {
+                } else if (cursorTables.getString(typeIndex).equals("Русская пирамида")) {
                     btnTableHead.setBackgroundResource(R.drawable.bol_pyramide1);
                     btnTableHead.setTextColor(Color.WHITE);
                 }
@@ -253,6 +251,7 @@ public class CommonActivity extends AppCompatActivity implements View.OnClickLis
                         Intent intent = new Intent("tableActivity");
                         // передаем название заголовка
                         intent.putExtra("numTable", numTable);
+                        intent.putExtra("adminName", adminName);
                         startActivity(intent);
                     }
                 });
@@ -267,9 +266,18 @@ public class CommonActivity extends AppCompatActivity implements View.OnClickLis
     private void choseBtnCommon() throws IOException {
         Log.i("Gas", "\n ...//... ");
 
+        dateReserveTomorrow = btnDate.getText().toString();  // Start date
+        Calendar c = Calendar.getInstance();
+        try {
+            c.setTime(Objects.requireNonNull(dateFormat.parse(dateReserveTomorrow)));
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+        c.add(Calendar.DATE, 1);  // number of days to add
+        dateReserveTomorrow = dateFormat.format(c.getTime());  // dt is now the new date
+
         // очищаем таблицу
         clearBtnCommon();
-
 
         // нужно, чтобы при загрузке и при изменении даты показывались данные (подкрашивались кнопки) по времени
         // получаем данные c табл "ORDERS"
@@ -283,29 +291,60 @@ public class CommonActivity extends AppCompatActivity implements View.OnClickLis
             int reserveTimeIndex = cursorOrders.getColumnIndex(DBHelper.KEY_RESERVE_TIME);
             int durationIndex = cursorOrders.getColumnIndex(DBHelper.KEY_DURATION);
             int clientIndex = cursorOrders.getColumnIndex(DBHelper.KEY_CLIENT);
-            int employeeIndex = cursorOrders.getColumnIndex(DBHelper.KEY_EMPLOYEE);
-            int orderDateIndex = cursorOrders.getColumnIndex(DBHelper.KEY_ORDER_DATE);
-            int orderTimeIndex = cursorOrders.getColumnIndex(DBHelper.KEY_ORDER_TIME);
-            int rateIndex = cursorOrders.getColumnIndex(DBHelper.KEY_TARIFF);
-            int descriptionIndex = cursorOrders.getColumnIndex(DBHelper.KEY_DESCRIPTION);
             do {
-                // меняем нужные кнопки
-                // смотрим какой это стол
-                int indexNumTable = cursorOrders.getInt(numTableIndex);
-                // находим кнопку по времени резерва, воспользуемся спец. методом
-                int indexHourTable = indexTimeMethod(cursorOrders.getString(reserveTimeIndex));
-                // т.к. массив начинается с 0, а номера столов с 1 ...
-                // [i-1][j-1], где i-номер стола, j-время
-                btnTable = btnTableTagArray[indexNumTable - 1][indexHourTable];
+                if ((cursorOrders.getString(reserveDateIndex).equals(btnDate.getText().toString()))
+                        || (cursorOrders.getString(reserveDateIndex).equals(dateReserveTomorrow))) {
+                    // меняем нужные кнопки
+                    // смотрим какой это стол
+                    // кооордината по строке
+                    int indexNumTable = cursorOrders.getInt(numTableIndex);
+                    // находим кнопку по времени резерва, воспользуемся спец. методом
+                    // коорината по столбцу
+                    int indexHourTable = indexTimeMethod(cursorOrders.getString(reserveTimeIndex),
+                            cursorOrders.getString(reserveDateIndex));
+                    Log.i("Gas", "indexHourTable = " + indexHourTable);
+                    // т.к. массив начинается с 0, а номера столов с 1 ...
+                    // [i-1][j-1], где i-номер стола, j-время
+                    btnTable = btnTableTagArray[indexNumTable - 1][indexHourTable];
 
-                //  Идем по заказам
-                // находим все заказы на указанный день
-                if (cursorOrders.getString(reserveDateIndex).equals(btnDate.getText().toString())) {
-                    String reserveTime = cursorOrders.getString(reserveTimeIndex);
-                    int durationMinute = cursorOrders.getInt(durationIndex);
-                    String client = cursorOrders.getString(clientIndex);
-                    // красим кнопки
-                    changeBtnCommon(indexNumTable, indexHourTable, reserveTime, durationMinute, client);
+                    Log.i("Gas", "cursorOrders.getString(reserveDateIndex) = " + cursorOrders.getString(reserveDateIndex));
+                    Log.i("Gas", "dateReserveTomorrow = " + dateReserveTomorrow);
+
+                    //  Идем по заказам
+                    // находим все заказы на указанный день
+
+                    // если дата резерва совпадает с ячейкой БД
+                    if (cursorOrders.getString(reserveDateIndex).equals(btnDate.getText().toString())) {
+                        if (indexHourTable < 13) { // если время с 11 по 23
+                            // записываем время с БД в отдельный параметр
+                            String reserveTime = cursorOrders.getString(reserveTimeIndex);
+                            // записываем продолжительность с БД в отдельный параметр
+                            int durationMinute = cursorOrders.getInt(durationIndex);
+                            // записываем клиента с БД в отдельный параметр
+                            String client = cursorOrders.getString(clientIndex);
+
+                            // выбираем кнопку для покраски (красим кнопки)
+                            // передаем туда индексы кнопки в матрице
+                            changeBtnCommon(indexNumTable, indexHourTable, reserveTime, durationMinute, client);
+                        }
+                    } else if (cursorOrders.getString(reserveDateIndex).equals(dateReserveTomorrow)) {
+                        // если следующий день
+                        if (indexHourTable > 12 && indexHourTable < 18) { // если время с 0 по 4
+                            // если врея от 0 до 5 утра (индекс времени от 13 по 17)
+
+                            // записываем время с БД в отдельный параметр
+                            String reserveTime = cursorOrders.getString(reserveTimeIndex);
+                            Log.i("Gas", "reserveTime = " + reserveTime);
+                            // записываем продолжительность с БД в отдельный параметр
+                            int durationMinute = cursorOrders.getInt(durationIndex);
+                            // записываем клиента с БД в отдельный параметр
+                            String client = cursorOrders.getString(clientIndex);
+
+                            // выбираем кнопку для покраски (красим кнопки)
+                            // передаем туда индексы кнопки в матрице
+                            changeBtnCommon(indexNumTable, indexHourTable, reserveTime, durationMinute, client);
+                        }
+                    }
                 }
 
             } while (cursorOrders.moveToNext());
@@ -317,17 +356,12 @@ public class CommonActivity extends AppCompatActivity implements View.OnClickLis
 
     private void changeBtnCommon(int indexNumTable, int indexHourTable,
                                  String reserveTime, int durationMinute, String client) throws IOException {
+//        где-то здесь д.б. условия для правильной покраски кнопки на время после 0 и до 5
+
         int reserveMinute;
         // инициализируем значения
-        LocalTime reserveTimeLoc;
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-            // переводим в локаль время резерва, начала и конца часа
-            reserveTimeLoc = LocalTime.parse(reserveTime);
-            reserveMinute = reserveTimeLoc.getMinute();
-        } else {
-            String[] reserveTimeArr = reserveTime.split(":");
-            reserveMinute = Integer.parseInt(reserveTimeArr[1]);
-        }
+        String[] reserveTimeArr = reserveTime.split(":");
+        reserveMinute = Integer.parseInt(reserveTimeArr[1]);
 
         // получаем входной поток
         InputStream inputStream;
@@ -484,27 +518,17 @@ public class CommonActivity extends AppCompatActivity implements View.OnClickLis
         // загружаем как Drawable
         imageBtnCommon = Drawable.createFromStream(inputStream, null);
         btnTableTagArray[indexNumTable - 1][indexHourTable].setBackgroundDrawable(imageBtnCommon);
-//        btnTableTagArray[indexNumTable - 1][indexHourTable].setText(client);
     }
 
-    private Integer indexTimeMethod(String time) {
-        // метод принимает время и возвращает номер j позиции(=часу) в btnTableTagArray
-        LocalTime timeLoc = null;  // переданное время
+    private Integer indexTimeMethod(String time, String date) {
+        // метод принимает дату и время и возвращает номер j позиции(=часу) в btnTableTagArray
 
         // получили переданный час
-        int hour = 0;
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-            timeLoc = LocalTime.parse(time);
-            hour = timeLoc.getHour();
-        } else {
-            // у нас есть время в виде строки в формате: hh:mm:ss
-            // нам нужно получить часы
-            String[] hourAr = time.split(":");
-            hour = Integer.parseInt(hourAr[0]);
-        }
-        // теперь сравниваем
+        // у нас есть время в виде строки в формате: hh:mm
+        String[] hourAr = time.split(":");
+        int hour = Integer.parseInt(hourAr[0]);
+        // теперь сравниваем, сложная тараканиха по индексу
         int result;
-        // сложная тараканиха по индексу
         if (hour > 10 && hour < 24) result = hour - 11;
         else result = hour + 13;
         return result;
@@ -657,15 +681,16 @@ public class CommonActivity extends AppCompatActivity implements View.OnClickLis
     }
 
     private void datePicker() {
-
         DatePickerDialog datePickerDialog = new DatePickerDialog(this,
                 new DatePickerDialog.OnDateSetListener() {
 
+                    @SuppressLint("SetTextI18n")
                     @Override
                     public void onDateSet(DatePicker view, int year, int monthOfYear, int dayOfMonth) {
                         myYear = year;
                         myMonth = monthOfYear;
                         myDay = dayOfMonth;
+
                         String myMonthSt, myDaySt;
                         if (myMonth < 10) myMonthSt = "0" + (myMonth + 1);
                         else myMonthSt = "" + (myMonth + 1);
@@ -674,6 +699,17 @@ public class CommonActivity extends AppCompatActivity implements View.OnClickLis
 
                         btnDate.setText(myDaySt + "." + myMonthSt + "." + myYear);
                         btnDate1.setText(myDaySt + "." + myMonthSt + "." + myYear);
+
+
+                        dateReserveTomorrow = btnDate.getText().toString();  // Start date
+                        Calendar c = Calendar.getInstance();
+                        try {
+                            c.setTime(Objects.requireNonNull(dateFormat.parse(dateReserveTomorrow)));
+                        } catch (ParseException e) {
+                            e.printStackTrace();
+                        }
+                        c.add(Calendar.DATE, 1);  // number of days to add
+                        dateReserveTomorrow = dateFormat.format(c.getTime());  // dt is now the new date
 
                         try {
                             choseBtnCommon();

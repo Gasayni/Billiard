@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <group android:id="@+id/menugroup1" >
+        <item
+            android:id="@+id/numReserveMenu"
+            android:title="По номеру резерва"/>
+        <item
+            android:id="@+id/numTableMenu"
+            android:title="По номеру стола"/>
+        <item
+            android:id="@+id/dateReserveMenu"
+            android:title="По дате резерва"/>
+        <item
+            android:id="@+id/durationMenu"
+            android:title="По продолжительности игры"/>
+        <item
+            android:id="@+id/clientMenu"
+            android:title="По клиентам"/>
+        <item
+            android:id="@+id/employeeMenu"
+            android:title="По администраторам"/>
+        <item
+            android:id="@+id/dateOrderMenu"
+            android:title="По дате заказа"/>
+        <item
+            android:id="@+id/tariffMenu"
+            android:title="По тарифу"/>
+    </group>
+</menu>

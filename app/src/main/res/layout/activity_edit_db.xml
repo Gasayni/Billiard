@@ -67,7 +67,6 @@
                         android:id="@+id/tvData"
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
-                        android:hint="111"
                         android:textSize="16sp" />
 
                 </LinearLayout>

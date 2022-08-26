@@ -18,15 +18,15 @@ public class DBHelper extends SQLiteOpenHelper {
 
     public static String ORDERS = "orders";
     public static String TABLES = "tables";
-    public static String RATES = "rates";
+    public static String TARIFF = "tariff";
     public static String CLIENTS = "clients";
     public static String EMPLOYEES = "employees";
 
     public static final String KEY_ID = "_id";
+    public static final String KEY_NAME = "name";
     public static final String KEY_NUM_TABLE = "num_table";
     public static final String KEY_TYPE = "type";
     public static final String KEY_STATUS = "status";
-    public static final String KEY_TARIFF = "rate";
     public static final String KEY_RESERVE_TIME = "reserve_time";
     public static final String KEY_DURATION = "duration_minute";
     public static final String KEY_RESERVE_DATE = "reserve_date";
@@ -38,9 +38,8 @@ public class DBHelper extends SQLiteOpenHelper {
     public static final String KEY_ORDER_DATE = "order_date";
 
     public static final String KEY_PRICE = "price";
+    public static final String KEY_TARIFF = "tariff";
     public static final String KEY_RATING = "rating";
-    public static final String KEY_FIRST_NAME = "first_name";
-    public static final String KEY_SECOND_NAME = "second_name";
     public static final String KEY_PHONE = "phone";
     public static final String KEY_ORDERS_COUNT = "orders_count_per_client";
     public static final String KEY_SPENT = "spent";
