@@ -1,10 +1,19 @@
 package com.gas.billiard;
 
+import android.annotation.SuppressLint;
+import android.app.AlertDialog;
 import android.content.ContentValues;
 import android.content.Context;
+import android.content.DialogInterface;
+import android.content.Intent;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.graphics.Color;
 import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.widget.EditText;
+import android.widget.Toast;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -13,18 +22,19 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 
 public class OptionallyClass {
     // БД
     DBHelper dbHelper;
     SQLiteDatabase database;
     ContentValues contentValues;
-    Cursor cursorEmployee, cursorTables, cursorOrders, cursorClients, cursorRates;
-    int idDB, numTableDB, durationMinuteDB;
-    String reserveDateDB, reserveTimeDB, clientDB, employeeDB, orderDateDB, orderTimeDB, tariffDB, descriptionDB, statusDB;
+    Calendar cal = Calendar.getInstance();
+    Cursor cursorEmployee, cursorOrders, cursorClients, cursorTariff;
 
     List<String> adminsList = new ArrayList<>();
     List<String> passList = new ArrayList<>();
+    List<ReserveTable> oldReserveList = new ArrayList<>();
 
     private final SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm", Locale.ENGLISH);
     private final SimpleDateFormat dateFormat = new SimpleDateFormat("dd.MM.yyyy", Locale.ENGLISH);
@@ -59,9 +69,11 @@ public class OptionallyClass {
             // если не задан ни один сотрудника, то м. перейти в настройки его создания
             Log.d("Gas", "0 rows");
         }
+        cursorEmployee.close();
         if (thatReturn.equals("adminsList")) {
             return adminsList;
-        } else return passList;
+        }
+        else return passList;
     }
 
     public List<String> initClient(Context context) {
@@ -82,7 +94,6 @@ public class OptionallyClass {
             int ordersCountIndex = cursorClients.getColumnIndex(DBHelper.KEY_ORDERS_COUNT);
             int spentIndex = cursorClients.getColumnIndex(DBHelper.KEY_SPENT);
             int ratingIndex = cursorClients.getColumnIndex(DBHelper.KEY_RATING);
-            int descriptionIndex = cursorClients.getColumnIndex(DBHelper.KEY_DESCRIPTION);
             do {
                 // находим всех клиентов из бд
                 clientsList.add(cursorClients.getString(nameIndex));
@@ -91,10 +102,42 @@ public class OptionallyClass {
             // если не задан ни один сотрудника, то м. перейти в настройки его создания
             Log.d("Gas", "0 rows");
         }
+        cursorClients.close();
         return clientsList;
     }
 
-    public List<String> initTariff(Context context, String thatReturn) {
+    public String findPhoneClient(Context context, String client) {
+        // работа с БД
+        dbHelper = new DBHelper(context);
+        database = dbHelper.getWritableDatabase();
+        contentValues = new ContentValues();
+        String phone = "";
+
+        // получаем данные c табл "EMPLOYEES"
+        cursorClients = database.query(DBHelper.CLIENTS,
+                null, null, null,
+                null, null, null);
+        if (cursorClients.moveToFirst()) {
+            int nameIndex = cursorClients.getColumnIndex(DBHelper.KEY_NAME);
+            int phoneIndex = cursorClients.getColumnIndex(DBHelper.KEY_PHONE);
+            int ordersCountIndex = cursorClients.getColumnIndex(DBHelper.KEY_ORDERS_COUNT);
+            int spentIndex = cursorClients.getColumnIndex(DBHelper.KEY_SPENT);
+            int ratingIndex = cursorClients.getColumnIndex(DBHelper.KEY_RATING);
+            do {
+                if (client.equals(cursorClients.getString(nameIndex))) {
+                    phone = cursorClients.getString(phoneIndex);
+                }
+            } while (cursorClients.moveToNext());
+        } else {
+            // если не задан ни один сотрудника, то м. перейти в настройки его создания
+            Log.d("Gas", "0 rows");
+        }
+        cursorClients.close();
+        database.close();
+        return phone;
+    }
+
+    public List<String> initTariff(Context context, String whatReturn) {
         // работа с БД
         dbHelper = new DBHelper(context);
         database = dbHelper.getWritableDatabase();
@@ -103,59 +146,51 @@ public class OptionallyClass {
         List<String> tariffList = new ArrayList<>();
 
         // получаем данные c табл "TARIFF"
-        cursorRates = database.query(DBHelper.TARIFF,
+        cursorTariff = database.query(DBHelper.TARIFF,
                 null, null, null,
                 null, null, null);
-        if (cursorRates.moveToFirst()) {
-            int priceIndex = cursorRates.getColumnIndex(DBHelper.KEY_PRICE);
-            int nameIndex = cursorRates.getColumnIndex(DBHelper.KEY_NAME);
+        if (cursorTariff.moveToFirst()) {
+            int priceIndex = cursorTariff.getColumnIndex(DBHelper.KEY_PRICE);
+            int nameIndex = cursorTariff.getColumnIndex(DBHelper.KEY_NAME);
             do {
-                if (thatReturn.equals("tariffList")) {
-                    tariffList.add(cursorRates.getString(nameIndex));
+                if (whatReturn.equals("tariffList")) {
+                    tariffList.add(cursorTariff.getString(nameIndex));
                 }
 
-            } while (cursorRates.moveToNext());
+            } while (cursorTariff.moveToNext());
         } else {
             // если не задан ни один сотрудника, то м. перейти в настройки его создания
             Log.d("Gas", "0 rows");
         }
+        cursorTariff.close();
         return tariffList;
     }
 
-    /*private void initTablesList() {
-        btnNewReserveDate.setTextColor(Color.BLACK);
-        btnNewReserveTime.setTextColor(Color.BLACK);
-        typeNumTableList.clear();
-
-        // получаем данные c табл "TABLES"
-        cursorTables = database.query(DBHelper.TABLES,
+    public int getPriceFromTariff(Context context, String tariff) {
+        // работа с БД
+        dbHelper = new DBHelper(context);
+        database = dbHelper.getWritableDatabase();
+        contentValues = new ContentValues();
+        int price = 0;
+        // получаем данные c табл "TARIFF"
+        cursorTariff = database.query(DBHelper.TARIFF,
                 null, null, null,
                 null, null, null);
-        if (cursorTables.moveToFirst()) {
-            int numTableIndex = cursorTables.getColumnIndex(DBHelper.KEY_ID);
-            int typeTableIndex = cursorTables.getColumnIndex(DBHelper.KEY_TYPE);
+        if (cursorTariff.moveToFirst()) {
+            int priceIndex = cursorTariff.getColumnIndex(DBHelper.KEY_PRICE);
+            int nameIndex = cursorTariff.getColumnIndex(DBHelper.KEY_NAME);
             do {
-                if (choseTypeTable.equals("")) {  // если тип стола не выбран
-                    typeNumTableList.add(cursorTables.getInt(numTableIndex));
-                } else if (cursorTables.getString(typeTableIndex).equals(choseTypeTable)) {
-                    // фильтр по типу столов
-                    Log.i("Gas", "фильтр столов по типу игры проходит");
-                    typeNumTableList.add(cursorTables.getInt(numTableIndex));
+                if (tariff.equals(cursorTariff.getString(nameIndex))) {
+                    price = cursorTariff.getInt(priceIndex);
                 }
-                numTypeTableMap.put(cursorTables.getInt(numTableIndex), cursorTables.getString(typeTableIndex));
-
-            } while (cursorTables.moveToNext());
-            Log.i("Gas4", "typeTableList = " + typeNumTableList);
-
-            // здесь вызываем метод, кот. проведет выборку по времени
-            changeFreeTableTime();
+            } while (cursorTariff.moveToNext());
         } else {
             // если не задан ни один сотрудника, то м. перейти в настройки его создания
             Log.d("Gas", "0 rows");
         }
-        cursorTables.close();
-    }*/ // initTablesList из newOrderActivity надеюсь получиться перенести
-
+        cursorTariff.close();
+        return price;
+    }
 
     // нужно проверить БД на устаревание
     // если дата и время уже прошла, (если не был статус удалить) то меняем статус на old
@@ -164,6 +199,7 @@ public class OptionallyClass {
         dbHelper = new DBHelper(context);
         database = dbHelper.getWritableDatabase();
         contentValues = new ContentValues();
+        oldReserveList.clear();
 
         Log.i("Gas1", "currentDateStr = " + currentDateStr);
 
@@ -182,11 +218,10 @@ public class OptionallyClass {
             int orderDateIndex = cursorOrders.getColumnIndex(DBHelper.KEY_ORDER_DATE);
             int orderTimeIndex = cursorOrders.getColumnIndex(DBHelper.KEY_ORDER_TIME);
             int tariffIndex = cursorOrders.getColumnIndex(DBHelper.KEY_TARIFF);
-            int descriptionIndex = cursorOrders.getColumnIndex(DBHelper.KEY_DESCRIPTION);
             int statusIndex = cursorOrders.getColumnIndex(DBHelper.KEY_STATUS);
             do {
-
                 {
+
                     String reserveDate = cursorOrders.getString(reserveDateIndex);
                     String reserveStartTime = cursorOrders.getString(reserveTimeIndex);
                     try {
@@ -196,18 +231,15 @@ public class OptionallyClass {
                     } catch (ParseException e) {
                         e.printStackTrace();
                     }
-                    Calendar cal = Calendar.getInstance();
                     cal.setTime(reserveStartDateTime);
                     cal.add(Calendar.MINUTE, cursorOrders.getInt(durationIndex));
                     String reserveFinishTimeStr = dateTimeFormat.format(cal.getTime());
                     try {
-                        // из строки в Date
                         reserveFinishDateTime = dateTimeFormat.parse(reserveFinishTimeStr);
-//                        Log.i("Gas1", "reserveStartDateTime = " + reserveStartDateTime);
                     } catch (ParseException e) {
                         e.printStackTrace();
                     }
-                }
+                } // здесь находим время конца резерва
 
                 Log.i("Gas1", "index = " + cursorOrders.getInt(idIndex));
                 Log.i("Gas1", "reserveStartDateTime = " + dateTimeFormat.format(reserveStartDateTime));
@@ -219,20 +251,17 @@ public class OptionallyClass {
                 if ((reserveFinishDateTime.before(new Date())) && (cursorOrders.getString(statusIndex).equals(""))) {
                     // если время уже прошло, то копируем все данные и меняем статус
                     Log.i("Gas1", "make old");
-                    idDB = cursorOrders.getInt(idIndex);
-                    numTableDB = cursorOrders.getInt(numTableIndex);
-                    reserveDateDB = cursorOrders.getString(reserveDateIndex);
-                    reserveTimeDB = cursorOrders.getString(reserveTimeIndex);
-                    durationMinuteDB = cursorOrders.getInt(durationIndex);
-                    clientDB = cursorOrders.getString(clientIndex);
-                    employeeDB = cursorOrders.getString(employeeIndex);
-                    orderDateDB = cursorOrders.getString(orderDateIndex);
-                    orderTimeDB = cursorOrders.getString(orderTimeIndex);
-                    tariffDB = cursorOrders.getString(tariffIndex);
-                    descriptionDB = cursorOrders.getString(descriptionIndex);
-                    statusDB = cursorOrders.getString(statusIndex);
-
-                    changeReserveInDB();
+                    oldReserveList.add(new ReserveTable(
+                            cursorOrders.getInt(idIndex),
+                            cursorOrders.getInt(numTableIndex),
+                            cursorOrders.getString(reserveDateIndex),
+                            cursorOrders.getString(reserveTimeIndex),
+                            cursorOrders.getInt(durationIndex),
+                            cursorOrders.getString(orderDateIndex),
+                            cursorOrders.getString(orderTimeIndex),
+                            cursorOrders.getString(clientIndex),
+                            cursorOrders.getString(employeeIndex),
+                            cursorOrders.getString(tariffIndex)));
                 }
             } while (cursorOrders.moveToNext());
         } else {
@@ -240,24 +269,261 @@ public class OptionallyClass {
             Log.d("Gas", "0 rows");
         }
         cursorOrders.close();
+        database.close();
+        changeReserveInDB();
     }
 
     private void changeReserveInDB() {
-        // если хотим изменить запись, то просто передает тудатот же номер строки
-        database.delete(DBHelper.ORDERS, DBHelper.KEY_ID + "=" + idDB, null);
-        contentValues.put(DBHelper.KEY_ID, idDB);
-        contentValues.put(DBHelper.KEY_NUM_TABLE, numTableDB);
-        contentValues.put(DBHelper.KEY_RESERVE_DATE, reserveDateDB);
-        contentValues.put(DBHelper.KEY_RESERVE_TIME, reserveTimeDB);
-        contentValues.put(DBHelper.KEY_DURATION, durationMinuteDB);
-        contentValues.put(DBHelper.KEY_CLIENT, clientDB);
-        contentValues.put(DBHelper.KEY_EMPLOYEE, employeeDB);
-        contentValues.put(DBHelper.KEY_ORDER_DATE, orderDateDB);
-        contentValues.put(DBHelper.KEY_ORDER_TIME, orderTimeDB);
-        contentValues.put(DBHelper.KEY_TARIFF, tariffDB);
-        contentValues.put(DBHelper.KEY_DESCRIPTION, descriptionDB);
-        contentValues.put(DBHelper.KEY_STATUS, "Old");
+        database = dbHelper.getWritableDatabase();
+        for (int i = 0; i < oldReserveList.size(); i++) {
+            // если хотим изменить запись, то просто передает тудатот же номер строки
+            database.delete(DBHelper.ORDERS, DBHelper.KEY_ID + "=" + oldReserveList.get(i).getIdOrder(), null);
 
-        database.insert(DBHelper.ORDERS, null, contentValues);
+            contentValues.put(DBHelper.KEY_ID, oldReserveList.get(i).getIdOrder());
+            contentValues.put(DBHelper.KEY_NUM_TABLE, oldReserveList.get(i).getNumTable());
+            contentValues.put(DBHelper.KEY_RESERVE_DATE, oldReserveList.get(i).getDateStartReserve());
+            contentValues.put(DBHelper.KEY_RESERVE_TIME, oldReserveList.get(i).getTimeStartReserve());
+            contentValues.put(DBHelper.KEY_DURATION, oldReserveList.get(i).getDuration());
+            contentValues.put(DBHelper.KEY_CLIENT, oldReserveList.get(i).getClient());
+            contentValues.put(DBHelper.KEY_EMPLOYEE, oldReserveList.get(i).getEmployee());
+            contentValues.put(DBHelper.KEY_ORDER_DATE, oldReserveList.get(i).getDateOrder());
+            contentValues.put(DBHelper.KEY_ORDER_TIME, oldReserveList.get(i).getTimeOrder());
+            contentValues.put(DBHelper.KEY_TARIFF, oldReserveList.get(i).getTariff());
+            contentValues.put(DBHelper.KEY_STATUS, "Old");
+
+            database.insert(DBHelper.ORDERS, null, contentValues);
+        }
     }
+
+    // метод перезаписывает в БД "TABLES" изменения
+    public void changeTableInDB(Context context, int numTableDB, String choseTypeTable) {
+        // работа с БД
+        dbHelper = new DBHelper(context);
+        database = dbHelper.getWritableDatabase();
+        contentValues = new ContentValues();
+
+        // если хотим изменить запись, то просто передает туда тот же номер строки
+        database.delete(DBHelper.TABLES, DBHelper.KEY_ID + "=" + numTableDB, null);
+        contentValues.put(DBHelper.KEY_ID, numTableDB);
+        contentValues.put(DBHelper.KEY_TYPE, choseTypeTable);
+
+        database.insert(DBHelper.TABLES, null, contentValues);
+    }
+
+    public void openDialogCreateClient(Context context) {
+        LayoutInflater inflater = LayoutInflater.from(context);
+        View subView = inflater.inflate(R.layout.dialog_create_client_or_employee, null);
+        final EditText etName = (EditText) subView.findViewById(R.id.etName);
+        final EditText etPhone = (EditText) subView.findViewById(R.id.etPhone);
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(context);
+        builder.setTitle("Добавление клиента\n")
+                .setMessage("Введите данные нового клиента")
+                .setView(subView)
+                .setPositiveButton("Добавить", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        final String nameNewClient = etName.getText().toString();
+                        final String phoneNewClient = etPhone.getText().toString();
+
+                        if (nameNewClient.equals("")) {
+                            Toast.makeText(context, "Введите имя клиента", Toast.LENGTH_SHORT).show();
+                            etName.setHintTextColor(Color.RED);
+                        } else {
+                            putClientInDB(context, nameNewClient, phoneNewClient);
+                            Toast.makeText(context, "Клиент добавлен", Toast.LENGTH_SHORT).show();
+
+                            // чтобы БД клиентов сразу обновилась
+                            Intent intent = new Intent(context, EditDBActivity.class);
+                            // передаем название заголовка
+                            intent.putExtra("headName", "Клиенты");
+                            context.startActivity(intent);
+                        }
+                    }
+                })
+                .setNegativeButton("Отмена", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        Toast.makeText(context, "Отмена", Toast.LENGTH_SHORT).show();
+                    }
+                });
+        AlertDialog alert = builder.create();
+        alert.show();
+    }
+
+    private void putClientInDB(Context context, String nameNewClient, String phoneNewClient) {
+        // работа с БД
+        dbHelper = new DBHelper(context);
+        database = dbHelper.getWritableDatabase();
+        contentValues = new ContentValues();
+
+        contentValues.put(DBHelper.KEY_NAME, nameNewClient);
+        contentValues.put(DBHelper.KEY_PHONE, phoneNewClient);
+        contentValues.put(DBHelper.KEY_ORDERS_COUNT, 0);
+        contentValues.put(DBHelper.KEY_SPENT, 0);
+        contentValues.put(DBHelper.KEY_RATING, 0);
+
+
+        database.insert(DBHelper.CLIENTS, null, contentValues);
+    }
+
+    public void openDialogCreateEmployee(Context context) {
+        LayoutInflater inflater = LayoutInflater.from(context);
+        View subView = inflater.inflate(R.layout.dialog_create_client_or_employee, null);
+        final EditText etName = (EditText) subView.findViewById(R.id.etName);
+        final EditText etPhone = (EditText) subView.findViewById(R.id.etPhone);
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(context);
+        builder.setTitle("Добавление Администратора\n")
+                .setMessage("Введите данные нового администратора")
+                .setView(subView)
+                .setPositiveButton("Добавить", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        final String nameNewEmployee = etName.getText().toString();
+                        final String phoneNewEmployee = etPhone.getText().toString();
+
+                        if (nameNewEmployee.equals("")) {
+                            Toast.makeText(context, "Введите имя администратора", Toast.LENGTH_SHORT).show();
+                            etName.setHintTextColor(Color.RED);
+                        } else {
+                            putEmployeeInDB(context, nameNewEmployee, phoneNewEmployee);
+                            Toast.makeText(context, "Администратор добавлен", Toast.LENGTH_SHORT).show();
+
+                            // чтобы БД клиентов сразу обновилась
+                            Intent intent = new Intent(context, EditDBActivity.class);
+                            // передаем название заголовка
+                            intent.putExtra("headName", "Сотрудники");
+                            context.startActivity(intent);
+                        }
+                    }
+                })
+                .setNegativeButton("Отмена", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        Toast.makeText(context, "Отмена", Toast.LENGTH_SHORT).show();
+                    }
+                });
+        AlertDialog alert = builder.create();
+        alert.show();
+    }
+
+    private void putEmployeeInDB(Context context, String nameNewEmployee, String phoneNewEmployee) {
+        // работа с БД
+        dbHelper = new DBHelper(context);
+        database = dbHelper.getWritableDatabase();
+        contentValues = new ContentValues();
+
+        contentValues.put(DBHelper.KEY_NAME, nameNewEmployee);
+        contentValues.put(DBHelper.KEY_PHONE, phoneNewEmployee);
+        contentValues.put(DBHelper.KEY_RATING, 0);
+
+        database.insert(DBHelper.EMPLOYEES, null, contentValues);
+    }
+
+    public void openDialogCreateTariff(Context context) {
+        LayoutInflater inflater = LayoutInflater.from(context);
+        View subView = inflater.inflate(R.layout.dialog_create_tariff, null);
+        final EditText etPrice = (EditText) subView.findViewById(R.id.etPrice);
+        final EditText etTariff = (EditText) subView.findViewById(R.id.etTariff);
+        etPrice.setText("0");
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(context);
+        builder.setTitle("Добавление Тарифа\n")
+                .setMessage("Введите данные нового Тарифа")
+                .setView(subView)
+                .setPositiveButton("Добавить", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        int priceNewTariff = Integer.parseInt(etPrice.getText().toString());
+                        final String nameNewTariff = etTariff.getText().toString();
+                        if (etPrice.getText().toString().equals("")) priceNewTariff = 0;
+
+                        if (nameNewTariff.equals("")) {
+                            Toast.makeText(context, "Введите название тарифа", Toast.LENGTH_SHORT).show();
+                            etTariff.setHintTextColor(Color.RED);
+                        } else {
+                            etTariff.setHintTextColor(Color.BLACK);
+                            putTariffInDB(context, nameNewTariff, priceNewTariff);
+                            Toast.makeText(context, "Тариф добавлен", Toast.LENGTH_SHORT).show();
+
+                            // чтобы БД клиентов сразу обновилась
+                            Intent intent = new Intent(context, EditDBActivity.class);
+                            // передаем название заголовка
+                            intent.putExtra("headName", "Тарифы");
+                            context.startActivity(intent);
+                        }
+                    }
+                })
+                .setNegativeButton("Отмена", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        Toast.makeText(context, "Отмена", Toast.LENGTH_SHORT).show();
+                    }
+                });
+        AlertDialog alert = builder.create();
+        alert.show();
+    }
+
+    private void putTariffInDB(Context context, String nameNewTariff, int priceNewTariff) {
+        // работа с БД
+        dbHelper = new DBHelper(context);
+        database = dbHelper.getWritableDatabase();
+        contentValues = new ContentValues();
+
+        contentValues.put(DBHelper.KEY_NAME, nameNewTariff);
+        contentValues.put(DBHelper.KEY_PRICE, priceNewTariff);
+
+        database.insert(DBHelper.TARIFF, null, contentValues);
+    }
+
+    public String dateFormatMethod(Calendar dateCal) {
+        String myMonthSt, myDaySt;
+        if (dateCal.get(Calendar.MONTH) < 10) myMonthSt = "0" + (dateCal.get(Calendar.MONTH) + 1);
+        else myMonthSt = "" + (dateCal.get(Calendar.MONTH) + 1);
+        if (dateCal.get(Calendar.DAY_OF_MONTH) < 10) myDaySt = "0" + dateCal.get(Calendar.DAY_OF_MONTH);
+        else myDaySt = "" + dateCal.get(Calendar.DAY_OF_MONTH);
+
+        return myDaySt + "." + myMonthSt + "." + dateCal.get(Calendar.YEAR);
+    }
+
+    public String timeFormatMethod(Calendar dateCal) {
+        String hourReserveSt, minuteReserveSt;
+
+        if (dateCal.get(Calendar.HOUR_OF_DAY) < 10) hourReserveSt = "0" + dateCal.get(Calendar.HOUR_OF_DAY);
+        else hourReserveSt = "" + dateCal.get(Calendar.HOUR_OF_DAY);
+        if (dateCal.get(Calendar.MINUTE) < 10) minuteReserveSt = "0" + dateCal.get(Calendar.MINUTE);
+        else minuteReserveSt = "" + dateCal.get(Calendar.MINUTE);
+
+        return hourReserveSt + ":" + minuteReserveSt;
+    }
+
+    public int checkLeftEndWorkMinute(int durationNewReserve) {
+        // посчитаем сколько времени осталось до конца рабочего дня
+        Calendar currentDateCalendar = Calendar.getInstance();
+        Calendar endWorkTimeCalendar = Calendar.getInstance();
+        if (endWorkTimeCalendar.get(Calendar.HOUR_OF_DAY) >= 5) {
+            // если не полночь, а день, то окончание работы завтра в 5 утра
+            endWorkTimeCalendar.add(Calendar.DATE, 1);  // number of days to add
+            Log.i("gas4", "Прибавили день");
+        }
+        try {
+            endWorkTimeCalendar.setTime(Objects.requireNonNull(dateTimeFormat.parse(
+                    endWorkTimeCalendar.get(Calendar.DAY_OF_MONTH) + "." + (endWorkTimeCalendar.get(Calendar.MONTH) + 1) + "." +
+                            endWorkTimeCalendar.get(Calendar.YEAR) + " 05:00")));
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+        @SuppressLint("DefaultLocale")
+        int leftEndWorkMinute = Integer.parseInt(String.format("%.0f",(
+                endWorkTimeCalendar.getTimeInMillis() - currentDateCalendar.getTimeInMillis()) / (1000d * 60)));
+        Log.i("gas4", "leftEndWorkMinute = " + leftEndWorkMinute);
+
+        // если длительность превышает режим работы бильярдной
+        if (durationNewReserve > leftEndWorkMinute) durationNewReserve = leftEndWorkMinute;
+
+        return durationNewReserve;
+    }
+
+
 }

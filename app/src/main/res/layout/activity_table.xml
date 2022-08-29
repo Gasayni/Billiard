@@ -70,8 +70,8 @@
                 android:layout_below="@id/tvTypeTable"
                 android:layout_marginTop="32dp"
                 android:gravity="center"
-                android:textColor="@color/black"
                 android:hint="Клиент:  "
+                android:textColor="@color/black"
                 android:textSize="20sp" />
 
             <LinearLayout
@@ -211,6 +211,14 @@
                         android:textSize="16sp" />
 
                     <TextView
+                        android:id="@+id/tvTimeEndGame"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:hint="Конец игры: __:__"
+                        android:textColor="@color/black"
+                        android:textSize="16sp" />
+
+                    <TextView
                         android:id="@+id/tvCurrentGameDuration"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
@@ -229,6 +237,7 @@
                 android:layout_below="@id/linCommon"
                 android:layout_alignParentRight="true"
                 android:layout_marginTop="8dp"
+                android:textColor="@color/black"
                 android:background="@drawable/btn_style_1"
                 android:text="Показать все резервы"
                 android:textSize="16dp" />

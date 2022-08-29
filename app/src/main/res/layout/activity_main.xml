@@ -20,7 +20,7 @@
     <AutoCompleteTextView
         android:id="@+id/actvAdmin"
         android:layout_width="wrap_content"
-        android:layout_height="40dp"
+        android:layout_height="wrap_content"
         android:layout_below="@id/tvAdmin"
         android:layout_centerHorizontal="true"
         android:layout_marginTop="16dp"
@@ -47,7 +47,7 @@
     <EditText
         android:id="@+id/etPas"
         android:layout_width="wrap_content"
-        android:layout_height="40dp"
+        android:layout_height="wrap_content"
         android:layout_below="@id/tvPass"
         android:layout_centerHorizontal="true"
         android:layout_marginTop="16dp"

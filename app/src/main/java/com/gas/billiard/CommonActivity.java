@@ -49,7 +49,7 @@ public class CommonActivity extends AppCompatActivity implements View.OnClickLis
     List<Button> btnTableHeadTagsList = new ArrayList<>();
     List<Button> btnTimeTagsList = new ArrayList<>();
     Button[][] btnTableTagArray = new Button[tableCount][hourCount];
-    String adminName = "";
+    String getAdminName;
 
     // БД
     DBHelper dbHelper;
@@ -86,7 +86,8 @@ public class CommonActivity extends AppCompatActivity implements View.OnClickLis
 
 
         Intent getIntent = getIntent();
-        adminName = getIntent.getStringExtra("adminName");
+        getAdminName = getIntent.getStringExtra("adminName");
+        Log.i("Gas4", "getAdminName in Common = " + getAdminName);
 
         // работа с БД
         dbHelper = new DBHelper(this);
@@ -167,7 +168,7 @@ public class CommonActivity extends AppCompatActivity implements View.OnClickLis
             case R.id.setting: {
                 intent = new Intent("settingActivity");
                 // передаем имя админа (взависимости от переданного имени, разные права доступа)
-                intent.putExtra("adminName", adminName);
+                intent.putExtra("adminName", getAdminName);
                 startActivity(intent);
                 break;
             }
@@ -184,7 +185,8 @@ public class CommonActivity extends AppCompatActivity implements View.OnClickLis
             case R.id.btnAdd: {
                 intent = new Intent("newOrderActivity");
                 intent.putExtra("whoCall", "commonActivity");
-                intent.putExtra("adminName", adminName);
+                intent.putExtra("adminName", getAdminName);
+                intent.putExtra("type", "");
                 startActivity(intent);
                 // при добавлении нового резерва, также нужно обновить таблицу резерва
                 break;
@@ -225,14 +227,12 @@ public class CommonActivity extends AppCompatActivity implements View.OnClickLis
             }
         });
 
-        // получаем данные c табл "tables"
         cursorTables = database.query(DBHelper.TABLES,
                 null, null, null,
                 null, null, null);
         if (cursorTables.moveToFirst()) {
             int numberTableIndex = cursorTables.getColumnIndex(DBHelper.KEY_ID);
             int typeIndex = cursorTables.getColumnIndex(DBHelper.KEY_TYPE);
-            int descriptionIndex = cursorTables.getColumnIndex(DBHelper.KEY_DESCRIPTION);
             do {
                 // инициализируем каждую кнопку шапки стола
                 int numTable = cursorTables.getInt(numberTableIndex);
@@ -251,7 +251,7 @@ public class CommonActivity extends AppCompatActivity implements View.OnClickLis
                         Intent intent = new Intent("tableActivity");
                         // передаем название заголовка
                         intent.putExtra("numTable", numTable);
-                        intent.putExtra("adminName", adminName);
+                        intent.putExtra("adminName", getAdminName);
                         startActivity(intent);
                     }
                 });
@@ -281,6 +281,7 @@ public class CommonActivity extends AppCompatActivity implements View.OnClickLis
 
         // нужно, чтобы при загрузке и при изменении даты показывались данные (подкрашивались кнопки) по времени
         // получаем данные c табл "ORDERS"
+//        String selection = "NOT " + DBHelper.KEY_STATUS + " = \'deleted\'";
         cursorOrders = database.query(DBHelper.ORDERS,
                 null, null, null,
                 null, null, null);
@@ -546,7 +547,12 @@ public class CommonActivity extends AppCompatActivity implements View.OnClickLis
 
         btnDate.setTag("btnChoseDate");
         // задаем сегодняшнюю дату
-        btnDate.setText(dateFormat.format(new Date()));
+        // если новая дата, но время до 5 утра, то показывается вчерашняя дата
+        Calendar dayCalendar = Calendar.getInstance();
+        if (dayCalendar.get(Calendar.HOUR_OF_DAY) < 5) {
+            dayCalendar.add(Calendar.DATE, -1);  // number of days to add
+        }
+        btnDate.setText(option.dateFormatMethod(dayCalendar));
         btnDate.setTextSize(14);
         btnDate.setBackgroundResource(R.drawable.btn_style_2);
 
@@ -565,12 +571,10 @@ public class CommonActivity extends AppCompatActivity implements View.OnClickLis
             btnTableHead.setText((i + 1) + "");
             btnTableHead.setTextSize(10);
 
-//            marginBtnTable = (LinearLayout.LayoutParams) btnTableHead.getLayoutParams();
-//            marginBtnTable.setMargins(0, 0, marginLength, 0);
-
             linTableHead.addView(btnTableHead);
-        }
 
+            // ищи btnTableHead.setOnClickListener
+        }
 
         btnDate1 = new Button(linTableHead.getContext());
         btnDate1.setLayoutParams(new LinearLayout.LayoutParams(
@@ -579,7 +583,7 @@ public class CommonActivity extends AppCompatActivity implements View.OnClickLis
 
         btnDate1.setTag("btnChoseDate1");
         // задаем сегодняшнюю дату
-        btnDate1.setText(dateFormat.format(new Date()));
+        btnDate1.setText(btnDate.getText());
         btnDate1.setTextSize(14);
         btnDate1.setBackgroundResource(R.drawable.btn_style_2);
 

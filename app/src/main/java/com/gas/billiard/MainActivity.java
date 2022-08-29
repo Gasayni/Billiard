@@ -51,10 +51,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             return false;
         });
         actvAdmin.setAdapter(adapter);
-        actvAdmin.setText("Алена");   // проверка
+//        actvAdmin.setText("Алена Водонаева");   // проверка
 
         etPas = findViewById(R.id.etPas);
-        etPas.setText("1111");        // проверка
+//        etPas.setText("1111");        // проверка
 
         btnEnter = findViewById(R.id.btnEnter);
         btnEnter.setOnClickListener(this);

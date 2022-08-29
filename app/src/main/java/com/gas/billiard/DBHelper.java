@@ -30,7 +30,6 @@ public class DBHelper extends SQLiteOpenHelper {
     public static final String KEY_RESERVE_TIME = "reserve_time";
     public static final String KEY_DURATION = "duration_minute";
     public static final String KEY_RESERVE_DATE = "reserve_date";
-    public static final String KEY_DESCRIPTION = "description";
 
     public static final String KEY_EMPLOYEE = "employee";
     public static final String KEY_CLIENT = "client";

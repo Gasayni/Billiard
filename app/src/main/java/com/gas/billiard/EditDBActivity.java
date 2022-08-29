@@ -9,16 +9,21 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Color;
+import android.graphics.Typeface;
+import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.widget.SwitchCompat;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.Button;
+import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.NumberPicker;
@@ -29,19 +34,23 @@ import android.widget.Toast;
 import java.util.ArrayList;
 import java.util.List;
 
-public class EditDBActivity extends AppCompatActivity implements View.OnClickListener {
+public class EditDBActivity extends AppCompatActivity implements CompoundButton.OnCheckedChangeListener, View.OnClickListener {
     OptionallyClass optionallyClass = new OptionallyClass();
     LinearLayout linColumns;
     Button btnColumns, btnAdd, btnDelete, btnChange;
-    TextView tvHead, tvData;
+    TextView tvHead, tvData, tvPyramid, tvPool;
+    Typeface boldTypeface = Typeface.defaultFromStyle(Typeface.BOLD);
+    Typeface normalTypeface = Typeface.defaultFromStyle(Typeface.NORMAL);
+    String choseTypeTable = "Русская пирамида";
+
     private List<String> nameBtnColumns = new ArrayList<>();
     private List<Button> btnColumnsTagsList = new ArrayList<>();
-    private int marginLength, numReserveDB, numTableDB, durationMinuteDB;
-    private String typeDB, dateDB, timeDB, clientDB;
+    private int marginLength, numberRowDB, numTableDB, durationMinuteDB, ordersCountDB, spentDB, ratingDB, priceDB;
+    private String typeDB, dateDB, timeDB, clientDB, nameDB, phoneDB, tariffDB;
     String choseStr;
     AutoCompleteTextView actvChose;
     List<Button> getBtnColumnsTagsList = new ArrayList<>();
-    boolean findReserveFlag;
+    boolean findClientFlag, findEmployeeFlag, findReserveFlag, findTariffFlag;
 
     List<String> adminsList = new ArrayList<>();
     List<String> clientsList = new ArrayList<>();
@@ -51,8 +60,8 @@ public class EditDBActivity extends AppCompatActivity implements View.OnClickLis
     DBHelper dbHelper;
     SQLiteDatabase database;
     ContentValues contentValues;
-    Cursor cursorTABLE_DB, cursorOrders, cursorTables;
-    private String TABLE_DB;
+    Cursor cursorTABLE_DB, cursorOrders, cursorTables, cursorClient, cursorEmployee, cursorTariff;
+    private String TABLE_DB, getAdminName;
 
     String sortTableName;
     int getFilterNumTable;
@@ -71,9 +80,10 @@ public class EditDBActivity extends AppCompatActivity implements View.OnClickLis
         dbHelper = new DBHelper(this);
         database = dbHelper.getWritableDatabase();
         contentValues = new ContentValues();
-        tvData = findViewById(R.id.tvData);
 
+        tvData = findViewById(R.id.tvData);
         tvHead = findViewById(R.id.tvHead);
+
         btnDelete = findViewById(R.id.btnDelete);
         btnDelete.setOnClickListener(this);
         btnAdd = findViewById(R.id.btnAdd);
@@ -85,25 +95,37 @@ public class EditDBActivity extends AppCompatActivity implements View.OnClickLis
         Intent getIntent = getIntent();
         tvHead.setText(getIntent.getStringExtra("headName"));
         getFilterNumTable = getIntent.getIntExtra("getFilterNumTable", -1);
+        getAdminName = getIntent.getStringExtra("adminName");
+        Log.i("Gas4", "getAdminName in Edit = " + getAdminName);
 
         addBtnColumns();
 
-        Log.i("Gas6", "getFilterNumTable = " + getFilterNumTable);
-        // здесь будет фильтр по столам, если фильтр вызвали
-        if (getFilterNumTable == -1) {
-            selection = DBHelper.KEY_STATUS + " = \'\'";
-            editBtnColumns(columnsArr, selection, null, null, null, DBHelper.KEY_ID);
-        } else {
-            selection = DBHelper.KEY_NUM_TABLE + " = " + getFilterNumTable;
-            editBtnColumns(columnsArr, selection, null, null, null, null);
-        }
-
-        if (tvHead.getText().toString().equals("Столы")) {
+        if (tvHead.getText().toString().equals("Резервы")) {
+            Log.i("Gas6", "getFilterNumTable = " + getFilterNumTable);
+            // здесь будет фильтр по столам, если в getFilterNumTable передали номер стола
+            if (getFilterNumTable == -1) {
+                selection = DBHelper.KEY_STATUS + " = \'\'";
+                editBtnColumns(columnsArr, selection, null, null, null, DBHelper.KEY_ID);
+            } else {
+                selection = DBHelper.KEY_NUM_TABLE + " = " + getFilterNumTable + " AND " + DBHelper.KEY_STATUS + " = \'\'";
+                editBtnColumns(columnsArr, selection, null, null, null, null);
+            }
+        } else if (tvHead.getText().toString().equals("Столы")) {
             Log.i("Gas5", "Столы столы");
+            // прячем ненужные кнопки
             btnAdd.setVisibility(View.INVISIBLE);
             btnDelete.setVisibility(View.INVISIBLE);
+            editBtnColumns(null, null, null, null, null, DBHelper.KEY_ID);
+        } else if (tvHead.getText().toString().equals("Клиенты")) {
+            editBtnColumns(null, null, null, null, null, DBHelper.KEY_ID);
+        } else if (tvHead.getText().toString().equals("Сотрудники")) {
+            editBtnColumns(null, null, null, null, null, DBHelper.KEY_ID);
+        } else if (tvHead.getText().toString().equals("Тарифы")) {
+            editBtnColumns(null, null, null, null, null, DBHelper.KEY_ID);
         }
     }
+
+    @SuppressLint("NonConstantResourceId")
     @Override
     public void onClick(View view) {
         Intent intent;
@@ -112,62 +134,121 @@ public class EditDBActivity extends AppCompatActivity implements View.OnClickLis
             case R.id.btnAdd: {
                 if (tvHead.getText().toString().equals("Резервы")) {
                     intent = new Intent("newOrderActivity");
+                    intent.putExtra("whoCall", "editDBActivity_add");
+                    intent.putExtra("adminName", getAdminName);
                     startActivity(intent);
+                }
+                if (tvHead.getText().toString().equals("Клиенты")) {
+                    optionallyClass.openDialogCreateClient(this);
+                }
+                if (tvHead.getText().toString().equals("Сотрудники")) {
+                    optionallyClass.openDialogCreateEmployee(this);
+                }
+                if (tvHead.getText().toString().equals("Тарифы")) {
+                    optionallyClass.openDialogCreateTariff(this);
                 }
                 break;
             }
             case R.id.btnDelete: {
                 if (tvHead.getText().toString().equals("Резервы")) {
-                    openDialogDeleteReserve();
+                    openDialogDelete("Резервы");
+                } else if (tvHead.getText().toString().equals("Клиенты")) {
+                    openDialogDelete("Клиенты");
+                } else if (tvHead.getText().toString().equals("Сотрудники")) {
+                    openDialogDelete("Сотрудники");
+                } else if (tvHead.getText().toString().equals("Тарифы")) {
+                    openDialogDelete("Тарифы");
                 }
                 break;
             }
             case R.id.btnChange: {
                 if (tvHead.getText().toString().equals("Резервы")) {
-                    openDialogChangeReserve(view);
+                    openDialogChangeReserve();
+                } else if (tvHead.getText().toString().equals("Столы")) {
+                    openDialogChangeTable();
+                } else if (tvHead.getText().toString().equals("Клиенты")) {
+                    openDialogTakeDataChangeClient();
+                } else if (tvHead.getText().toString().equals("Сотрудники")) {
+                    openDialogTakeDataChangeEmployee();
+                } else if (tvHead.getText().toString().equals("Тарифы")) {
+                    openDialogTakeDataChangeTariff();
                 }
                 break;
             }
         }
     }
 
+    @Override
+    public void onBackPressed() {
+        Intent intent;
+        intent = new Intent(EditDBActivity.this, CommonActivity.class);
+        startActivity(intent);
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.menu_items, menu);
+        return true;
+    }
+
+    @SuppressLint("NonConstantResourceId")
+    @Override
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        Intent intent;
+        switch (item.getItemId()) {
+            // переключаемся на редактор резерва
+            case R.id.clients: {
+                intent = new Intent("editDBActivity");
+                // передаем название заголовка
+                intent.putExtra("headName", "Клиенты");
+                startActivity(intent);
+                break;
+            }
+            case R.id.reserves: {
+                intent = new Intent("editDBActivity");
+                // передаем название заголовка
+                intent.putExtra("headName", "Резервы");
+                intent.putExtra("adminName", getAdminName);
+                startActivity(intent);
+                break;
+            }
+            case R.id.setting: {
+                intent = new Intent("settingActivity");
+                startActivity(intent);
+                break;
+            }
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+    // метод отрисовывает кнопки сортировки и фильтрации и прочих в шапке
     public void addBtnColumns() {
-        // сначала отрисуем кнопки шапки часов
+        // сначала отрисуем кнопки шапки
         marginLength = optionallyClass.convertDpToPixels(this, 2);
 
         linColumns = findViewById(R.id.linHead);
-
+        nameBtnColumns.add("Сортировка");
+        nameBtnColumns.add("Фильтр");
+        // если нужны дополнительные кнопки, то добавляем к листу еще с названиями
         switch (tvHead.getText().toString()) {
             case "Тарифы": {
                 TABLE_DB = DBHelper.TARIFF;
-                nameBtnColumns.add("Цена / ч");
-                nameBtnColumns.add("Тип скидки");
                 break;
             }
             case "Столы": {
                 TABLE_DB = DBHelper.TABLES;
-                nameBtnColumns.add("Стол");
-                nameBtnColumns.add("Тип игры");
                 break;
             }
             case "Сотрудники": {
                 TABLE_DB = DBHelper.EMPLOYEES;
-                nameBtnColumns.add("ФИО");
-                nameBtnColumns.add("Рейтинг");
                 break;
             }
             case "Клиенты": {
                 TABLE_DB = DBHelper.CLIENTS;
-                nameBtnColumns.add("ФИО");
-                nameBtnColumns.add("Заказы");
-                nameBtnColumns.add("Сумма");
-                nameBtnColumns.add("Рейтинг");
                 break;
             }
             case "Резервы": {
                 TABLE_DB = DBHelper.ORDERS;
-                nameBtnColumns.add("Сортировка");
-                nameBtnColumns.add("Фильтр");
                 nameBtnColumns.add("Все резервы");
                 break;
             }
@@ -183,6 +264,7 @@ public class EditDBActivity extends AppCompatActivity implements View.OnClickLis
                     optionallyClass.convertDpToPixels(this, 30)));
             LinearLayout.LayoutParams marginBtnTable = (LinearLayout.LayoutParams) btnColumns.getLayoutParams();
 
+            // здесь особые кнопки сортировки и фильтации и другие (else)
             if (btnColumns.getTag().equals("btnColumns1")) {
                 btnColumns.setBackgroundResource(R.drawable.sort_icon);
                 marginBtnTable.setMargins(0, 0, (marginLength * 3), 0);
@@ -213,6 +295,7 @@ public class EditDBActivity extends AppCompatActivity implements View.OnClickLis
 
     }
 
+    // метод отрабатывает нажатия кнопок сорт и фильтра и прочих в шапке
     private void onClickSortMethod(Button btnColumns) {
         btnColumns.setOnClickListener(new View.OnClickListener() {
             public void onClick(View view) {
@@ -231,29 +314,31 @@ public class EditDBActivity extends AppCompatActivity implements View.OnClickLis
                     }
                     case "Столы": {
                         if (btnColumns.getTag().equals("btnColumns1")) {
+                            // Нажата Кнопка "Сортировка"
                             sortTableName = DBHelper.KEY_ID;
                         } else if (btnColumns.getTag().equals("btnColumns2")) {
+                            // Нажата Кнопка "Фильтр"
                             sortTableName = DBHelper.KEY_TYPE;
                         }
                         break;
                     }
                     case "Сотрудники": {
                         if (btnColumns.getTag().equals("btnColumns1")) {
+                            // Нажата Кнопка "Сортировка"
                             sortTableName = DBHelper.KEY_NAME;
                         } else if (btnColumns.getTag().equals("btnColumns2")) {
+                            // Нажата Кнопка "Фильтр"
                             sortTableName = DBHelper.KEY_RATING;
                         }
                         break;
                     }
                     case "Клиенты": {
                         if (btnColumns.getTag().equals("btnColumns1")) {
-                            sortTableName = DBHelper.KEY_NAME;
+                            // Нажата Кнопка "Сортировка"
+                            showSortClientPopupMenu(btnColumns);
                         } else if (btnColumns.getTag().equals("btnColumns2")) {
-                            sortTableName = DBHelper.KEY_ORDERS_COUNT;
-                        } else if (btnColumns.getTag().equals("btnColumns3")) {
-                            sortTableName = DBHelper.KEY_SPENT;
-                        } else if (btnColumns.getTag().equals("btnColumns4")) {
-                            sortTableName = DBHelper.KEY_RATING;
+                            // Нажата Кнопка "Фильтр"
+                            showFilterClientPopupMenu(btnColumns);
                         }
                         break;
                     }
@@ -276,6 +361,7 @@ public class EditDBActivity extends AppCompatActivity implements View.OnClickLis
         });
     }
 
+    // метод обрабатывает нажатия кнопок из всплывающего меню (Сортировка резервов)
     private void showSortReserveTablePopupMenu(View v) {
         PopupMenu popupMenu = new PopupMenu(this, v);
         popupMenu.inflate(R.menu.sort_reserve_table_popup_menu);
@@ -326,6 +412,7 @@ public class EditDBActivity extends AppCompatActivity implements View.OnClickLis
         popupMenu.show();
     }
 
+    // метод обрабатывает нажатия кнопок из всплывающего меню (Фильтр резервов)
     private void showFilterReserveTablePopupMenu(View v) {
         PopupMenu popupMenu = new PopupMenu(this, v);
         popupMenu.inflate(R.menu.filter_reserve_table_popup_menu);
@@ -340,7 +427,6 @@ public class EditDBActivity extends AppCompatActivity implements View.OnClickLis
                         openDialogChoseTable();
                         return true;
                     case R.id.dateReserveMenu:
-
                         sortTableName = DBHelper.KEY_RESERVE_DATE;
                         editBtnColumns(columnsArr, null, null, null, null, sortTableName);
                         return true;
@@ -374,6 +460,65 @@ public class EditDBActivity extends AppCompatActivity implements View.OnClickLis
         popupMenu.show();
     }
 
+    // метод обрабатывает нажатия кнопок из всплывающего меню (Сортировка клиентов)
+    private void showSortClientPopupMenu(View v) {
+        PopupMenu popupMenu = new PopupMenu(this, v);
+        popupMenu.inflate(R.menu.sort_client_popup_menu);
+        popupMenu.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
+            @SuppressLint("NonConstantResourceId")
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                switch (item.getItemId()) {
+                    case R.id.nameMenu:
+                        // здесь будет сортировка по клиентам
+                        sortTableName = DBHelper.KEY_NAME;
+                        editBtnColumns(null, null, null, null, null, sortTableName);
+                        return true;
+                    case R.id.ordersCountMenu:
+                        sortTableName = DBHelper.KEY_ORDERS_COUNT + " DESC";
+                        editBtnColumns(null, null, null, null, null, sortTableName);
+                        return true;
+                    case R.id.spentMenu:
+                        sortTableName = DBHelper.KEY_SPENT + " DESC";
+                        editBtnColumns(null, null, null, null, null, sortTableName);
+                        return true;
+                    case R.id.ratingMenu:
+                        sortTableName = DBHelper.KEY_RATING + " DESC";
+                        editBtnColumns(null, null, null, null, null, sortTableName);
+                        return true;
+                    default: {
+                        return false;
+                    }
+                }
+            }
+        });
+        popupMenu.show();
+    }
+
+    // метод обрабатывает нажатия кнопок из всплывающего меню (Фильтр резервов)
+    private void showFilterClientPopupMenu(View v) {
+        PopupMenu popupMenu = new PopupMenu(this, v);
+        popupMenu.inflate(R.menu.filter_client_popup_menu);
+        popupMenu.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
+            @SuppressLint("NonConstantResourceId")
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                switch (item.getItemId()) {
+                    case R.id.nameMenu:
+                        clientsList = optionallyClass.initClient(EditDBActivity.this);
+                        Log.i("Gas", "clientsList = " + clientsList);
+                        openDialogActvChose(clientsList, "Table Client Name");
+                        return true;
+                    default: {
+                        return false;
+                    }
+                }
+            }
+        });
+        popupMenu.show();
+    }
+
+    // метод вызывает диалоговое окно выбора стола (для фильтации)
     public void openDialogChoseTable() {
         final Dialog dialog = new Dialog(EditDBActivity.this);
         dialog.setContentView(R.layout.dialog_number_picker);
@@ -397,7 +542,7 @@ public class EditDBActivity extends AppCompatActivity implements View.OnClickLis
         dialog.show();
     }
 
-
+    // метод формирует список данных БД (общий формат)
     public void editBtnColumns(String[] column, String selection, String[] selectionArgs,
                                String groupBy, String having, String orderBy) {
         // очищаем сначала
@@ -406,7 +551,7 @@ public class EditDBActivity extends AppCompatActivity implements View.OnClickLis
         int idIndex = 0, priceIndex = 0, ratingIndex = 0, spentIndex = 0, ordersIndex = 0, phoneIndex = 0,
                 nameIndex = 0, tariffIndex = 0, numTableIndex = 0, reserveDateIndex = 0,
                 reserveTimeIndex = 0, durationIndex = 0, clientIndex = 0, employeeIndex = 0, dateOrderIndex = 0,
-                timeOrderIndex = 0, typeIndex = 0, descriptionIndex = 0, statusIndex = 0;
+                timeOrderIndex = 0, typeIndex = 0, statusIndex = 0;
 
         // получаем данные c табл выбранной таблицы
         cursorTABLE_DB = database.query(TABLE_DB, column, selection, selectionArgs, groupBy, having, orderBy);
@@ -417,7 +562,7 @@ public class EditDBActivity extends AppCompatActivity implements View.OnClickLis
                 // здесь мы инициализируем
                 case "Тарифы": {
                     priceIndex = cursorTABLE_DB.getColumnIndex(DBHelper.KEY_PRICE);
-                    nameIndex = cursorTABLE_DB.getColumnIndex(DBHelper.KEY_NAME);
+                    tariffIndex = cursorTABLE_DB.getColumnIndex(DBHelper.KEY_NAME);
                     break;
                 }
                 case "Столы": {
@@ -428,7 +573,6 @@ public class EditDBActivity extends AppCompatActivity implements View.OnClickLis
                     nameIndex = cursorTABLE_DB.getColumnIndex(DBHelper.KEY_NAME);
                     phoneIndex = cursorTABLE_DB.getColumnIndex(DBHelper.KEY_PHONE);
                     ratingIndex = cursorTABLE_DB.getColumnIndex(DBHelper.KEY_RATING);
-                    descriptionIndex = cursorTABLE_DB.getColumnIndex(DBHelper.KEY_DESCRIPTION);
                     break;
                 }
                 case "Клиенты": {
@@ -437,7 +581,6 @@ public class EditDBActivity extends AppCompatActivity implements View.OnClickLis
                     ordersIndex = cursorTABLE_DB.getColumnIndex(DBHelper.KEY_ORDERS_COUNT);
                     spentIndex = cursorTABLE_DB.getColumnIndex(DBHelper.KEY_SPENT);
                     ratingIndex = cursorTABLE_DB.getColumnIndex(DBHelper.KEY_RATING);
-                    descriptionIndex = cursorTABLE_DB.getColumnIndex(DBHelper.KEY_DESCRIPTION);
                     break;
                 }
                 case "Резервы": {
@@ -450,7 +593,7 @@ public class EditDBActivity extends AppCompatActivity implements View.OnClickLis
                     dateOrderIndex = cursorTABLE_DB.getColumnIndex(DBHelper.KEY_ORDER_DATE);
                     timeOrderIndex = cursorTABLE_DB.getColumnIndex(DBHelper.KEY_ORDER_TIME);
                     tariffIndex = cursorTABLE_DB.getColumnIndex(DBHelper.KEY_TARIFF);
-//                    statusIndex = cursorTABLE_DB.getColumnIndex(DBHelper.KEY_STATUS);
+                    statusIndex = cursorTABLE_DB.getColumnIndex(DBHelper.KEY_STATUS);
                     break;
                 }
             }
@@ -460,66 +603,64 @@ public class EditDBActivity extends AppCompatActivity implements View.OnClickLis
                 // здесь мы выводим все
                 switch (tvHead.getText().toString()) {
                     case "Тарифы": {
-                        s.append("\n" + cursorTABLE_DB.getInt(idIndex))
-                                .append(".\t\t" + cursorTABLE_DB.getInt(priceIndex))
-                                .append("\t\t" + cursorTABLE_DB.getString(tariffIndex));
+                        s.append("\n" + String.format("%-7s", cursorTABLE_DB.getInt(idIndex) + "."))
+                                .append("Цена: " + String.format("%-10s", cursorTABLE_DB.getInt(priceIndex)))
+                                .append("Тариф: " + cursorTABLE_DB.getString(tariffIndex));
                         break;
                     }
                     case "Столы": {
-                        s.append("\n" + cursorTABLE_DB.getInt(idIndex))
-                                .append(".\t\t" + cursorTABLE_DB.getString(typeIndex));
+                        s.append("\n" + String.format("%-7s", cursorTABLE_DB.getInt(idIndex) + "."))
+                                .append(cursorTABLE_DB.getString(typeIndex));
                         break;
                     }
                     case "Сотрудники": {
-                        s.append("\n" + cursorTABLE_DB.getInt(idIndex))
-                                .append("\t" + cursorTABLE_DB.getString(nameIndex))
-                                .append("\t\t\t\t" + cursorTABLE_DB.getString(phoneIndex))
-                                .append("\t\t\t\tРейтинг: " + cursorTABLE_DB.getInt(ratingIndex));
-//                                .append("\t\tРейтинг " + cursorTableDb.getInt(ratingIndex))
-//                                .append("\t\t(" + cursorTableDb.getString(descriptionIndex) + ")")
+                        s.append("\n" + String.format("%-7s", cursorTABLE_DB.getInt(idIndex) + "."))
+                                .append(String.format("%-26s", cursorTABLE_DB.getString(nameIndex)))
+                                .append("Тел: " + String.format("%-16s", cursorTABLE_DB.getString(phoneIndex)))
+                                .append("Рейтинг: " + cursorTABLE_DB.getInt(ratingIndex));
                         break;
                     }
                     case "Клиенты": {
-                        s.append("\n" + cursorTABLE_DB.getInt(idIndex))
-                                .append("\t" + cursorTABLE_DB.getString(nameIndex))
-                                .append("\t\t\t\t" + cursorTABLE_DB.getString(phoneIndex))
-                                .append("\t\t\t\tЗаказов: " + cursorTABLE_DB.getInt(ordersIndex))
-                                .append("\t\t\t\tПотратил: " + cursorTABLE_DB.getInt(spentIndex))
-                                .append("\t\t\t\tРейтинг: " + cursorTABLE_DB.getInt(ratingIndex));
-//                                .append("\t\tРейтинг: " + cursorTableDb.getInt(ratingIndex))
-//                                .append("\t\t(" + cursorTableDb.getString(descriptionIndex) + ")")
+                        s.append("\n" + String.format("%-4s", (cursorTABLE_DB.getInt(idIndex) + ".")))
+                                .append(String.format("%-32s", cursorTABLE_DB.getString(nameIndex)))
+                                .append("Тел: " + String.format("%-14s", cursorTABLE_DB.getString(phoneIndex)))
+                                .append("Заказал: " + String.format("%-10s", (cursorTABLE_DB.getInt(ordersIndex) + " раз")))
+                                .append("Потратил: " + String.format("%-12s", (cursorTABLE_DB.getInt(spentIndex) + " руб.")))
+                                .append("Рейтинг: " + cursorTABLE_DB.getInt(ratingIndex));
+                        Log.i("Gas5", s.toString());
                         break;
                     }
                     case "Резервы": {
-                        s.append("\n" + cursorTABLE_DB.getInt(idIndex))
-                                .append(".\t\t\tСтол № " + cursorTABLE_DB.getInt(numTableIndex))
-//                                .append("\t\t\t\t\tStatus: " + cursorTABLE_DB.getString(statusIndex))
-                                .append("\t\t\t\t\tРезерв на: " + cursorTABLE_DB.getString(reserveDateIndex))
-                                .append("\t" + cursorTABLE_DB.getString(reserveTimeIndex))
-                                .append("\t\t\t\t\t" + cursorTABLE_DB.getInt(durationIndex))
-                                .append("\t\t\t\t\tТариф: " + cursorTABLE_DB.getString(tariffIndex))
-                                .append("\t\t\t\t\tКлиент: " + cursorTABLE_DB.getString(clientIndex))
-                                .append("\t\t\t\t\tОформил: " + cursorTABLE_DB.getString(employeeIndex))
-                                .append("\t\t" + cursorTABLE_DB.getString(dateOrderIndex))
-                                .append("\t" + cursorTABLE_DB.getString(timeOrderIndex));
+                        s.append("\n" + String.format("%-7s", cursorTABLE_DB.getInt(idIndex) + "."))
+                                .append("Стол № " + String.format("%-7s", cursorTABLE_DB.getInt(numTableIndex)))
+                                .append("Резерв на: " + String.format("%-15s", cursorTABLE_DB.getString(reserveDateIndex)))
+                                .append(String.format("%-10s", cursorTABLE_DB.getString(reserveTimeIndex)))
+                                .append("Продолжительность(мин): " + String.format("%-8s", cursorTABLE_DB.getInt(durationIndex)))
+                                .append("Тариф: " + String.format("%-26s", cursorTABLE_DB.getString(tariffIndex)))
+                                .append("Клиент: " + String.format("%-36s", cursorTABLE_DB.getString(clientIndex)))
+                                .append("Оформил: " + String.format("%-36s", cursorTABLE_DB.getString(employeeIndex)))
+                                .append(String.format("%-15s", cursorTABLE_DB.getString(dateOrderIndex)))
+                                .append(String.format("%-10s", cursorTABLE_DB.getString(timeOrderIndex)))
+                                .append("Статус: " + cursorTABLE_DB.getString(statusIndex));
                         break;
                     }
                 }
-                tvData.setText(s);
+                tvData.setText(s.toString());
                 tvData.setTextColor(Color.BLACK);
 
             } while (cursorTABLE_DB.moveToNext());
         } else {
             Log.d("Gas", "0 rows");
+            tvData.setHint("Актуальных данных нет");
         }
         cursorTABLE_DB.close();
     }
 
-
-    private void openDialogChangeReserve(View view) {
+    // метод вызывает диалоговое окно изменения резерва
+    private void openDialogChangeReserve() {
         LayoutInflater inflater = LayoutInflater.from(EditDBActivity.this);
-        View subView = inflater.inflate(R.layout.dialog_chose_reserve, null);
-        final EditText etNumReserve = (EditText) subView.findViewById(R.id.etNumReserve);
+        View subView = inflater.inflate(R.layout.dialog_chose_num, null);
+        final EditText etNum = (EditText) subView.findViewById(R.id.etNum);
 
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle("Изменение резерва\n")
@@ -528,18 +669,21 @@ public class EditDBActivity extends AppCompatActivity implements View.OnClickLis
                 .setPositiveButton("OK", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        numReserveDB = Integer.parseInt(etNumReserve.getText().toString());
+                        numberRowDB = Integer.parseInt(etNum.getText().toString());
                         // сначала по номеру резерва узнаем все данные резерва
                         takeDataChangeOrder();
                         if (findReserveFlag) {
                             Intent intent = new Intent("newOrderActivity");
-                            intent.putExtra("numReserve", numReserveDB);
+                            intent.putExtra("whoCall", "editDBActivity_Correct");
+                            intent.putExtra("numReserve", numberRowDB);
                             intent.putExtra("numTable", numTableDB);
                             intent.putExtra("type", typeDB);
                             intent.putExtra("date", dateDB);
                             intent.putExtra("time", timeDB);
                             intent.putExtra("duration", durationMinuteDB);
                             intent.putExtra("client", clientDB);
+                            intent.putExtra("tariff", tariffDB);
+                            intent.putExtra("adminName", getAdminName);
                             startActivity(intent);
 
                             editBtnColumns(null, null, null,
@@ -560,6 +704,171 @@ public class EditDBActivity extends AppCompatActivity implements View.OnClickLis
         alert.show();
     }
 
+    // метод вызывает диалоговое окно изменения стола
+    private void openDialogChangeTable() {
+        LayoutInflater inflater = LayoutInflater.from(EditDBActivity.this);
+        View subView = inflater.inflate(R.layout.dialog_change_table, null);
+        final EditText etNumTable = (EditText) subView.findViewById(R.id.etNum);
+        SwitchCompat switchTypeTable = subView.findViewById(R.id.switchTypeTable);
+        if (switchTypeTable != null) {
+            Log.i("Gas", "мы еще не нажали на свитч");
+            switchTypeTable.setOnCheckedChangeListener(EditDBActivity.this);
+        }
+        tvPyramid = subView.findViewById(R.id.tvPyramid);
+        tvPool = subView.findViewById(R.id.tvPool);
+
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Изменение стола\n")
+                .setMessage("Введите номер стола для изменения")
+                .setView(subView)
+                .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        numTableDB = Integer.parseInt(etNumTable.getText().toString());
+                        // у нас только 19 столов
+                        if (numTableDB >= 1 && numTableDB < 20) {
+                            // то вызываем изменение таблицы "столы"
+                            Log.i("Gas", "numTableDB = " + numTableDB);
+                            Log.i("Gas", "choseTypeTable = " + choseTypeTable);
+
+                            optionallyClass.changeTableInDB(EditDBActivity.this, numTableDB, choseTypeTable);
+
+                            editBtnColumns(null, null, null,
+                                    null, null, DBHelper.KEY_ID);
+                        } else
+                            Toast.makeText(EditDBActivity.this, "Этого стола нет в БД", Toast.LENGTH_SHORT).show();
+
+
+                    }
+                })
+                .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        Toast.makeText(EditDBActivity.this, "Отменено", Toast.LENGTH_LONG).show();
+                    }
+                });
+        AlertDialog alert = builder.create();
+        alert.show();
+    }
+
+    // метод вызывает диалоговое окно для выбора порядкового номера клиента (изменение клиента)
+    private void openDialogTakeDataChangeClient() {
+        LayoutInflater inflater = LayoutInflater.from(EditDBActivity.this);
+        View subView = inflater.inflate(R.layout.dialog_chose_num, null);
+        final EditText etNum = (EditText) subView.findViewById(R.id.etNum);
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Изменение клиента\n")
+                .setMessage("Введите порядковый номер клиента для изменения")
+                .setView(subView)
+                .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        numberRowDB = Integer.parseInt(etNum.getText().toString());
+                        // сначала по номеру резерва узнаем все данные резерва
+                        takeDataChangeClient();
+                        if (findClientFlag) {
+                            openDialogChangeClient();
+                        } else
+                            Toast.makeText(EditDBActivity.this, "Этого клиента нет БД", Toast.LENGTH_SHORT).show();
+                    }
+                })
+                .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        Toast.makeText(EditDBActivity.this, "Отменено", Toast.LENGTH_LONG).show();
+                    }
+                });
+        AlertDialog alert = builder.create();
+        alert.show();
+    }
+
+    // метод вызывает диалоговое окно для выбора порядкового номера администратора (изменение администратора)
+    private void openDialogTakeDataChangeEmployee() {
+        LayoutInflater inflater = LayoutInflater.from(EditDBActivity.this);
+        View subView = inflater.inflate(R.layout.dialog_chose_num, null);
+        final EditText etNum = (EditText) subView.findViewById(R.id.etNum);
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Изменение администратора\n")
+                .setMessage("Введите порядковый номер администратора для изменения")
+                .setView(subView)
+                .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        numberRowDB = Integer.parseInt(etNum.getText().toString());
+                        // сначала по номеру резерва узнаем все данные резерва
+                        takeDataChangeEmployee();
+                        if (findEmployeeFlag) {
+                            openDialogChangeEmployee();
+                        } else
+                            Toast.makeText(EditDBActivity.this, "Этого администратора нет БД", Toast.LENGTH_SHORT).show();
+                    }
+                })
+                .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        Toast.makeText(EditDBActivity.this, "Отменено", Toast.LENGTH_LONG).show();
+                    }
+                });
+        AlertDialog alert = builder.create();
+        alert.show();
+    }
+
+    // метод вызывает диалоговое окно для выбора порядкового номера тарифа (изменение тарифа)
+    private void openDialogTakeDataChangeTariff() {
+        LayoutInflater inflater = LayoutInflater.from(EditDBActivity.this);
+        View subView = inflater.inflate(R.layout.dialog_chose_num, null);
+        final EditText etNum = (EditText) subView.findViewById(R.id.etNum);
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Изменение тарифа\n")
+                .setMessage("Введите порядковый номер тарифа для изменения")
+                .setView(subView)
+                .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        numberRowDB = Integer.parseInt(etNum.getText().toString());
+                        // сначала по номеру резерва узнаем все данные резерва
+                        takeDataChangeTariff();
+                        if (findTariffFlag) {
+                            openDialogChangeTariff();
+                        } else
+                            Toast.makeText(EditDBActivity.this, "Этого тарифа нет БД", Toast.LENGTH_SHORT).show();
+                    }
+                })
+                .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        Toast.makeText(EditDBActivity.this, "Отменено", Toast.LENGTH_LONG).show();
+                    }
+                });
+        AlertDialog alert = builder.create();
+        alert.show();
+    }
+
+    // метод определяет выбор переключателя типа стола (изменение стола)
+    @Override
+    public void onCheckedChanged(CompoundButton compoundButton, boolean isChecked) {
+        Log.i("Gas", "isChecked first = " + isChecked);
+        if (isChecked) {
+            tvPyramid.setTypeface(boldTypeface);
+            tvPyramid.setText("Русская пирамида");
+            tvPool.setTypeface(normalTypeface);
+            tvPool.setText("");
+            choseTypeTable = "Русская пирамида";
+
+        } else {
+            tvPool.setTypeface(boldTypeface);
+            tvPool.setText("Американский пул");
+            tvPyramid.setTypeface(normalTypeface);
+            tvPyramid.setText("");
+            choseTypeTable = "Американский пул";
+        }
+    }
+
+    // метод забирает все данные из изменяемого резерва (изменение резерва)
     private void takeDataChangeOrder() {
         findReserveFlag = false;
         cursorOrders = database.query(DBHelper.ORDERS,
@@ -572,19 +881,21 @@ public class EditDBActivity extends AppCompatActivity implements View.OnClickLis
             int reserveTimeIndex = cursorOrders.getColumnIndex(DBHelper.KEY_RESERVE_TIME);
             int durationIndex = cursorOrders.getColumnIndex(DBHelper.KEY_DURATION);
             int clientIndex = cursorOrders.getColumnIndex(DBHelper.KEY_CLIENT);
+            int tariffIndex = cursorOrders.getColumnIndex(DBHelper.KEY_TARIFF);
             int employeeIndex = cursorOrders.getColumnIndex(DBHelper.KEY_EMPLOYEE);
             do {
-                if (numReserveDB == cursorOrders.getInt(idIndex)) {
+                if (numberRowDB == cursorOrders.getInt(idIndex)) {
                     findReserveFlag = true;
                     numTableDB = cursorOrders.getInt(numTableIndex);
                     dateDB = cursorOrders.getString(reserveDateIndex);
                     timeDB = cursorOrders.getString(reserveTimeIndex);
                     durationMinuteDB = cursorOrders.getInt(durationIndex);
                     clientDB = cursorOrders.getString(clientIndex);
+                    tariffDB = cursorOrders.getString(tariffIndex);
                 }
             } while (cursorOrders.moveToNext());
 
-            Log.i("Gas5", "numReserveDB = " + numReserveDB);
+            Log.i("Gas5", "numReserveDB = " + numberRowDB);
             Log.i("Gas5", "numTableDB = " + numTableDB);
             Log.i("Gas5", "dateDB = " + dateDB);
             Log.i("Gas5", "timeDB = " + timeDB);
@@ -596,9 +907,106 @@ public class EditDBActivity extends AppCompatActivity implements View.OnClickLis
             // если в БД нет заказов
             Log.d("Gas", "0 rows");
         }
+        cursorOrders.close();
     }
 
+    // метод забирает все данные из изменяемого клиента (изменение клиента)
+    private void takeDataChangeClient() {
+        findClientFlag = false;
+        cursorClient = database.query(DBHelper.CLIENTS,
+                null, null, null,
+                null, null, null);
+        if (cursorClient.moveToFirst()) {
+            int idIndex = cursorClient.getColumnIndex(DBHelper.KEY_ID);
+            int nameIndex = cursorClient.getColumnIndex(DBHelper.KEY_NAME);
+            int phoneIndex = cursorClient.getColumnIndex(DBHelper.KEY_PHONE);
+            int ordersCountIndex = cursorClient.getColumnIndex(DBHelper.KEY_ORDERS_COUNT);
+            int spentIndex = cursorClient.getColumnIndex(DBHelper.KEY_SPENT);
+            int ratingIndex = cursorClient.getColumnIndex(DBHelper.KEY_RATING);
+            do {
+                if (numberRowDB == cursorClient.getInt(idIndex)) {
+                    findClientFlag = true;
+                    nameDB = cursorClient.getString(nameIndex);
+                    phoneDB = cursorClient.getString(phoneIndex);
+                    ordersCountDB = cursorClient.getInt(ordersCountIndex);
+                    spentDB = cursorClient.getInt(spentIndex);
+                    ratingDB = cursorClient.getInt(ratingIndex);
+                }
+            } while (cursorClient.moveToNext());
+
+            Log.i("Gas5", "nameDB = " + nameDB);
+            Log.i("Gas5", "phoneDB = " + phoneDB);
+            Log.i("Gas5", "ordersCountDB = " + ordersCountDB);
+            Log.i("Gas5", "spentDB = " + spentDB);
+            Log.i("Gas5", "ratingDB = " + ratingDB);
+        } else {
+            // если в БД нет заказов
+            Log.d("Gas", "0 rows");
+        }
+        cursorClient.close();
+    }
+
+    // метод забирает все данные из изменяемого админа (изменение админа)
+    private void takeDataChangeEmployee() {
+        findEmployeeFlag = false;
+        cursorEmployee = database.query(DBHelper.EMPLOYEES,
+                null, null, null,
+                null, null, null);
+        if (cursorEmployee.moveToFirst()) {
+            int idIndex = cursorEmployee.getColumnIndex(DBHelper.KEY_ID);
+            int nameIndex = cursorEmployee.getColumnIndex(DBHelper.KEY_NAME);
+            int phoneIndex = cursorEmployee.getColumnIndex(DBHelper.KEY_PHONE);
+            int ratingIndex = cursorEmployee.getColumnIndex(DBHelper.KEY_RATING);
+            do {
+                if (numberRowDB == cursorEmployee.getInt(idIndex)) {
+                    findEmployeeFlag = true;
+                    nameDB = cursorEmployee.getString(nameIndex);
+                    phoneDB = cursorEmployee.getString(phoneIndex);
+                    ratingDB = cursorEmployee.getInt(ratingIndex);
+                }
+            } while (cursorEmployee.moveToNext());
+
+            Log.i("Gas5", "nameDB = " + nameDB);
+            Log.i("Gas5", "phoneDB = " + phoneDB);
+            Log.i("Gas5", "ratingDB = " + ratingDB);
+        } else {
+            // если в БД нет заказов
+            Log.d("Gas", "0 rows");
+        }
+        cursorEmployee.close();
+    }
+
+    // метод забирает все данные из изменяемого клиента (изменение клиента)
+    private void takeDataChangeTariff() {
+        findTariffFlag = false;
+        cursorTariff = database.query(DBHelper.TARIFF,
+                null, null, null,
+                null, null, null);
+        if (cursorTariff.moveToFirst()) {
+            int idIndex = cursorTariff.getColumnIndex(DBHelper.KEY_ID);
+            int priceIndex = cursorTariff.getColumnIndex(DBHelper.KEY_PRICE);
+            int tariffIndex = cursorTariff.getColumnIndex(DBHelper.KEY_NAME);
+            do {
+                if (numberRowDB == cursorTariff.getInt(idIndex)) {
+                    findTariffFlag = true;
+                    priceDB = cursorTariff.getInt(priceIndex);
+                    tariffDB = cursorTariff.getString(tariffIndex);
+                }
+            } while (cursorTariff.moveToNext());
+
+            Log.i("Gas5", "nameDB = " + priceDB);
+            Log.i("Gas5", "phoneDB = " + tariffDB);
+        } else {
+            // если в БД нет заказов
+            Log.d("Gas", "0 rows");
+        }
+        cursorTariff.close();
+    }
+
+    // метод забирает тип стола изменяемого резерва (изменение стола)
     private void takeTypeTableMethod() {
+        // метод получает тип выбранного стола
+
         // получаем данные c табл "TABLES"
         cursorTables = database.query(DBHelper.TABLES,
                 null, null, null,
@@ -617,28 +1025,68 @@ public class EditDBActivity extends AppCompatActivity implements View.OnClickLis
             // если не задан ни один сотрудника, то м. перейти в настройки его создания
             Log.d("Gas", "0 rows");
         }
+        cursorTables.close();
     }
 
-    private void openDialogDeleteReserve() {
+    // метод вызывает диалоговое окно для удаления (удаление)
+    private void openDialogDelete(String whoCallMe) {
         LayoutInflater inflater = LayoutInflater.from(EditDBActivity.this);
-        View subView = inflater.inflate(R.layout.dialog_chose_reserve, null);
-        final EditText etNumReserve = (EditText) subView.findViewById(R.id.etNumReserve);
+        View subView = inflater.inflate(R.layout.dialog_chose_num, null);
+        final EditText etNum = (EditText) subView.findViewById(R.id.etNum);
 
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("Удаление резерва\n")
-                .setMessage("Введите порядковый номер резерва для удаления")
-                .setView(subView)
-                .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+        builder.setView(subView);
+        if (whoCallMe.equals("Резервы")) {
+            builder.setTitle("Удаление резерва\n")
+                    .setMessage("Введите порядковый номер резерва для удаления");
+        } else if (whoCallMe.equals("Клиенты")) {
+            builder.setTitle("Удаление клиента\n")
+                    .setMessage("Введите порядковый номер клиента для удаления");
+        } else if (whoCallMe.equals("Сотрудники")) {
+            builder.setTitle("Удаление администратора\n")
+                    .setMessage("Введите порядковый номер администратора для удаления");
+        } else if (whoCallMe.equals("Тарифы")) {
+            builder.setTitle("Удаление Тарифа\n")
+                    .setMessage("Введите порядковый номер тарифа для удаления");
+        }
+        builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        numReserveDB = Integer.parseInt(etNumReserve.getText().toString());
-                        takeDataChangeOrder();
-                        if (findReserveFlag) {
-                            database.delete(DBHelper.ORDERS, DBHelper.KEY_ID + "=" + numReserveDB, null);
-                            Toast.makeText(EditDBActivity.this, "Резерв " + numReserveDB + " удален.", Toast.LENGTH_LONG).show();
-                            editBtnColumns(null, null, null, null, null, DBHelper.KEY_ID);
-                        } else
-                            Toast.makeText(EditDBActivity.this, "Этого резерва нет БД", Toast.LENGTH_SHORT).show();
+                        numberRowDB = Integer.parseInt(etNum.getText().toString());
+                        if (whoCallMe.equals("Резервы")) {
+                            takeDataChangeOrder();
+                            if (findReserveFlag) {
+                                database.delete(DBHelper.ORDERS, DBHelper.KEY_ID + "=" + numberRowDB, null);
+
+                                Toast.makeText(EditDBActivity.this, "Резерв " + numberRowDB + " удален", Toast.LENGTH_LONG).show();
+                                editBtnColumns(null, null, null, null, null, DBHelper.KEY_ID);
+                            } else
+                                Toast.makeText(EditDBActivity.this, "В БД не найден!", Toast.LENGTH_SHORT).show();
+                        } else if (whoCallMe.equals("Клиенты")) {
+                            takeDataChangeClient();
+                            if (findClientFlag) {
+                                database.delete(DBHelper.CLIENTS, DBHelper.KEY_ID + "=" + numberRowDB, null);
+                                Toast.makeText(EditDBActivity.this, "Клиент " + numberRowDB + " удален", Toast.LENGTH_LONG).show();
+                                editBtnColumns(null, null, null, null, null, DBHelper.KEY_ID);
+                            } else
+                                Toast.makeText(EditDBActivity.this, "Клиент В БД не найден!", Toast.LENGTH_SHORT).show();
+                        } else if (whoCallMe.equals("Сотрудники")) {
+                            takeDataChangeEmployee();
+                            if (findEmployeeFlag) {
+                                database.delete(DBHelper.EMPLOYEES, DBHelper.KEY_ID + "=" + numberRowDB, null);
+                                Toast.makeText(EditDBActivity.this, "Администратор " + numberRowDB + " удален", Toast.LENGTH_LONG).show();
+                                editBtnColumns(null, null, null, null, null, DBHelper.KEY_ID);
+                            } else
+                                Toast.makeText(EditDBActivity.this, "Администратор В БД не найден!", Toast.LENGTH_SHORT).show();
+                        } else if (whoCallMe.equals("Тарифы")) {
+                            takeDataChangeTariff();
+                            if (findTariffFlag) {
+                                database.delete(DBHelper.TARIFF, DBHelper.KEY_ID + "=" + numberRowDB, null);
+                                Toast.makeText(EditDBActivity.this, "Тариф " + numberRowDB + " удален", Toast.LENGTH_LONG).show();
+                                editBtnColumns(null, null, null, null, null, DBHelper.KEY_ID);
+                            } else
+                                Toast.makeText(EditDBActivity.this, "Тариф В БД не найден!", Toast.LENGTH_SHORT).show();
+                        }
                     }
                 })
                 .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
@@ -651,7 +1099,8 @@ public class EditDBActivity extends AppCompatActivity implements View.OnClickLis
         alert.show();
     }
 
-    private void openDialogActvChose(List<String> list, String typeDialog) {
+    // метод вызывает диалоговое окно для выбора из ACTV (фильтрация)
+    private void openDialogActvChose(List<String> list, String whoCallMe) {
         LayoutInflater inflater = LayoutInflater.from(EditDBActivity.this);
         View subView = inflater.inflate(R.layout.dialog_chose_actv, null);
         actvChose = (AutoCompleteTextView) subView.findViewById(R.id.actvChose);
@@ -662,13 +1111,13 @@ public class EditDBActivity extends AppCompatActivity implements View.OnClickLis
         actvChose.setAdapter(adapterChose);
 
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        if (typeDialog.equals("Тариф")) {
+        if (whoCallMe.equals("Тариф")) {
             builder.setTitle("Выбор тарифа\n");
             builder.setMessage("Выберите тариф для фильтрации");
-        } else if (typeDialog.equals("Клиент")) {
+        } else if (whoCallMe.equals("Клиент") || whoCallMe.equals("Table Client Name")) {
             builder.setTitle("Выбор клиента\n");
             builder.setMessage("Выберите клиента для фильтрации");
-        } else if (typeDialog.equals("Администратор")) {
+        } else if (whoCallMe.equals("Администратор") || whoCallMe.equals("Table Employee Name")) {
             builder.setTitle("Выбор Администратора\n");
             builder.setMessage("Выберите Администратора для фильтрации");
         }
@@ -683,15 +1132,18 @@ public class EditDBActivity extends AppCompatActivity implements View.OnClickLis
                             Log.i("Gas", "choseStr = " + choseStr);
                             Log.i("Gas", "TABLE_DB = " + TABLE_DB);
 
-                            if (typeDialog.equals("Тариф")) {
+                            if (whoCallMe.equals("Тариф")) {
                                 selection = DBHelper.KEY_TARIFF + " = \'" + choseStr + "\'";
-                            } else if (typeDialog.equals("Клиент")) {
+                            } else if (whoCallMe.equals("Клиент")) {
                                 selection = DBHelper.KEY_CLIENT + " = \'" + choseStr + "\'";
-                            } else if (typeDialog.equals("Администратор")) {
+                            } else if (whoCallMe.equals("Администратор")) {
                                 selection = DBHelper.KEY_EMPLOYEE + " = \'" + choseStr + "\'";
+                            } else if (whoCallMe.equals("Table Client Name") || whoCallMe.equals("Table Employee Name")) {
+                                // если вызвали с таблицы "Клиенты" или "Администраторы"
+                                selection = DBHelper.KEY_NAME + " = \'" + choseStr + "\'";
                             }
                             Log.i("Gas", "selection: " + selection);
-                            editBtnColumns(columnsArr, selection, null, null, null, null);
+                            editBtnColumns(null, selection, null, null, null, null);
                         }
                     }
                 })
@@ -703,5 +1155,174 @@ public class EditDBActivity extends AppCompatActivity implements View.OnClickLis
                 });
         AlertDialog alert = builder.create();
         alert.show();
+    }
+
+    // метод вызывает диалоговое окно для редактирования клиента (редактирование клиента)
+    private void openDialogChangeClient() {
+        LayoutInflater inflater = LayoutInflater.from(EditDBActivity.this);
+        View subView = inflater.inflate(R.layout.dialog_create_client_or_employee, null);
+        final EditText etName = (EditText) subView.findViewById(R.id.etName);
+        final EditText etPhone = (EditText) subView.findViewById(R.id.etPhone);
+        etName.setText(nameDB);
+        etPhone.setText(phoneDB);
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(EditDBActivity.this);
+        builder.setTitle("Изменение клиента\n")
+                .setMessage("Измените данные клиента")
+                .setView(subView)
+                .setPositiveButton("Изменить", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        nameDB = etName.getText().toString();
+                        phoneDB = etPhone.getText().toString();
+
+                        if (nameDB.equals("")) {
+                            Toast.makeText(EditDBActivity.this, "Введите имя клиента", Toast.LENGTH_SHORT).show();
+                            etName.setHintTextColor(Color.RED);
+                        } else {
+                            putChangeClientInDB();
+                            Toast.makeText(EditDBActivity.this, "Клиент добавлен", Toast.LENGTH_SHORT).show();
+
+                            // чтобы БД клиентов сразу обновилась
+                            Intent intent = new Intent(EditDBActivity.this, EditDBActivity.class);
+                            // передаем название заголовка
+                            intent.putExtra("headName", "Клиенты");
+                            startActivity(intent);
+                        }
+                    }
+                })
+                .setNegativeButton("Отмена", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        Toast.makeText(EditDBActivity.this, "Отмена", Toast.LENGTH_SHORT).show();
+                    }
+                });
+        AlertDialog alert = builder.create();
+        alert.show();
+    }
+
+    // метод вызывает диалоговое окно для редактирования администратора (редактирование администратора)
+    private void openDialogChangeEmployee() {
+        LayoutInflater inflater = LayoutInflater.from(EditDBActivity.this);
+        View subView = inflater.inflate(R.layout.dialog_create_client_or_employee, null);
+        final EditText etName = (EditText) subView.findViewById(R.id.etName);
+        final EditText etPhone = (EditText) subView.findViewById(R.id.etPhone);
+        etName.setText(nameDB);
+        etPhone.setText(phoneDB);
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(EditDBActivity.this);
+        builder.setTitle("Изменение администратора\n")
+                .setMessage("Измените данные администратора")
+                .setView(subView)
+                .setPositiveButton("Изменить", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        nameDB = etName.getText().toString();
+                        phoneDB = etPhone.getText().toString();
+
+                        if (nameDB.equals("")) {
+                            Toast.makeText(EditDBActivity.this, "Введите имя администратора", Toast.LENGTH_SHORT).show();
+                            etName.setHintTextColor(Color.RED);
+                        } else {
+                            putChangeEmployeeInDB();
+                            Toast.makeText(EditDBActivity.this, "Администратор добавлен", Toast.LENGTH_SHORT).show();
+
+                            // чтобы БД клиентов сразу обновилась
+                            Intent intent = new Intent(EditDBActivity.this, EditDBActivity.class);
+                            // передаем название заголовка
+                            intent.putExtra("headName", "Сотрудники");
+                            startActivity(intent);
+                        }
+                    }
+                })
+                .setNegativeButton("Отмена", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        Toast.makeText(EditDBActivity.this, "Отмена", Toast.LENGTH_SHORT).show();
+                    }
+                });
+        AlertDialog alert = builder.create();
+        alert.show();
+    }
+
+    // метод вызывает диалоговое окно для редактирования администратора (редактирование администратора)
+    private void openDialogChangeTariff() {
+        LayoutInflater inflater = LayoutInflater.from(EditDBActivity.this);
+        View subView = inflater.inflate(R.layout.dialog_create_tariff, null);
+        final EditText etPrice = (EditText) subView.findViewById(R.id.etPrice);
+        final EditText etTariff = (EditText) subView.findViewById(R.id.etTariff);
+        etPrice.setText("" + priceDB);
+        etTariff.setText(tariffDB);
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(EditDBActivity.this);
+        builder.setTitle("Изменение Тарифа\n")
+                .setMessage("Измените данные тарифа")
+                .setView(subView)
+                .setPositiveButton("Изменить", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        priceDB = Integer.parseInt(etPrice.getText().toString());
+                        tariffDB = etTariff.getText().toString();
+                        if (etPrice.getText().toString().equals("")) priceDB = 0;
+
+                        if (etTariff.equals("")) {
+                            Toast.makeText(EditDBActivity.this, "Введите название тарифа", Toast.LENGTH_SHORT).show();
+                            etTariff.setHintTextColor(Color.RED);
+                        } else {
+                            etTariff.setHintTextColor(Color.BLACK);
+                            putChangeTariffInDB();
+                            Toast.makeText(EditDBActivity.this, "Тариф изменен", Toast.LENGTH_SHORT).show();
+
+                            // чтобы БД клиентов сразу обновилась
+                            Intent intent = new Intent(EditDBActivity.this, EditDBActivity.class);
+                            // передаем название заголовка
+                            intent.putExtra("headName", "Тарифы");
+                            startActivity(intent);
+                        }
+                    }
+                })
+                .setNegativeButton("Отмена", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        Toast.makeText(EditDBActivity.this, "Отмена", Toast.LENGTH_SHORT).show();
+                    }
+                });
+        AlertDialog alert = builder.create();
+        alert.show();
+    }
+
+    // метод заменяет данные Клиента в БД (редактирование клиента)
+    private void putChangeClientInDB() {
+        database.delete(DBHelper.CLIENTS, DBHelper.KEY_ID + "=" + numberRowDB, null);
+        contentValues.put(DBHelper.KEY_ID, numberRowDB);
+        contentValues.put(DBHelper.KEY_NAME, nameDB);
+        contentValues.put(DBHelper.KEY_PHONE, phoneDB);
+        contentValues.put(DBHelper.KEY_ORDERS_COUNT, ordersCountDB);
+        contentValues.put(DBHelper.KEY_SPENT, spentDB);
+        contentValues.put(DBHelper.KEY_RATING, ratingDB);
+
+        database.insert(DBHelper.CLIENTS, null, contentValues);
+    }
+
+    // метод заменяет данные администратора в БД (редактирование Администратора)
+    private void putChangeEmployeeInDB() {
+        database.delete(DBHelper.EMPLOYEES, DBHelper.KEY_ID + "=" + numberRowDB, null);
+        contentValues.put(DBHelper.KEY_ID, numberRowDB);
+        contentValues.put(DBHelper.KEY_NAME, nameDB);
+        contentValues.put(DBHelper.KEY_PHONE, phoneDB);
+        contentValues.put(DBHelper.KEY_RATING, ratingDB);
+
+        database.insert(DBHelper.EMPLOYEES, null, contentValues);
+    }
+
+    // метод заменяет данные администратора в БД (редактирование Администратора)
+    private void putChangeTariffInDB() {
+        database.delete(DBHelper.TARIFF, DBHelper.KEY_ID + "=" + numberRowDB, null);
+
+        contentValues.put(DBHelper.KEY_ID, numberRowDB);
+        contentValues.put(DBHelper.KEY_NAME, tariffDB);
+        contentValues.put(DBHelper.KEY_PRICE, priceDB);
+
+        database.insert(DBHelper.TARIFF, null, contentValues);
     }
 }

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <group android:id="@+id/menugroup1" >
+        <item
+            android:id="@+id/nameMenu"
+            android:title="По Имени"/>
+        <item
+            android:id="@+id/ordersCountMenu"
+            android:title="По количеству заказов"/>
+        <item
+            android:id="@+id/spentMenu"
+            android:title="По сумме"/>
+        <item
+            android:id="@+id/ratingMenu"
+            android:title="По рейтингу"/>
+    </group>
+</menu>
