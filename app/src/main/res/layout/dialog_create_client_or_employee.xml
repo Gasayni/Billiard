@@ -8,25 +8,25 @@
     <EditText
         android:id="@+id/etName"
         android:layout_width="wrap_content"
-        android:layout_height="40dp"
+        android:layout_height="wrap_content"
         android:layout_centerHorizontal="true"
         android:ems="10"
         android:gravity="center"
         android:hint="Имя"
         android:inputType="textPersonName"
-        android:textSize="20sp" />
+        android:textSize="32sp" />
 
     <EditText
         android:id="@+id/etPhone"
         android:layout_width="wrap_content"
-        android:layout_height="40dp"
+        android:layout_height="wrap_content"
         android:layout_below="@+id/etName"
         android:layout_centerHorizontal="true"
-        android:layout_marginTop="16dp"
+        android:layout_marginTop="32dp"
         android:ems="10"
         android:gravity="center"
         android:hint="Телефон"
         android:inputType="phone"
-        android:textSize="20sp" />
+        android:textSize="32sp" />
 
 </RelativeLayout>

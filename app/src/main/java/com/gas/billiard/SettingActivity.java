@@ -10,15 +10,18 @@ import android.widget.Button;
 import android.widget.Toast;
 
 public class SettingActivity extends AppCompatActivity implements View.OnClickListener {
-    Button btnTariff, btnEmployee, btnClient, btnBack, btnOrders, btnTables;
+    Button btnEmployee, btnBack, btnTables;
+    String getAdminName;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_setting);
+        // Получаем название заголовка
+        Intent getIntent = getIntent();
+        getAdminName = getIntent.getStringExtra("adminName");
 
-        btnTariff = findViewById(R.id.btnTariff);
-        btnTariff.setOnClickListener(this);
+
         btnEmployee = findViewById(R.id.btnEmployee);
         btnEmployee.setOnClickListener(this);
         btnTables = findViewById(R.id.btnTables);
@@ -32,18 +35,12 @@ public class SettingActivity extends AppCompatActivity implements View.OnClickLi
     public void onClick(View view) {
         Intent intent;
         switch (view.getId()) {
-            // переключаемся на редактор резерва
-            case R.id.btnTariff: {
-                intent = new Intent("editDBActivity");
-                // передаем название заголовка
-                intent.putExtra("headName", "Тарифы");
-                startActivity(intent);
-                break;
-            }
+
             case R.id.btnTables: {
                 intent = new Intent("editDBActivity");
                 // передаем название заголовка
                 intent.putExtra("headName", "Столы");
+                intent.putExtra("adminName", getAdminName);
                 startActivity(intent);
                 break;
             }
@@ -51,11 +48,13 @@ public class SettingActivity extends AppCompatActivity implements View.OnClickLi
                 intent = new Intent("editDBActivity");
                 // передаем название заголовка
                 intent.putExtra("headName", "Сотрудники");
+                intent.putExtra("adminName", getAdminName);
                 startActivity(intent);
                 break;
             }
             case R.id.btnBack: {
                 intent = new Intent(SettingActivity.this, CommonActivity.class);
+                intent.putExtra("adminName", getAdminName);
                 startActivity(intent);
                 break;
             }

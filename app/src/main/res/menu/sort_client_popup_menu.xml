@@ -8,10 +8,7 @@
             android:id="@+id/ordersCountMenu"
             android:title="По количеству заказов"/>
         <item
-            android:id="@+id/spentMenu"
+            android:id="@+id/durationSumMinuteMenu"
             android:title="По сумме"/>
-        <item
-            android:id="@+id/ratingMenu"
-            android:title="По рейтингу"/>
     </group>
 </menu>

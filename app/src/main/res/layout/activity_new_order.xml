@@ -9,8 +9,71 @@
     tools:context=".NewOrderActivity">
 
     <LinearLayout
+        android:id="@+id/linTime"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="72dp"
+        android:layout_centerHorizontal="true"
+        android:gravity="center"
+        android:orientation="horizontal">
+
+        <Button
+            android:id="@+id/btnNewReserveDate"
+            android:layout_width="400sp"
+            android:layout_height="80dp"
+            android:layout_marginEnd="8dp"
+            android:layout_weight="1"
+            android:background="@drawable/btn_style_1"
+            android:clickable="true"
+            android:focusable="true"
+            android:gravity="center"
+            android:hint="Дата резерва"
+            android:textSize="20sp" />
+
+        <Button
+            android:id="@+id/btnNewReserveTime"
+            android:layout_width="400sp"
+            android:layout_height="80dp"
+            android:layout_marginStart="8dp"
+            android:layout_weight="1"
+            android:background="@drawable/btn_style_1"
+            android:clickable="true"
+            android:focusable="true"
+            android:gravity="center"
+            android:hint="Время резерва"
+            android:textSize="20sp" />
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/linDuration"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/linTime"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="32dp"
+        android:gravity="center"
+        android:orientation="horizontal">
+
+        <Button
+            android:id="@+id/btnNewReserveDuration"
+            android:layout_width="400dp"
+            android:layout_height="80dp"
+            android:layout_marginEnd="8dp"
+            android:background="@drawable/btn_style_6"
+            android:clickable="true"
+            android:focusable="true"
+            android:gravity="center"
+            android:hint="Продолжительность \n резерва"
+            android:textSize="20sp" />
+
+    </LinearLayout>
+
+    <LinearLayout
         android:id="@+id/linType"
         android:layout_width="match_parent"
+        android:layout_marginTop="64dp"
+        android:layout_below="@id/linDuration"
         android:layout_height="wrap_content"
         android:layout_centerHorizontal="true"
         android:orientation="horizontal">
@@ -24,7 +87,7 @@
             android:hint="Американский \n пул"
             android:textColorHint="@color/grey"
             android:textColor="@color/black"
-            android:textSize="16sp" />
+            android:textSize="30sp" />
 
         <android.support.v7.widget.SwitchCompat
             android:id="@+id/switchTypeTable"
@@ -41,149 +104,93 @@
             android:gravity="center"
             android:textColorHint="@color/grey"
             android:textColor="@color/black"
-            android:textSize="16sp"
+            android:textSize="30sp"
             android:hint="Русская \nпирамида" />
 
     </LinearLayout>
 
     <LinearLayout
-        android:id="@+id/linTime"
+        android:id="@+id/linTable"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_below="@id/linType"
         android:layout_centerHorizontal="true"
-        android:layout_marginTop="32dp"
+        android:layout_marginTop="64dp"
         android:gravity="center"
         android:orientation="horizontal">
 
+        <AutoCompleteTextView
+            android:id="@+id/actvFreeTable"
+            android:layout_width="500sp"
+            android:layout_height="wrap_content"
+            android:layout_marginRight="32dp"
+            android:clickable="true"
+            android:ems="10"
+            android:focusable="true"
+            android:gravity="center"
+            android:hint="Стол"
+            android:textIsSelectable="true"
+            android:textSize="32sp" />
+
         <Button
-            android:id="@+id/btnNewReserveDate"
-            android:layout_width="match_parent"
-            android:layout_height="60dp"
-            android:layout_marginRight="8dp"
-            android:layout_weight="1"
+            android:id="@+id/btnBron"
+            android:layout_width="80dp"
+            android:layout_height="80dp"
+            android:layout_marginStart="8dp"
             android:background="@drawable/btn_style_1"
             android:clickable="true"
             android:focusable="true"
             android:gravity="center"
-            android:hint="Дата резерва"
-            android:textSize="14sp" />
-
-        <Button
-            android:id="@+id/btnNewReserveTime"
-            android:layout_width="match_parent"
-            android:layout_height="60dp"
-            android:layout_marginLeft="8dp"
-            android:layout_weight="1"
-            android:background="@drawable/btn_style_1"
-            android:clickable="true"
-            android:focusable="true"
-            android:gravity="center"
-            android:hint="Время резерва"
-            android:textSize="14sp" />
-
-    </LinearLayout>
-
-    <LinearLayout
-        android:id="@+id/linDuration"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_below="@id/linTime"
-        android:layout_centerHorizontal="true"
-        android:layout_marginTop="16dp"
-        android:gravity="center"
-        android:orientation="horizontal">
-
-        <Button
-            android:id="@+id/btnNewReserveDuration"
-            android:layout_width="200dp"
-            android:layout_height="90dp"
-            android:layout_marginRight="8dp"
-            android:background="@drawable/btn_style_1"
-            android:clickable="true"
-            android:focusable="true"
-            android:gravity="center"
-            android:hint="Продолжительность \n резерва"
+            android:hint="Бронь"
             android:textSize="14sp" />
 
     </LinearLayout>
-
-    <AutoCompleteTextView
-        android:id="@+id/actvFreeTable"
-        android:layout_width="300dp"
-        android:layout_height="wrap_content"
-        android:layout_below="@id/linDuration"
-        android:layout_centerHorizontal="true"
-        android:layout_marginTop="32dp"
-        android:clickable="true"
-        android:ems="10"
-        android:focusable="true"
-        android:gravity="center"
-        android:hint="Стол"
-        android:textIsSelectable="true"
-        android:textSize="20sp" />
 
     <LinearLayout
         android:id="@+id/linClient"
-        android:layout_width="match_parent"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_below="@id/actvFreeTable"
+        android:layout_below="@id/linTable"
+        android:layout_centerHorizontal="true"
         android:layout_marginTop="32dp">
 
         <AutoCompleteTextView
             android:id="@+id/actvClient"
-            android:layout_width="wrap_content"
+            android:layout_width="500sp"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:layout_centerHorizontal="true"
+            android:layout_marginRight="32dp"
             android:clickable="true"
             android:ems="10"
             android:focusable="true"
             android:gravity="center"
             android:hint="Клиент"
-            android:textSize="20sp" />
-
+            android:textSize="32sp" />
 
         <Button
             android:id="@+id/btnCreateClient"
-            android:layout_width="50dp"
-            android:layout_height="50dp"
+            android:layout_width="80dp"
+            android:layout_height="80dp"
             android:background="@drawable/btn_style_1"
             android:clickable="true"
             android:focusable="true"
             android:gravity="center"
             android:text="+"
-            android:textSize="16sp" />
+            android:textSize="40sp" />
     </LinearLayout>
-
-    <AutoCompleteTextView
-        android:id="@+id/actvTariff"
-        android:layout_width="300dp"
-        android:layout_height="wrap_content"
-        android:layout_below="@id/linClient"
-        android:layout_centerHorizontal="true"
-        android:layout_marginTop="32dp"
-        android:clickable="true"
-        android:ems="10"
-        android:focusable="true"
-        android:gravity="center"
-        android:hint="Тариф"
-        android:textIsSelectable="true"
-        android:textSize="20sp" />
 
     <Button
         android:id="@+id/btnCreateReserve"
-        android:layout_width="200sp"
-        android:layout_height="60dp"
-        android:layout_below="@id/actvTariff"
+        android:layout_width="400dp"
+        android:layout_height="90dp"
+        android:layout_below="@id/linClient"
         android:layout_centerHorizontal="true"
-        android:layout_marginTop="32dp"
+        android:layout_marginTop="80dp"
         android:background="@drawable/btn_style_1"
         android:clickable="true"
         android:focusable="true"
         android:gravity="center"
-        android:hint="Создать резерв"
         android:onClick="showDialogAlertCreateReserve"
+        android:text="Создать резерв"
         android:textColor="@color/black"
-        android:textSize="14sp" />
+        android:textSize="24sp" />
 </RelativeLayout>

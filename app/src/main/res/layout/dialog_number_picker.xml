@@ -21,9 +21,10 @@
         <NumberPicker
             android:id="@+id/numberPicker"
             android:layout_width="wrap_content"
-            android:layout_height="150dp"
-            android:layout_gravity="left"
+            android:layout_height="200dp"
+            android:layout_gravity="center"
             android:layout_marginTop="16dp"
+            android:scrollbarSize="30sp"
             android:layout_marginRight="8dp" />
 
     </LinearLayout>
@@ -40,16 +41,14 @@
 
         <Button
             android:id="@+id/btnSet"
-            android:layout_width="match_parent"
-            android:layout_height="60dp"
-            android:layout_marginRight="8dp"
-            android:layout_weight="1"
+            android:layout_width="300dp"
+            android:layout_height="70dp"
             android:background="@drawable/btn_style_1"
             android:clickable="true"
             android:focusable="true"
             android:gravity="center"
             android:hint="Выбрать"
-            android:textSize="14sp" />
+            android:textSize="20sp" />
 
     </LinearLayout>
 

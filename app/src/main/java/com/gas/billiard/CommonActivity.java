@@ -5,6 +5,7 @@ import android.app.AlertDialog;
 import android.app.DatePickerDialog;
 import android.content.ContentValues;
 import android.content.Intent;
+import android.content.res.Configuration;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Color;
@@ -35,6 +36,7 @@ import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
 public class CommonActivity extends AppCompatActivity implements View.OnClickListener {
+    private final SimpleDateFormat dateTimeFormat = new SimpleDateFormat("dd.MM.yyyy HH:mm", Locale.ENGLISH);
     private final SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm", Locale.ENGLISH);
     private final SimpleDateFormat dateFormat = new SimpleDateFormat("dd.MM.yyyy", Locale.ENGLISH);
     private TextView tvTime;
@@ -43,7 +45,7 @@ public class CommonActivity extends AppCompatActivity implements View.OnClickLis
     LinearLayout linTable, linHour, linTableTime, linTableTimeHead, linTableHead;
     private final int hourCount = 18;
     private final int tableCount = 19;
-    Button btnAdd, btnDate, btnDate1, btnTableHead, btnTime, btnTable;
+    Button btnAdd, btnDate, btnDate1, btnDate2, btnTableHead, btnTime, btnTable;
     private int marginLength;
     // листы для тегов (нужны, чтобы запоминать теги)
     List<Button> btnTableHeadTagsList = new ArrayList<>();
@@ -105,7 +107,7 @@ public class CommonActivity extends AppCompatActivity implements View.OnClickLis
 
         // покажем текущее время
         tvTime = findViewById(R.id.tvTime);
-        actualTime();
+
 
         // отрисовываем таблицу заказов на изначальную дату
         addBtnCommon();
@@ -117,6 +119,8 @@ public class CommonActivity extends AppCompatActivity implements View.OnClickLis
         } catch (IOException e) {
             e.printStackTrace();
         }
+
+        actualTime();
     }
 
     @Override
@@ -132,6 +136,7 @@ public class CommonActivity extends AppCompatActivity implements View.OnClickLis
                     Intent intent = new Intent(CommonActivity.this, MainActivity.class);
                     // передаем название заголовка
                     intent.putExtra("headName", "Резервы");
+                    intent.putExtra("adminName", getAdminName);
                     startActivity(intent);
                 }));
         builderAlert.setIcon(R.drawable.bol_pyramide1);
@@ -155,6 +160,7 @@ public class CommonActivity extends AppCompatActivity implements View.OnClickLis
                 intent = new Intent("editDBActivity");
                 // передаем название заголовка
                 intent.putExtra("headName", "Клиенты");
+                intent.putExtra("adminName", getAdminName);
                 startActivity(intent);
                 break;
             }
@@ -162,6 +168,7 @@ public class CommonActivity extends AppCompatActivity implements View.OnClickLis
                 intent = new Intent("editDBActivity");
                 // передаем название заголовка
                 intent.putExtra("headName", "Резервы");
+                intent.putExtra("adminName", getAdminName);
                 startActivity(intent);
                 break;
             }
@@ -206,10 +213,114 @@ public class CommonActivity extends AppCompatActivity implements View.OnClickLis
             handler.post(() -> {
                 tvTime.setText(timeFormat.format(new Date()));
                 // также обращаемся каждую минуту к калькулятору оставшегося времени
-//                calculateduration(timeFormat.format(currentTime));
                 actualTime();  // мисис рекурсия
             });
         }).start();
+    }
+
+    public void addBtnTableHead() {
+        linTableHead = findViewById(R.id.linTableHead);
+        LinearLayout.LayoutParams marginBtnTable;
+
+
+        btnDate = new Button(linTableHead.getContext());
+        btnDate.setLayoutParams(new LinearLayout.LayoutParams(
+                option.convertDpToPixels(this, 100),
+                option.convertDpToPixels(this, 50)));
+
+        btnDate.setTag("btnChoseDate");
+        // задаем сегодняшнюю дату
+        // если новая дата, но время с 0 до 5 утра, то показывается вчерашняя дата (дата смены)
+        Calendar dayCalendar = Calendar.getInstance();
+        if (dayCalendar.get(Calendar.HOUR_OF_DAY) < 5) {
+            dayCalendar.add(Calendar.DATE, -1);  // number of days to add
+        }
+        btnDate.setText(option.dateFormatMethod(dayCalendar));
+        btnDate.setTextSize(14);
+        btnDate.setBackgroundResource(R.drawable.btn_style_2);
+
+        marginBtnTable = (LinearLayout.LayoutParams) btnDate.getLayoutParams();
+        marginBtnTable.setMargins(0, 0, marginLength, 0);
+
+        linTableHead.addView(btnDate);
+
+
+
+        for (int i = 0; i < tableCount - 9; i++) {
+            btnTableHead = new Button(linTableHead.getContext());
+            btnTableHead.setLayoutParams(new LinearLayout.LayoutParams(
+                    option.convertDpToPixels(this, 60),
+                    option.convertDpToPixels(this, 60)));
+
+            btnTableHead.setTag("btnTableHead" + (1 + i));
+            btnTableHeadTagsList.add(btnTableHead);
+            btnTableHead.setText((i + 1) + "");
+            btnTableHead.setTextSize(10);
+            btnTableHead.setClickable(false);
+
+            linTableHead.addView(btnTableHead);
+
+            // ищи btnTableHead.setOnClickListener
+        }
+
+
+
+
+        btnDate1 = new Button(linTableHead.getContext());
+        btnDate1.setLayoutParams(new LinearLayout.LayoutParams(
+                option.convertDpToPixels(this, 100),
+                option.convertDpToPixels(this, 50)));
+
+        btnDate1.setTag("btnChoseDate1");
+        // задаем сегодняшнюю дату
+        btnDate1.setText(btnDate.getText());
+        btnDate1.setTextSize(14);
+        btnDate1.setBackgroundResource(R.drawable.btn_style_2);
+
+        marginBtnTable = (LinearLayout.LayoutParams) btnDate1.getLayoutParams();
+        marginBtnTable.setMargins(0, 0, marginLength, 0);
+
+        linTableHead.addView(btnDate1);
+        if(getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT)
+            btnDate1.setVisibility(View.INVISIBLE);
+        else if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE)
+            btnDate1.setVisibility(View.VISIBLE);
+
+
+
+        for (int i = tableCount - 9; i < tableCount; i++) {
+            btnTableHead = new Button(linTableHead.getContext());
+            btnTableHead.setLayoutParams(new LinearLayout.LayoutParams(
+                    option.convertDpToPixels(this, 60),
+                    option.convertDpToPixels(this, 60)));
+
+            btnTableHead.setTag("btnTableHead" + (1 + i));
+            btnTableHeadTagsList.add(btnTableHead);
+            btnTableHead.setText((i + 1) + "");
+            btnTableHead.setTextSize(10);
+
+            linTableHead.addView(btnTableHead);
+
+            // ищи btnTableHead.setOnClickListener
+        }
+
+
+
+        btnDate2 = new Button(linTableHead.getContext());
+        btnDate2.setLayoutParams(new LinearLayout.LayoutParams(
+                option.convertDpToPixels(this, 100),
+                option.convertDpToPixels(this, 50)));
+
+        btnDate2.setTag("btnChoseDate1");
+        // задаем сегодняшнюю дату
+        btnDate2.setText(btnDate.getText());
+        btnDate2.setTextSize(14);
+        btnDate2.setBackgroundResource(R.drawable.btn_style_2);
+
+        marginBtnTable = (LinearLayout.LayoutParams) btnDate2.getLayoutParams();
+        marginBtnTable.setMargins(0, 0, marginLength, 0);
+
+        linTableHead.addView(btnDate2);
     }
 
     private void choseTypeTable() {
@@ -222,6 +333,12 @@ public class CommonActivity extends AppCompatActivity implements View.OnClickLis
         });
         btnDate1.findViewWithTag("btnChoseDate1");
         btnDate1.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View view) {
+                datePicker();
+            }
+        });
+        btnDate2.findViewWithTag("btnChoseDate1");
+        btnDate2.setOnClickListener(new View.OnClickListener() {
             public void onClick(View view) {
                 datePicker();
             }
@@ -250,6 +367,7 @@ public class CommonActivity extends AppCompatActivity implements View.OnClickLis
                     public void onClick(View view) {
                         Intent intent = new Intent("tableActivity");
                         // передаем название заголовка
+                        intent.putExtra("whoCall", "btnTable");
                         intent.putExtra("numTable", numTable);
                         intent.putExtra("adminName", getAdminName);
                         startActivity(intent);
@@ -262,6 +380,92 @@ public class CommonActivity extends AppCompatActivity implements View.OnClickLis
         }
         cursorTables.close();
     }
+
+
+    public void addBtnCommon() {
+        linTableTime = findViewById(R.id.linTableTimeHead);
+
+        for (int i = 0; i < tableCount - 9; i++) {
+            linTable = new LinearLayout(linTableTime.getContext());
+            linTable.setLayoutParams(new LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.WRAP_CONTENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT));
+            linTable.setOrientation(LinearLayout.HORIZONTAL);
+
+
+            int hourRight = 11;
+            for (int j = 0; j < hourCount; j++, hourRight++) {
+                if (hourRight == 24) {
+                    hourRight = 0;
+                }
+
+                btnTable = new Button(linTable.getContext());
+                btnTable.setLayoutParams(new LinearLayout.LayoutParams(
+                        option.convertDpToPixels(this, 180),
+                        option.convertDpToPixels(this, 60)));
+
+//                btnTable.setTag("btnTable." + (i+1) + "." + hourRight);
+                btnTable.setTag(hourRight);
+                btnTableTagArray[i][j] = btnTable;
+                btnTable.setBackgroundResource(R.drawable.btn_style_4);
+                btnTable.setClickable(false);
+                btnTable.setTextSize(12);
+
+//                LinearLayout.LayoutParams marginBtnTable = (LinearLayout.LayoutParams) btnTable.getLayoutParams();
+//                marginBtnTable.setMargins(0, 0, marginLength, 0);
+
+                linTable.removeView(btnTable);
+                linTable.addView(btnTable);
+            }
+            linTableTime.removeView(linTable);
+            linTableTime.addView(linTable);
+        }
+
+        if(getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT)
+            addPlugBtnHour();
+        else if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE)
+            addBtnHour();
+
+
+        for (int i = tableCount - 9; i < tableCount; i++) {
+            linTable = new LinearLayout(linTableTime.getContext());
+            linTable.setLayoutParams(new LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.WRAP_CONTENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT));
+            linTable.setOrientation(LinearLayout.HORIZONTAL);
+
+
+            int hourRight = 11;
+            for (int j = 0; j < hourCount; j++, hourRight++) {
+                if (hourRight == 24) {
+                    hourRight = 0;
+                }
+
+                btnTable = new Button(linTable.getContext());
+                btnTable.setLayoutParams(new LinearLayout.LayoutParams(
+                        option.convertDpToPixels(this, 180),
+                        option.convertDpToPixels(this, 60)));
+
+//                btnTable.setTag("btnTable." + (i+1) + "." + hourRight);
+                btnTable.setTag(hourRight);
+                btnTableTagArray[i][j] = btnTable;
+                btnTable.setBackgroundResource(R.drawable.btn_style_4);
+                btnTable.setClickable(false);
+                btnTable.setTextSize(12);
+
+//                LinearLayout.LayoutParams marginBtnTable = (LinearLayout.LayoutParams) btnTable.getLayoutParams();
+//                marginBtnTable.setMargins(0, 0, marginLength, 0);
+
+                linTable.removeView(btnTable);
+                linTable.addView(btnTable);
+            }
+            linTableTime.removeView(linTable);
+            linTableTime.addView(linTable);
+        }
+    }
+
+
+
 
     private void choseBtnCommon() throws IOException {
         Log.i("Gas", "\n ...//... ");
@@ -290,11 +494,17 @@ public class CommonActivity extends AppCompatActivity implements View.OnClickLis
             int numTableIndex = cursorOrders.getColumnIndex(DBHelper.KEY_NUM_TABLE);
             int reserveDateIndex = cursorOrders.getColumnIndex(DBHelper.KEY_RESERVE_DATE);
             int reserveTimeIndex = cursorOrders.getColumnIndex(DBHelper.KEY_RESERVE_TIME);
+            int dateOrderIndex = cursorOrders.getColumnIndex(DBHelper.KEY_ORDER_DATE);
+            int timeOrderIndex = cursorOrders.getColumnIndex(DBHelper.KEY_ORDER_TIME);
             int durationIndex = cursorOrders.getColumnIndex(DBHelper.KEY_DURATION);
             int clientIndex = cursorOrders.getColumnIndex(DBHelper.KEY_CLIENT);
+            int bronIndex = cursorOrders.getColumnIndex(DBHelper.KEY_BRON);
             do {
                 if ((cursorOrders.getString(reserveDateIndex).equals(btnDate.getText().toString()))
                         || (cursorOrders.getString(reserveDateIndex).equals(dateReserveTomorrow))) {
+                    String reserveDate = cursorOrders.getString(reserveDateIndex);
+                    String bron = cursorOrders.getString(bronIndex);
+                    int id = cursorOrders.getInt(idIndex);
                     // меняем нужные кнопки
                     // смотрим какой это стол
                     // кооордината по строке
@@ -323,10 +533,12 @@ public class CommonActivity extends AppCompatActivity implements View.OnClickLis
                             int durationMinute = cursorOrders.getInt(durationIndex);
                             // записываем клиента с БД в отдельный параметр
                             String client = cursorOrders.getString(clientIndex);
+                            String dateOrder = cursorOrders.getString(dateOrderIndex);
+                            String timeOrder = cursorOrders.getString(timeOrderIndex);
 
                             // выбираем кнопку для покраски (красим кнопки)
                             // передаем туда индексы кнопки в матрице
-                            changeBtnCommon(indexNumTable, indexHourTable, reserveTime, durationMinute, client);
+                            changeBtnCommon(id, indexNumTable, indexHourTable, reserveDate, reserveTime, durationMinute, client, bron, dateOrder, timeOrder);
                         }
                     } else if (cursorOrders.getString(reserveDateIndex).equals(dateReserveTomorrow)) {
                         // если следующий день
@@ -340,10 +552,12 @@ public class CommonActivity extends AppCompatActivity implements View.OnClickLis
                             int durationMinute = cursorOrders.getInt(durationIndex);
                             // записываем клиента с БД в отдельный параметр
                             String client = cursorOrders.getString(clientIndex);
+                            String dateOrder = cursorOrders.getString(dateOrderIndex);
+                            String timeOrder = cursorOrders.getString(timeOrderIndex);
 
                             // выбираем кнопку для покраски (красим кнопки)
                             // передаем туда индексы кнопки в матрице
-                            changeBtnCommon(indexNumTable, indexHourTable, reserveTime, durationMinute, client);
+                            changeBtnCommon(id, indexNumTable, indexHourTable, reserveDate, reserveTime, durationMinute, client, bron, dateOrder, timeOrder);
                         }
                     }
                 }
@@ -355,9 +569,27 @@ public class CommonActivity extends AppCompatActivity implements View.OnClickLis
         cursorOrders.close();
     }
 
-    private void changeBtnCommon(int indexNumTable, int indexHourTable,
-                                 String reserveTime, int durationMinute, String client) throws IOException {
+    @SuppressLint("SetTextI18n")
+    private void changeBtnCommon(int id, int indexNumTable, int indexHourTable, String reserveDate,
+                                 String reserveTime, int durationMinute, String client, String bron, String dateOrder, String timeOrder) throws IOException {
 //        где-то здесь д.б. условия для правильной покраски кнопки на время после 0 и до 5
+
+        Calendar reserveFinishDateTimeCal = Calendar.getInstance();
+        String reserveFinishTimeStr;
+        {
+            Date reserveStartDateTime = new Date();
+            try {
+                // из строки в Date
+                reserveStartDateTime = dateTimeFormat.parse(reserveDate + " " + reserveTime);
+//                        Log.i("Gas1", "reserveStartDateTime = " + reserveStartDateTime);
+            } catch (ParseException e) {
+                e.printStackTrace();
+            }
+
+            reserveFinishDateTimeCal.setTime(reserveStartDateTime);
+            reserveFinishDateTimeCal.add(Calendar.MINUTE, durationMinute);
+            reserveFinishTimeStr = timeFormat.format(reserveFinishDateTimeCal.getTime());
+        }
 
         int reserveMinute;
         // инициализируем значения
@@ -378,47 +610,76 @@ public class CommonActivity extends AppCompatActivity implements View.OnClickLis
         }
         // если продолжительность резерва больше 1, то все предыдущие нужно красить полностью (кроме последней)
         if (btnCountDraw > 1) {
+
             // для первой кнопки нужны осбобые условия покраски (м.б. что не сначала, но точно до конца)
             Log.i("Gas", "для первого часа reserveTime = " + reserveTime);
             Log.i("Gas", "durationMinute = " + durationMinute);
-            drawCustomBtn(indexNumTable, indexHourTable, reserveMinute, durationMinute, client, false);
-//            ...
-            //начинаем со всторой кнопки
-            for (int i = indexHourTable + 1; i < indexHourTable + btnCountDraw - 1; i++) {
+            drawCommonFirstBtn(id, indexNumTable, indexHourTable, reserveTime, reserveFinishTimeStr, reserveMinute, durationMinute, client, bron, dateOrder, timeOrder, false);
+            // если время прошло, то красим серым
+            if (reserveFinishDateTimeCal.before(Calendar.getInstance())) {
+                btnTableTagArray[indexNumTable - 1][indexHourTable].setBackgroundResource(R.drawable.btn_style_3);
+            }
+
+            // для средних кнопок
+            for (int i = indexHourTable + 1; i < indexHourTable + btnCountDraw/* - 1*/; i++) {
                 inputStream = getAssets().open("reserve_60min.png");
                 // загружаем как Drawable
                 imageBtnCommon = Drawable.createFromStream(inputStream, null);
                 btnTableTagArray[indexNumTable - 1][i].setBackgroundDrawable(imageBtnCommon);
-                btnTableTagArray[indexNumTable - 1][i].setText(client);
+                btnTableTagArray[indexNumTable - 1][i].setText("\n");
+                drawCommonCommonBtn(id, indexNumTable, (indexHourTable + btnCountDraw - 1), reserveTime,
+                        reserveFinishTimeStr, reserveMinute, durationMinute, client, bron, dateOrder, timeOrder);
+
+                // если время прошло, то красим серым
+                if (reserveFinishDateTimeCal.before(Calendar.getInstance())) {
+                    btnTableTagArray[indexNumTable - 1][i].setBackgroundResource(R.drawable.btn_style_3);
+                }
             }
+
+
             // для последней кнопки нужны особые условия
             // далее разделить durationMinute на btnCountDraw-1 и найти остаток
             //  и конечно же вычесть reserveMinute - и будет кол-во наших минут
             Log.i("Gas", "для последнего часа reserveTime = " + reserveTime);
             durationMinute = durationMinute - ((btnCountDraw - 1) * 60) + reserveMinute;
             Log.i("Gas", "durationMinute After = " + durationMinute);
-            // ну и рисуем
-            drawCustomBtn(indexNumTable, (indexHourTable + btnCountDraw - 1), reserveMinute, durationMinute, client, true);
+            drawCommonLastBtn(id, indexNumTable, (indexHourTable + btnCountDraw - 1), reserveTime,
+                    reserveFinishTimeStr, reserveMinute, durationMinute, client, bron, dateOrder, timeOrder, true);
+
+            // если время прошло, то красим серым
+            if (reserveFinishDateTimeCal.before(Calendar.getInstance())) {
+                btnTableTagArray[indexNumTable - 1][indexHourTable + btnCountDraw - 1].setBackgroundResource(R.drawable.btn_style_3);
+            }
         }
         // если у нас 1 кнопка то особые условия для этой кнопки
         else if (btnCountDraw == 1) {
-            drawCustomBtn(indexNumTable, indexHourTable, reserveMinute, durationMinute, client, false);
+            drawCommonFirstBtn(id, indexNumTable, indexHourTable, reserveTime, reserveFinishTimeStr, reserveMinute, durationMinute, client, bron, dateOrder, timeOrder, false);
+
+            // если время прошло, то красим серым
+            if (reserveFinishDateTimeCal.before(Calendar.getInstance())) {
+                btnTableTagArray[indexNumTable - 1][indexHourTable].setBackgroundResource(R.drawable.btn_style_3);
+            }
         }
-
-
     }
 
-    private void drawCustomBtn(int indexNumTable, int indexHourTable, int reserveMinute,
-                               int durationMinute, String client, boolean endBtnFlag) throws IOException {
+
+
+    @SuppressLint("SetTextI18n")
+    private void drawCommonFirstBtn(int id, int indexNumTable, int indexHourTable, String reserveStartTimeStr, String reserveFinishTimeStr, int reserveMinute,
+                                    int durationMinute, String client, String bron, String dateOrder, String timeOrder, boolean endBtnFlag) throws IOException {
 
         // получаем входной поток
         InputStream inputStream = getAssets().open("reserve_0min.png");
         Drawable imageBtnCommon;
         // красим кнопки
         // Если минуты Резерва начинаются c начала часа или если эта последняя кнопка, то красим всегда с начала
+
+//        Log.i("Gas6", "indexNumTable = " + indexNumTable);
+//        Log.i("Gas6", "reserveMinute = " + reserveMinute);
+//        Log.i("Gas6", "durationMinute = " + durationMinute);
         if ((reserveMinute == 0) || (endBtnFlag)) {
             Log.i("Gas", "минуты Резерва начинаются c начала часа");
-            if ((durationMinute > 2) && (durationMinute < 8)) {
+            if ((durationMinute >= 0) && (durationMinute < 8)) {
                 Log.i("Gas", "до 5 мин");
                 inputStream = getAssets().open("reserve_5min_atStart.png");
             } else if ((durationMinute > 7) && (durationMinute < 13)) {
@@ -436,82 +697,144 @@ public class CommonActivity extends AppCompatActivity implements View.OnClickLis
             } else if ((durationMinute > 27) && (durationMinute < 33)) {
                 Log.i("Gas", "до 30 мин");
                 inputStream = getAssets().open("reserve_30min_atStart.png");
-                btnTableTagArray[indexNumTable - 1][indexHourTable].setText(client);
+                if (bron.equals("Без брони"))
+                    btnTableTagArray[indexNumTable - 1][indexHourTable].setText(client + "\n" + reserveStartTimeStr + "  -  " + reserveFinishTimeStr);
+                else
+                    btnTableTagArray[indexNumTable - 1][indexHourTable].setText(client + "\n" + reserveStartTimeStr + "  -  " + reserveFinishTimeStr + "\t⭐");
             } else if ((durationMinute > 32) && (durationMinute < 38)) {
                 Log.i("Gas", "до 35 мин");
                 inputStream = getAssets().open("reserve_35min_atStart.png");
-                btnTableTagArray[indexNumTable - 1][indexHourTable].setText(client);
+                if (bron.equals("Без брони"))
+                    btnTableTagArray[indexNumTable - 1][indexHourTable].setText(client + "\n" + reserveStartTimeStr + "  -  " + reserveFinishTimeStr);
+                else
+                    btnTableTagArray[indexNumTable - 1][indexHourTable].setText(client + "\n" + reserveStartTimeStr + "  -  " + reserveFinishTimeStr + "\t⭐");
             } else if ((durationMinute > 37) && (durationMinute < 43)) {
                 Log.i("Gas", "до 40 мин");
                 inputStream = getAssets().open("reserve_40min_atStart.png");
-                btnTableTagArray[indexNumTable - 1][indexHourTable].setText(client);
+                if (bron.equals("Без брони"))
+                    btnTableTagArray[indexNumTable - 1][indexHourTable].setText(client + "\n" + reserveStartTimeStr + "  -  " + reserveFinishTimeStr);
+                else
+                    btnTableTagArray[indexNumTable - 1][indexHourTable].setText(client + "\n" + reserveStartTimeStr + "  -  " + reserveFinishTimeStr + "\t⭐");
             } else if ((durationMinute > 42) && (durationMinute < 48)) {
                 Log.i("Gas", "до 45 мин");
                 inputStream = getAssets().open("reserve_45min_atStart.png");
-                btnTableTagArray[indexNumTable - 1][indexHourTable].setText(client);
+                if (bron.equals("Без брони"))
+                    btnTableTagArray[indexNumTable - 1][indexHourTable].setText(client + "\n" + reserveStartTimeStr + "  -  " + reserveFinishTimeStr);
+                else
+                    btnTableTagArray[indexNumTable - 1][indexHourTable].setText(client + "\n" + reserveStartTimeStr + "  -  " + reserveFinishTimeStr + "\t⭐");
             } else if ((durationMinute > 47) && (durationMinute < 53)) {
                 Log.i("Gas", "до 50 мин");
                 inputStream = getAssets().open("reserve_50min_atStart.png");
-                btnTableTagArray[indexNumTable - 1][indexHourTable].setText(client);
+                if (bron.equals("Без брони"))
+                    btnTableTagArray[indexNumTable - 1][indexHourTable].setText(client + "\n" + reserveStartTimeStr + "  -  " + reserveFinishTimeStr);
+                else
+                    btnTableTagArray[indexNumTable - 1][indexHourTable].setText(client + "\n" + reserveStartTimeStr + "  -  " + reserveFinishTimeStr + "\t⭐");
             } else if ((durationMinute > 52) && (durationMinute < 58)) {
                 Log.i("Gas", "до 55 мин");
                 inputStream = getAssets().open("reserve_55min_atStart.png");
-                btnTableTagArray[indexNumTable - 1][indexHourTable].setText(client);
+                if (bron.equals("Без брони"))
+                    btnTableTagArray[indexNumTable - 1][indexHourTable].setText(client + "\n" + reserveStartTimeStr + "  -  " + reserveFinishTimeStr);
+                else
+                    btnTableTagArray[indexNumTable - 1][indexHourTable].setText(client + "\n" + reserveStartTimeStr + "  -  " + reserveFinishTimeStr + "\t⭐");
             } else if (durationMinute > 57) {
                 Log.i("Gas", "до конца часа");
                 inputStream = getAssets().open("reserve_60min.png");
-                btnTableTagArray[indexNumTable - 1][indexHourTable].setText(client);
+                if (bron.equals("Без брони"))
+                    btnTableTagArray[indexNumTable - 1][indexHourTable].setText(client + "\n" + reserveStartTimeStr + "  -  " + reserveFinishTimeStr);
+                else
+                    btnTableTagArray[indexNumTable - 1][indexHourTable].setText(client + "\n" + reserveStartTimeStr + "  -  " + reserveFinishTimeStr + "\t⭐");
             }
         }
 
         // если минуты резерва начинаются не с начала часа
         // Пример: время резерва: 18:15 продолжительностью 45мин
         // или время резерва: 16:30 продолжительностью 60мин
-        else if ((reserveMinute > 0) && (reserveMinute < 57)) {
-            Log.i("Gas", "время резерва: 16:30 продолжительностью 60мин");
+        else if ((reserveMinute > 0) && (reserveMinute < 60)) {
             // пока рисунки только до конца часа, поэтому меньше условий
 //            durationMinute = durationMinute + reserveMinute;
             if ((reserveMinute > 2) && (reserveMinute < 8)) {
                 Log.i("Gas", "с 5 мин");
                 inputStream = getAssets().open("reserve_5min_end.png");
-                btnTableTagArray[indexNumTable - 1][indexHourTable].setText(client);
+                if (bron.equals("Без брони"))
+                    btnTableTagArray[indexNumTable - 1][indexHourTable].setText(client + "\n" + reserveStartTimeStr + "  -  " + reserveFinishTimeStr);
+                else
+                    btnTableTagArray[indexNumTable - 1][indexHourTable].setText(client + "\n" + reserveStartTimeStr + "  -  " + reserveFinishTimeStr + "\t⭐");
             } else if ((reserveMinute > 7) && (reserveMinute < 13)) {
                 Log.i("Gas", "с 10 мин");
                 inputStream = getAssets().open("reserve_10min_end.png");
-                btnTableTagArray[indexNumTable - 1][indexHourTable].setText(client);
+                if (bron.equals("Без брони"))
+                    btnTableTagArray[indexNumTable - 1][indexHourTable].setText(client + "\n" + reserveStartTimeStr + "  -  " + reserveFinishTimeStr);
+                else
+                    btnTableTagArray[indexNumTable - 1][indexHourTable].setText(client + "\n" + reserveStartTimeStr + "  -  " + reserveFinishTimeStr + "\t⭐");
             } else if ((reserveMinute > 12) && (reserveMinute < 18)) {
                 Log.i("Gas", "с 15 мин");
                 inputStream = getAssets().open("reserve_15min_end.png");
-                btnTableTagArray[indexNumTable - 1][indexHourTable].setText(client);
+                if (bron.equals("Без брони"))
+                    btnTableTagArray[indexNumTable - 1][indexHourTable].setText(client + "\n" + reserveStartTimeStr + "  -  " + reserveFinishTimeStr);
+                else
+                    btnTableTagArray[indexNumTable - 1][indexHourTable].setText(client + "\n" + reserveStartTimeStr + "  -  " + reserveFinishTimeStr + "\t⭐");
             } else if ((reserveMinute > 17) && (reserveMinute < 23)) {
                 Log.i("Gas", "с 20 мин");
                 inputStream = getAssets().open("reserve_20min_end.png");
-                btnTableTagArray[indexNumTable - 1][indexHourTable].setText(client);
+                if (bron.equals("Без брони"))
+                    btnTableTagArray[indexNumTable - 1][indexHourTable].setText(client + "\n" + reserveStartTimeStr + "  -  " + reserveFinishTimeStr);
+                else
+                    btnTableTagArray[indexNumTable - 1][indexHourTable].setText(client + "\n" + reserveStartTimeStr + "  -  " + reserveFinishTimeStr + "\t⭐");
             } else if ((reserveMinute > 22) && (reserveMinute < 28)) {
                 Log.i("Gas", "с 25 мин");
                 inputStream = getAssets().open("reserve_25min_end.png");
-                btnTableTagArray[indexNumTable - 1][indexHourTable].setText(client);
+                if (bron.equals("Без брони"))
+                    btnTableTagArray[indexNumTable - 1][indexHourTable].setText(client + "\n" + reserveStartTimeStr + "  -  " + reserveFinishTimeStr);
+                else
+                    btnTableTagArray[indexNumTable - 1][indexHourTable].setText(client + "\n" + reserveStartTimeStr + "  -  " + reserveFinishTimeStr + "\t⭐");
             } else if ((reserveMinute > 27) && (reserveMinute < 33)) {
                 Log.i("Gas", "с 30 мин");
                 inputStream = getAssets().open("reserve_30min_end.png");
-                btnTableTagArray[indexNumTable - 1][indexHourTable].setText(client);
+                if (bron.equals("Без брони"))
+                    btnTableTagArray[indexNumTable - 1][indexHourTable].setText(client + "\n" + reserveStartTimeStr + "  -  " + reserveFinishTimeStr);
+                else
+                    btnTableTagArray[indexNumTable - 1][indexHourTable].setText(client + "\n" + reserveStartTimeStr + "  -  " + reserveFinishTimeStr + "\t⭐");
             } else if ((reserveMinute > 32) && (reserveMinute < 38)) {
                 Log.i("Gas", "с 35 мин");
+                if (bron.equals("Без брони"))
+                    btnTableTagArray[indexNumTable - 1][indexHourTable].setText(client + "\n" + reserveStartTimeStr + "  -  " + reserveFinishTimeStr);
+                else
+                    btnTableTagArray[indexNumTable - 1][indexHourTable].setText(client + "\n" + reserveStartTimeStr + "  -  " + reserveFinishTimeStr + "\t⭐");
                 inputStream = getAssets().open("reserve_35min_end.png");
             } else if ((reserveMinute > 37) && (reserveMinute < 43)) {
                 Log.i("Gas", "с 40 мин");
+                if (bron.equals("Без брони"))
+                    btnTableTagArray[indexNumTable - 1][indexHourTable].setText(client + "\n" + reserveStartTimeStr + "  -  " + reserveFinishTimeStr);
+                else
+                    btnTableTagArray[indexNumTable - 1][indexHourTable].setText(client + "\n" + reserveStartTimeStr + "  -  " + reserveFinishTimeStr + "\t⭐");
                 inputStream = getAssets().open("reserve_40min_end.png");
             } else if ((reserveMinute > 42) && (reserveMinute < 48)) {
                 Log.i("Gas", "с 45 мин");
+                if (bron.equals("Без брони"))
+                    btnTableTagArray[indexNumTable - 1][indexHourTable].setText(client + "\n" + reserveStartTimeStr + "  -  " + reserveFinishTimeStr);
+                else
+                    btnTableTagArray[indexNumTable - 1][indexHourTable].setText(client + "\n" + reserveStartTimeStr + "  -  " + reserveFinishTimeStr + "\t⭐");
                 inputStream = getAssets().open("reserve_45min_end.png");
             } else if ((reserveMinute > 47) && (reserveMinute < 53)) {
                 Log.i("Gas", "с 50 мин");
+                if (bron.equals("Без брони"))
+                    btnTableTagArray[indexNumTable - 1][indexHourTable].setText(client + "\n" + reserveStartTimeStr + "  -  " + reserveFinishTimeStr);
+                else
+                    btnTableTagArray[indexNumTable - 1][indexHourTable].setText(client + "\n" + reserveStartTimeStr + "  -  " + reserveFinishTimeStr + "\t⭐");
                 inputStream = getAssets().open("reserve_50min_end.png");
-            } else if ((reserveMinute > 52) && (reserveMinute < 58)) { //логично, если достигнет
+            } else if ((reserveMinute > 52) && (reserveMinute < 57)) { //логично, если достигнет
                 Log.i("Gas", "с 55 мин");
+                if (bron.equals("Без брони"))
+                    btnTableTagArray[indexNumTable - 1][indexHourTable].setText(client + "\n" + reserveStartTimeStr + "  -  " + reserveFinishTimeStr);
+                else
+                    btnTableTagArray[indexNumTable - 1][indexHourTable].setText(client + "\n" + reserveStartTimeStr + "  -  " + reserveFinishTimeStr + "\t⭐");
                 inputStream = getAssets().open("reserve_55min_end.png");
             } else { // (if (reserveMinute > 57) )
                 Log.i("Gas", "с 5 мин");
+                if (bron.equals("Без брони"))
+                    btnTableTagArray[indexNumTable - 1][indexHourTable].setText(client + "\n" + reserveStartTimeStr + "  -  " + reserveFinishTimeStr);
+                else
+                    btnTableTagArray[indexNumTable - 1][indexHourTable].setText(client + "\n" + reserveStartTimeStr + "  -  " + reserveFinishTimeStr + "\t⭐");
 //                inputStream = getAssets().open("reserve_0min.png");
             }
         }
@@ -519,6 +842,137 @@ public class CommonActivity extends AppCompatActivity implements View.OnClickLis
         // загружаем как Drawable
         imageBtnCommon = Drawable.createFromStream(inputStream, null);
         btnTableTagArray[indexNumTable - 1][indexHourTable].setBackgroundDrawable(imageBtnCommon);
+
+        btnTableTagArray[indexNumTable - 1][indexHourTable].setClickable(true);
+        btnTableTagArray[indexNumTable - 1][indexHourTable].setOnClickListener(new View.OnClickListener() {
+            public void onClick(View view) {
+                Intent intent = new Intent("tableActivity");
+                intent.putExtra("whoCall", "btnCommon");
+                intent.putExtra("numTable", indexNumTable);
+                intent.putExtra("id", id);
+                intent.putExtra("adminName", getAdminName);
+                intent.putExtra("client", client);
+                intent.putExtra("duration", durationMinute);
+                intent.putExtra("bron", bron);
+                intent.putExtra("reserveDateStr", btnDate.getText().toString());
+                intent.putExtra("reserveStartTimeStr", reserveStartTimeStr);
+                intent.putExtra("dateOrder", dateOrder);
+                intent.putExtra("timeOrder", timeOrder);
+                intent.putExtra("reserveFinishTimeStr", reserveFinishTimeStr);
+                startActivity(intent);
+            }
+        });
+    }
+
+    private void drawCommonLastBtn(int id, int indexNumTable, int indexHourTable, String reserveStartTimeStr, String reserveFinishTimeStr, int reserveMinute,
+                               int durationMinute, String client, String bron, String dateOrder, String timeOrder, boolean endBtnFlag) throws IOException {
+
+
+
+        Log.i("Gas6", "");
+        Log.i("Gas6", "LAST drawCommonLastBtn");
+
+        // получаем входной поток
+        InputStream inputStream = getAssets().open("reserve_0min.png");
+        Drawable imageBtnCommon;
+        // красим кнопки
+        // Если минуты Резерва начинаются c начала часа или если эта последняя кнопка, то красим всегда с начала
+
+        Log.i("Gas6", "inputStream на старте = " + indexNumTable);
+        Log.i("Gas6", "indexNumTable = " + indexNumTable);
+        Log.i("Gas6", "reserveMinute = " + reserveMinute);
+        Log.i("Gas6", "durationMinute = " + durationMinute);
+
+        if (/*(reserveMinute == 0) || */(endBtnFlag)) {
+            Log.i("Gas6", "минуты Резерва начинаются c начала часа");
+            if ((durationMinute >= 0) && (durationMinute < 8)) {
+                Log.i("Gas6", "до 5 мин");
+                inputStream = getAssets().open("reserve_5min_atStart.png");
+            } else if ((durationMinute > 7) && (durationMinute < 13)) {
+                Log.i("Gas6", "до 10 мин");
+                inputStream = getAssets().open("reserve_10min_atStart.png");
+            } else if ((durationMinute > 12) && (durationMinute < 18)) {
+                Log.i("Gas6", "до 15 мин");
+                inputStream = getAssets().open("reserve_15min_atStart.png");
+            } else if ((durationMinute > 7) && (durationMinute < 23)) {
+                Log.i("Gas6", "до 20 мин");
+                inputStream = getAssets().open("reserve_20min_atStart.png");
+            } else if ((durationMinute > 22) && (durationMinute < 28)) {
+                Log.i("Gas6", "до 25 мин");
+                inputStream = getAssets().open("reserve_25min_atStart.png");
+            } else if ((durationMinute > 27) && (durationMinute < 33)) {
+                Log.i("Gas6", "до 30 мин");
+                inputStream = getAssets().open("reserve_30min_atStart.png");
+            } else if ((durationMinute > 32) && (durationMinute < 38)) {
+                Log.i("Gas6", "до 35 мин");
+                inputStream = getAssets().open("reserve_35min_atStart.png");
+            } else if ((durationMinute > 37) && (durationMinute < 43)) {
+                Log.i("Gas6", "до 40 мин");
+                inputStream = getAssets().open("reserve_40min_atStart.png");
+            } else if ((durationMinute > 42) && (durationMinute < 48)) {
+                Log.i("Gas6", "до 45 мин");
+                inputStream = getAssets().open("reserve_45min_atStart.png");
+            } else if ((durationMinute > 47) && (durationMinute < 53)) {
+                Log.i("Gas6", "до 50 мин");
+                inputStream = getAssets().open("reserve_50min_atStart.png");
+            } else if ((durationMinute > 52) && (durationMinute < 58)) {
+                Log.i("Gas6", "до 55 мин");
+                inputStream = getAssets().open("reserve_55min_atStart.png");
+            } else if (durationMinute > 57) {
+                Log.i("Gas6", "до конца часа");
+                inputStream = getAssets().open("reserve_60min.png");
+            }
+        }
+
+        // загружаем как Drawable
+        imageBtnCommon = Drawable.createFromStream(inputStream, null);
+        btnTableTagArray[indexNumTable - 1][indexHourTable].setBackgroundDrawable(imageBtnCommon);
+
+        btnTableTagArray[indexNumTable - 1][indexHourTable].setClickable(true);
+        btnTableTagArray[indexNumTable - 1][indexHourTable].setOnClickListener(new View.OnClickListener() {
+            public void onClick(View view) {
+                Intent intent = new Intent("tableActivity");
+                intent.putExtra("whoCall", "btnCommon");
+                intent.putExtra("numTable", indexNumTable);
+                intent.putExtra("id", id);
+                intent.putExtra("adminName", getAdminName);
+                intent.putExtra("client", client);
+                intent.putExtra("duration", durationMinute);
+                intent.putExtra("bron", bron);
+                intent.putExtra("reserveDateStr", btnDate.getText().toString());
+                intent.putExtra("reserveStartTimeStr", reserveStartTimeStr);
+                intent.putExtra("dateOrder", dateOrder);
+                intent.putExtra("timeOrder", timeOrder);
+                intent.putExtra("reserveFinishTimeStr", reserveFinishTimeStr);
+                startActivity(intent);
+            }
+        });
+
+        Log.i("Gas6", "inputStream в конце = " + indexNumTable);
+    }
+
+    private void drawCommonCommonBtn(int id, int indexNumTable, int indexHourTable, String reserveStartTimeStr, String reserveFinishTimeStr, int reserveMinute,
+                               int durationMinute, String client, String bron, String dateOrder, String timeOrder) throws IOException {
+
+        btnTableTagArray[indexNumTable - 1][indexHourTable].setClickable(true);
+        btnTableTagArray[indexNumTable - 1][indexHourTable].setOnClickListener(new View.OnClickListener() {
+            public void onClick(View view) {
+                Intent intent = new Intent("tableActivity");
+                intent.putExtra("whoCall", "btnCommon");
+                intent.putExtra("numTable", indexNumTable);
+                intent.putExtra("id", id);
+                intent.putExtra("adminName", getAdminName);
+                intent.putExtra("client", client);
+                intent.putExtra("duration", durationMinute);
+                intent.putExtra("bron", bron);
+                intent.putExtra("reserveDateStr", btnDate.getText().toString());
+                intent.putExtra("reserveStartTimeStr", reserveStartTimeStr);
+                intent.putExtra("dateOrder", dateOrder);
+                intent.putExtra("timeOrder", timeOrder);
+                intent.putExtra("reserveFinishTimeStr", reserveFinishTimeStr);
+                startActivity(intent);
+            }
+        });
     }
 
     private Integer indexTimeMethod(String time, String date) {
@@ -533,64 +987,6 @@ public class CommonActivity extends AppCompatActivity implements View.OnClickLis
         if (hour > 10 && hour < 24) result = hour - 11;
         else result = hour + 13;
         return result;
-    }
-
-    public void addBtnTableHead() {
-        linTableHead = findViewById(R.id.linTableHead);
-        LinearLayout.LayoutParams marginBtnTable;
-
-
-        btnDate = new Button(linTableHead.getContext());
-        btnDate.setLayoutParams(new LinearLayout.LayoutParams(
-                option.convertDpToPixels(this, 80),
-                option.convertDpToPixels(this, 50)));
-
-        btnDate.setTag("btnChoseDate");
-        // задаем сегодняшнюю дату
-        // если новая дата, но время до 5 утра, то показывается вчерашняя дата
-        Calendar dayCalendar = Calendar.getInstance();
-        if (dayCalendar.get(Calendar.HOUR_OF_DAY) < 5) {
-            dayCalendar.add(Calendar.DATE, -1);  // number of days to add
-        }
-        btnDate.setText(option.dateFormatMethod(dayCalendar));
-        btnDate.setTextSize(14);
-        btnDate.setBackgroundResource(R.drawable.btn_style_2);
-
-        marginBtnTable = (LinearLayout.LayoutParams) btnDate.getLayoutParams();
-        marginBtnTable.setMargins(0, 0, marginLength, 0);
-
-        linTableHead.addView(btnDate);
-        for (int i = 0; i < tableCount; i++) {
-            btnTableHead = new Button(linTableHead.getContext());
-            btnTableHead.setLayoutParams(new LinearLayout.LayoutParams(
-                    option.convertDpToPixels(this, 40),
-                    option.convertDpToPixels(this, 40)));
-
-            btnTableHead.setTag("btnTableHead" + (1 + i));
-            btnTableHeadTagsList.add(btnTableHead);
-            btnTableHead.setText((i + 1) + "");
-            btnTableHead.setTextSize(10);
-
-            linTableHead.addView(btnTableHead);
-
-            // ищи btnTableHead.setOnClickListener
-        }
-
-        btnDate1 = new Button(linTableHead.getContext());
-        btnDate1.setLayoutParams(new LinearLayout.LayoutParams(
-                option.convertDpToPixels(this, 80),
-                option.convertDpToPixels(this, 50)));
-
-        btnDate1.setTag("btnChoseDate1");
-        // задаем сегодняшнюю дату
-        btnDate1.setText(btnDate.getText());
-        btnDate1.setTextSize(14);
-        btnDate1.setBackgroundResource(R.drawable.btn_style_2);
-
-        marginBtnTable = (LinearLayout.LayoutParams) btnDate1.getLayoutParams();
-        marginBtnTable.setMargins(0, 0, marginLength, 0);
-
-        linTableHead.addView(btnDate1);
     }
 
     public void addBtnHour() {
@@ -612,13 +1008,13 @@ public class CommonActivity extends AppCompatActivity implements View.OnClickLis
 
             btnTime = new Button(linHour.getContext());
             btnTime.setLayoutParams(new LinearLayout.LayoutParams(
-                    option.convertDpToPixels(this, 120),
+                    option.convertDpToPixels(this, 180),
                     option.convertDpToPixels(this, 50)));
 
             btnTime.setTag("btnTime" + hourRight);
             btnTimeTagsList.add(btnTableHead);
             btnTime.setText(hourRight + ":00");
-            btnTime.setTextSize(14);
+            btnTime.setTextSize(16);
             btnTime.setClickable(false);
 
 //            LinearLayout.LayoutParams marginBtnTable = (LinearLayout.LayoutParams) btnTime.getLayoutParams();
@@ -629,44 +1025,41 @@ public class CommonActivity extends AppCompatActivity implements View.OnClickLis
         linTableTimeHead.addView(linHour);
     }
 
-    public void addBtnCommon() {
-        linTableTime = findViewById(R.id.linTableTimeHead);
-
-        for (int i = 0; i < tableCount; i++) {
-            linTable = new LinearLayout(linTableTime.getContext());
-            linTable.setLayoutParams(new LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.WRAP_CONTENT,
-                    LinearLayout.LayoutParams.WRAP_CONTENT));
-            linTable.setOrientation(LinearLayout.HORIZONTAL);
+    public void addPlugBtnHour() {
+        linTableTimeHead = findViewById(R.id.linTableTimeHead);
 
 
-            int hourRight = 11;
-            for (int j = 0; j < hourCount; j++, hourRight++) {
-                if (hourRight == 24) {
-                    hourRight = 0;
-                }
+        linHour = new LinearLayout(linTableTimeHead.getContext());
+        linHour.setLayoutParams(new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT));
+        linHour.setOrientation(LinearLayout.HORIZONTAL);
 
-                btnTable = new Button(linTable.getContext());
-                btnTable.setLayoutParams(new LinearLayout.LayoutParams(
-                        option.convertDpToPixels(this, 120),
-                        option.convertDpToPixels(this, 40)));
 
-//                btnTable.setTag("btnTable." + (i+1) + "." + hourRight);
-                btnTable.setTag(hourRight);
-                btnTableTagArray[i][j] = btnTable;
-                btnTable.setBackgroundResource(R.drawable.btn_style_4);
-                btnTable.setClickable(false);
-                btnTable.setTextSize(10);
-
-//                LinearLayout.LayoutParams marginBtnTable = (LinearLayout.LayoutParams) btnTable.getLayoutParams();
-//                marginBtnTable.setMargins(0, 0, marginLength, 0);
-
-                linTable.removeView(btnTable);
-                linTable.addView(btnTable);
+        int hourRight = 11;
+        for (int i = 0; i < hourCount; i++, hourRight++) {
+            if (hourRight == 24) {
+                hourRight = 0;
             }
-            linTableTime.removeView(linTable);
-            linTableTime.addView(linTable);
+
+            btnTime = new Button(linHour.getContext());
+            btnTime.setLayoutParams(new LinearLayout.LayoutParams(
+                    option.convertDpToPixels(this, 180),
+                    option.convertDpToPixels(this, 50)));
+
+            btnTime.setTag("btnTime" + hourRight);
+            btnTimeTagsList.add(btnTableHead);
+            btnTime.setText(hourRight + ":00");
+            btnTime.setTextSize(16);
+            btnTime.setClickable(false);
+
+//            LinearLayout.LayoutParams marginBtnTable = (LinearLayout.LayoutParams) btnTime.getLayoutParams();
+//            marginBtnTable.setMargins(0, 0, marginLength, 0);
+
+            linHour.addView(btnTime);
         }
+        linTableTimeHead.addView(linHour);
+        linHour.setVisibility(View.INVISIBLE);
     }
 
     public void clearBtnCommon() throws IOException {
@@ -703,6 +1096,7 @@ public class CommonActivity extends AppCompatActivity implements View.OnClickLis
 
                         btnDate.setText(myDaySt + "." + myMonthSt + "." + myYear);
                         btnDate1.setText(myDaySt + "." + myMonthSt + "." + myYear);
+                        btnDate2.setText(myDaySt + "." + myMonthSt + "." + myYear);
 
 
                         dateReserveTomorrow = btnDate.getText().toString();  // Start date

@@ -29,24 +29,24 @@
                 android:id="@+id/actvNameTable"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
+                android:layout_marginTop="32dp"
                 android:clickable="true"
                 android:ems="10"
                 android:focusable="true"
                 android:gravity="center"
                 android:hint="Cтол  № ..."
                 android:textIsSelectable="true"
-                android:textSize="20sp" />
+                android:textSize="30sp" />
 
             <TextView
-                android:id="@+id/tvCurrentSum"
+                android:id="@+id/tvImage"
                 android:layout_width="match_parent"
-                android:layout_height="200dp"
+                android:layout_height="400dp"
                 android:layout_below="@id/actvNameTable"
-                android:layout_marginTop="6dp"
+                android:layout_marginTop="16dp"
                 android:background="@drawable/table_pool"
                 android:gravity="center"
-                android:text="... р"
+                android:text=""
                 android:textColor="@color/black"
                 android:textSize="20sp"
                 tools:ignore="ObsoleteLayoutParam" />
@@ -55,24 +55,24 @@
                 android:id="@+id/tvTypeTable"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_below="@id/tvCurrentSum"
+                android:layout_below="@id/tvImage"
                 android:layout_centerHorizontal="true"
                 android:layout_marginTop="6dp"
                 android:gravity="center"
                 android:hint="Тип игры"
                 android:textColor="@color/black"
-                android:textSize="20sp" />
+                android:textSize="24sp" />
 
             <TextView
                 android:id="@+id/tvCurrentClient"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_below="@id/tvTypeTable"
-                android:layout_marginTop="32dp"
+                android:layout_marginTop="64dp"
                 android:gravity="center"
                 android:hint="Клиент:  "
                 android:textColor="@color/black"
-                android:textSize="20sp" />
+                android:textSize="24sp" />
 
             <LinearLayout
                 android:id="@+id/linStartStop"
@@ -86,52 +86,49 @@
                 <Button
                     android:id="@+id/btnStart"
                     android:layout_width="match_parent"
-                    android:layout_height="50dp"
-                    android:layout_marginRight="4dp"
+                    android:layout_height="70dp"
+                    android:layout_marginEnd="4dp"
                     android:layout_weight="1"
                     android:background="@drawable/btn_style_7"
-                    android:clickable="true"
                     android:text="Открыть"
                     android:textColor="@color/black"
-                    android:textSize="14dp" />
-
-                <Button
-                    android:id="@+id/btnResume"
-                    android:layout_width="match_parent"
-                    android:layout_height="50dp"
-                    android:layout_marginRight="4dp"
-                    android:layout_weight="1"
-                    android:background="@drawable/btn_style_6"
-                    android:clickable="true"
-                    android:text="Продлить"
-                    android:textColor="@color/black"
-                    android:textSize="14dp" />
+                    android:textSize="20dp" />
 
                 <Button
                     android:id="@+id/btnAdd"
                     android:layout_width="match_parent"
-                    android:layout_height="50dp"
-                    android:layout_marginRight="4dp"
+                    android:layout_height="70dp"
+                    android:layout_marginEnd="4dp"
                     android:layout_weight="1"
                     android:background="@drawable/btn_style_7"
                     android:clickable="true"
-                    android:text="Резерв"
+                    android:text="Бронь"
                     android:textColor="@color/black"
-                    android:textSize="14dp" />
+                    android:textSize="20dp" />
+
+                <Button
+                    android:id="@+id/btnResume"
+                    android:layout_width="match_parent"
+                    android:layout_height="70dp"
+                    android:layout_weight="1"
+                    android:background="@drawable/btn_style_6"
+                    android:text="Продлить"
+                    android:textColor="@color/black"
+                    android:textSize="20dp" />
             </LinearLayout>
 
             <TextView
                 android:id="@+id/tvCommonInfo"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_below="@id/tvCurrentSum"
+                android:layout_below="@id/tvImage"
                 android:layout_gravity="center"
                 android:layout_marginTop="16dp"
                 android:gravity="center"
                 android:paddingRight="16dp"
                 android:text="Общая информация"
                 android:textColor="@color/black"
-                android:textSize="20sp" />
+                android:textSize="30sp" />
 
 
             <LinearLayout
@@ -146,77 +143,29 @@
                     android:id="@+id/linCommonInfo"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:layout_below="@id/linStartStop"
                     android:layout_marginTop="8dp"
                     android:layout_weight="1"
-                    android:gravity="left"
-                    android:orientation="vertical">
-
-                    <TextView
-                        android:id="@+id/tvCurrentTariffName"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_below="@id/tvCommonInfo"
-                        android:text="Текущий тариф:"
-                        android:textColor="@color/black"
-                        android:textSize="16sp" />
-
-                    <TextView
-                        android:id="@+id/tvCurrentTariff"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_below="@id/tvCommonInfo"
-                        android:layout_marginTop="8dp"
-                        android:hint="Тариф не указан"
-                        android:textColor="@color/black"
-                        android:textSize="14sp" />
-
-                    <TextView
-                        android:id="@+id/tvPriceName"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_below="@id/tvCommonInfo"
-                        android:layout_marginTop="16dp"
-                        android:text="Цена за минуту / час"
-                        android:textColor="@color/black"
-                        android:textSize="16sp" />
-
-                    <TextView
-                        android:id="@+id/tvCurrentPrice"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_below="@id/tvCommonInfo"
-                        android:layout_marginTop="8dp"
-                        android:hint="___ р / ч"
-                        android:textColor="@color/black"
-                        android:textSize="14sp" />
-                </LinearLayout>
-
-                <LinearLayout
-                    android:id="@+id/linCommonServise"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_below="@id/linStartStop"
-                    android:layout_marginTop="8dp"
-                    android:layout_weight="1"
-                    android:gravity="left"
+                    android:gravity="start"
                     android:orientation="vertical">
 
                     <TextView
                         android:id="@+id/tvTimeStartGame"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
+                        android:layout_marginBottom="8dp"
                         android:hint="Начало игры: __:__"
                         android:textColor="@color/black"
-                        android:textSize="16sp" />
+                        android:textSize="20sp" />
 
                     <TextView
                         android:id="@+id/tvTimeEndGame"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:layout_marginBottom="8dp"
                         android:hint="Конец игры: __:__"
                         android:textColor="@color/black"
-                        android:textSize="16sp" />
+                        android:textSize="20sp" />
 
                     <TextView
                         android:id="@+id/tvCurrentGameDuration"
@@ -225,22 +174,33 @@
                         android:layout_marginTop="8dp"
                         android:hint="Продолжительность игры: _ ч _ мин"
                         android:textColor="@color/black"
-                        android:textSize="16sp" />
+                        android:textSize="20sp" />
+
+
                 </LinearLayout>
+
+                <Button
+                    android:id="@+id/btnDeleteReserve"
+                    android:layout_width="250dp"
+                    android:layout_height="70dp"
+                    android:layout_marginTop="16dp"
+                    android:layout_marginRight="4dp"
+                    android:background="@drawable/btn_style_6"
+                    android:text="Удалить резерв"
+                    android:textColor="@color/black"
+                    android:textSize="20dp" />
 
             </LinearLayout>
 
             <Button
                 android:id="@+id/btnShowTableReserve"
-                android:layout_width="match_parent"
-                android:layout_height="50dp"
-                android:layout_below="@id/linCommon"
-                android:layout_alignParentRight="true"
-                android:layout_marginTop="8dp"
-                android:textColor="@color/black"
+                android:layout_width="500dp"
+                android:layout_height="70dp"
+                android:layout_marginTop="64dp"
                 android:background="@drawable/btn_style_1"
                 android:text="Показать все резервы"
-                android:textSize="16dp" />
+                android:textColor="@color/black"
+                android:textSize="24sp" />
 
         </LinearLayout>
     </ScrollView>

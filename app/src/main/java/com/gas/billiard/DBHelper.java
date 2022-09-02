@@ -18,7 +18,6 @@ public class DBHelper extends SQLiteOpenHelper {
 
     public static String ORDERS = "orders";
     public static String TABLES = "tables";
-    public static String TARIFF = "tariff";
     public static String CLIENTS = "clients";
     public static String EMPLOYEES = "employees";
 
@@ -27,23 +26,22 @@ public class DBHelper extends SQLiteOpenHelper {
     public static final String KEY_NUM_TABLE = "num_table";
     public static final String KEY_TYPE = "type";
     public static final String KEY_STATUS = "status";
+    public static final String KEY_BRON = "bron";
     public static final String KEY_RESERVE_TIME = "reserve_time";
     public static final String KEY_DURATION = "duration_minute";
     public static final String KEY_RESERVE_DATE = "reserve_date";
 
     public static final String KEY_EMPLOYEE = "employee";
+    public static final String KEY_PASS = "pass";
+
     public static final String KEY_CLIENT = "client";
     public static final String KEY_ORDER_TIME = "order_time";
     public static final String KEY_ORDER_DATE = "order_date";
 
-    public static final String KEY_PRICE = "price";
-    public static final String KEY_TARIFF = "tariff";
-    public static final String KEY_RATING = "rating";
     public static final String KEY_PHONE = "phone";
-    public static final String KEY_ORDERS_COUNT = "orders_count_per_client";
-    public static final String KEY_SPENT = "spent";
+    public static final String KEY_ORDERS_COUNT = "orders_count";
+    public static final String KEY_DURATION_SUM_MINUTE = "duration_sum_minute";
 
-    public static final String KEY_PASS = "pass";
 
     private SQLiteDatabase mDataBase;
     private final Context mContext;

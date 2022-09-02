@@ -6,6 +6,8 @@ import android.app.DatePickerDialog;
 import android.app.Dialog;
 import android.app.TimePickerDialog;
 import android.content.ContentValues;
+import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
@@ -16,14 +18,18 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.SwitchCompat;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.inputmethod.InputMethodManager;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.DatePicker;
+import android.widget.EditText;
 import android.widget.NumberPicker;
 import android.widget.TextView;
 import android.widget.TimePicker;
@@ -53,11 +59,10 @@ public class NewOrderActivity extends AppCompatActivity implements NumberPicker.
     List<String> finishList = new ArrayList<>();
     List<ReserveTable> checkList = new ArrayList<>();
     List<String> clientsList = new ArrayList<>();
-    List<String> tariffList = new ArrayList<>();
     SwitchCompat switchTypeTable;
     TextView tvPyramid, tvPool;
-    AutoCompleteTextView actvFreeTable, actvClient, actvTariff;
-    Button btnNewReserveTime, btnNewReserveDate, btnNewReserveDuration, btnCreateReserve, btnCreateClient;
+    AutoCompleteTextView actvFreeTable, actvClient;
+    Button btnNewReserveTime, btnNewReserveDate, btnNewReserveDuration, btnCreateReserve, btnCreateClient, btnBron;
     int numTable = -1;
 
     String[] durationTimeArr = {"30 мин", "45 мин", "50 мин", "1 ч", "1 ч 15 мин", "1 ч 30 мин", "1 ч 45 мин",
@@ -87,8 +92,8 @@ public class NewOrderActivity extends AppCompatActivity implements NumberPicker.
     int hourCurrent = currentDateCalendar.get(Calendar.HOUR_OF_DAY);
     int minuteCurrent = currentDateCalendar.get(Calendar.MINUTE);
     String myMonthSt, myDaySt;
-    String getAdminName = "";
     Date reserveDateTime;
+    String getAdminName;
 
     {
         if (monthReserve < 10) currentMonthSt = "0" + (monthReserve + 1);
@@ -105,7 +110,7 @@ public class NewOrderActivity extends AppCompatActivity implements NumberPicker.
     int durationNewReserve;
 
     private int getNumReserve, getNumTable, getDurationMinute;
-    private String getType = "", getDate, getTime, getClient, getTariff, whoCall;
+    private String getType = "", getDate, getTime, getClient, getBron, getStatus, whoCall, whatIsBtn;
 
     @SuppressLint({"ClickableViewAccessibility", "SetTextI18n"})
     @Override
@@ -117,6 +122,8 @@ public class NewOrderActivity extends AppCompatActivity implements NumberPicker.
         // getIntent() загружаем данные
         Intent intent = getIntent();
         whoCall = intent.getStringExtra("whoCall");
+        whatIsBtn = intent.getStringExtra("whatIsBtn");
+        if (whatIsBtn == null) whatIsBtn = "";
         Log.i("Gas", "whoCall1 = " + whoCall);
         getNumReserve = intent.getIntExtra("numReserve", -1);
         getNumTable = intent.getIntExtra("numTable", -1);
@@ -126,7 +133,9 @@ public class NewOrderActivity extends AppCompatActivity implements NumberPicker.
         getDate = intent.getStringExtra("date");
         getTime = intent.getStringExtra("time");
         getClient = intent.getStringExtra("client");
-        getTariff = intent.getStringExtra("tariff");
+        getBron = intent.getStringExtra("bron");
+        getStatus = intent.getStringExtra("status");
+        if (getBron == null) getBron = "";
         getDurationMinute = intent.getIntExtra("duration", -1);
         getAdminName = intent.getStringExtra("adminName");
         Log.i("Gas4", "getAdminName in newOrder = " + getAdminName);
@@ -138,7 +147,6 @@ public class NewOrderActivity extends AppCompatActivity implements NumberPicker.
         contentValues = new ContentValues();
 
         clientsList = optionallyClass.initClient(this);
-        tariffList = optionallyClass.initTariff(this, "tariffList");
 
         tvPyramid = findViewById(R.id.tvPyramid);
         tvPool = findViewById(R.id.tvPool);
@@ -153,6 +161,8 @@ public class NewOrderActivity extends AppCompatActivity implements NumberPicker.
         btnCreateReserve.setTextColor(Color.BLACK);
         btnCreateClient = findViewById(R.id.btnCreateClient);
         btnCreateClient.setOnClickListener(this);
+        btnBron = findViewById(R.id.btnBron);
+        btnBron.setOnClickListener(this);
 
         switchTypeTable = findViewById(R.id.switchTypeTable);
         if (switchTypeTable != null) {     // мы еще не нажали на свитч
@@ -189,16 +199,13 @@ public class NewOrderActivity extends AppCompatActivity implements NumberPicker.
                 this, android.R.layout.simple_dropdown_item_1line, clientsList);
         actvClient.setThreshold(1);
         actvClient.setAdapter(adapterClient);
-
-        actvTariff = findViewById(R.id.actvTariff);
-        actvTariff.setShowSoftInputOnFocus(false);
-        ArrayAdapter<String> adapterTariff = new ArrayAdapter<>(
-                this, android.R.layout.simple_dropdown_item_1line, tariffList);
-        actvTariff.setOnTouchListener((v, event) -> {
-            actvTariff.showDropDown();
-            return false;
+        actvClient.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> arg0, View arg1, int arg2, long arg3) {
+                InputMethodManager in = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+                in.hideSoftInputFromWindow(arg1.getApplicationWindowToken(), 0);
+            }
         });
-        actvTariff.setAdapter(adapterTariff);
 
         // если наша активити была вызвана (изменить резерв)
         checkWhoCallThisActivity();
@@ -223,7 +230,7 @@ public class NewOrderActivity extends AppCompatActivity implements NumberPicker.
                 break;
             }
             case R.id.btnCreateClient: {
-                optionallyClass.openDialogCreateClient(this);
+                openDialogCreateClient1();
 
                 List<String> clientsList = optionallyClass.initClient(this);
                 ArrayAdapter<String> adapterClient = new ArrayAdapter<>(
@@ -231,8 +238,61 @@ public class NewOrderActivity extends AppCompatActivity implements NumberPicker.
                 actvClient.setAdapter(adapterClient);
                 break;
             }
+            case R.id.btnBron: {
+                Log.i("Gas4", "btnBron = " + btnBron.getBackground().toString());
+                if (btnBron.getText().toString().equals("Бронь")) {
+                    btnBron.setText("Без брони");
+                    btnBron.setBackgroundResource(R.drawable.btn_style_6);
+                } else {
+                    btnBron.setText("Бронь");
+                    btnBron.setBackgroundResource(R.drawable.btn_style_1);
+                }
+            }
         }
     }
+
+
+
+    @SuppressLint("SetTextI18n")
+    public void openDialogCreateClient1() {
+        LayoutInflater inflater = LayoutInflater.from(NewOrderActivity.this);
+        View subView = inflater.inflate(R.layout.dialog_create_client_or_employee, null);
+        final EditText etName = (EditText) subView.findViewById(R.id.etName);
+        final EditText etPhone = (EditText) subView.findViewById(R.id.etPhone);
+        final String[] nameNewClient1 = new String[1];
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(NewOrderActivity.this);
+        builder.setTitle("Добавление клиента\n")
+                .setMessage("Введите данные нового клиента")
+                .setView(subView)
+                .setPositiveButton("Добавить", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        final String nameNewClient = etName.getText().toString();
+                        final String phoneNewClient = etPhone.getText().toString();
+//                        nameNewClient1[0] = nameNewClient;
+                        actvClient.setText(nameNewClient);
+
+                        if (nameNewClient.equals("")) {
+                            Toast.makeText(NewOrderActivity.this, "Введите имя клиента", Toast.LENGTH_SHORT).show();
+                            etName.setHintTextColor(Color.RED);
+                        } else {
+                            optionallyClass.putClientInDB(NewOrderActivity.this, nameNewClient, phoneNewClient);
+                            Toast.makeText(NewOrderActivity.this, "Клиент добавлен", Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                })
+                .setNegativeButton("Отмена", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        Toast.makeText(NewOrderActivity.this, "Отмена", Toast.LENGTH_SHORT).show();
+                    }
+                });
+        AlertDialog alert = builder.create();
+        alert.show();
+    }
+
+
 
     @Override
     public void onBackPressed() {
@@ -241,10 +301,13 @@ public class NewOrderActivity extends AppCompatActivity implements NumberPicker.
             intent = new Intent(NewOrderActivity.this, EditDBActivity.class);
             // передаем название заголовка
             intent.putExtra("headName", "Резервы");
+            intent.putExtra("adminName", getAdminName);
             startActivity(intent);
             finish();
         } else if (whoCall.equals("commonActivity")) {
             intent = new Intent(NewOrderActivity.this, CommonActivity.class);
+//            intent.putExtra("adminName", getAdminName);
+            intent.putExtra("adminName", getAdminName);
             startActivity(intent);
             finish();
         } else /*if (whoCall.equals("tableActivity_Start") || whoCall.equals("tableActivity_Add"))*/ {
@@ -268,6 +331,7 @@ public class NewOrderActivity extends AppCompatActivity implements NumberPicker.
                 intent = new Intent("editDBActivity");
                 // передаем название заголовка
                 intent.putExtra("headName", "Клиенты");
+                intent.putExtra("adminName", getAdminName);
                 startActivity(intent);
                 break;
             }
@@ -275,6 +339,7 @@ public class NewOrderActivity extends AppCompatActivity implements NumberPicker.
                 intent = new Intent("editDBActivity");
                 // передаем название заголовка
                 intent.putExtra("headName", "Резервы");
+                intent.putExtra("adminName", getAdminName);
                 startActivity(intent);
                 break;
             }
@@ -292,6 +357,7 @@ public class NewOrderActivity extends AppCompatActivity implements NumberPicker.
     @SuppressLint("SetTextI18n")
     private void checkWhoCallThisActivity() {
         btnNewReserveTime.setText(hourReserve + ":" + minuteReserve);
+//        btnNewReserveTime.setText("Выберите время");
         btnNewReserveDate.setText(currentDaySt + "." + currentMonthSt + "." + yearReserve);
         if (whoCall.equals("editDBActivity_Correct")) { // если вызвали с кнопки "Изменить резерв"
             btnCreateReserve.setText("Изменить  резерв");
@@ -307,16 +373,29 @@ public class NewOrderActivity extends AppCompatActivity implements NumberPicker.
             }
             actvFreeTable.setText("Стол № " + getNumTable);
             actvClient.setText(getClient);
-            actvTariff.setText(getTariff);
+            btnBron.setText(getBron);
+            if (getBron.equals("C бронью")) btnBron.setBackgroundResource(R.drawable.btn_style_1);
+            else btnBron.setBackgroundResource(R.drawable.btn_style_6);
         } else if (whoCall.equals("editDBActivity_add")) {
             btnCreateReserve.setText("Создать  резерв");
             actvFreeTable.setText("");
+            btnBron.setText("Бронь");
+            btnBron.setBackgroundResource(R.drawable.btn_style_1);
         } else if (whoCall.equals("tableActivity_Start")) {
             actvFreeTable.setText("Стол № " + getNumTable);
             btnNewReserveDate.setText(getDate);
             btnNewReserveTime.setText(getTime);
+            btnBron.setText("Без брони");
+            btnBron.setBackgroundResource(R.drawable.btn_style_6);
         } else if (whoCall.equals("tableActivity_Add")) {
             actvFreeTable.setText("Стол № " + getNumTable);
+            btnBron.setText("Бронь");
+            btnBron.setBackgroundResource(R.drawable.btn_style_1);
+        } else {
+            btnCreateReserve.setText("Создать  резерв");
+            actvFreeTable.setText("");
+            btnBron.setText("Бронь");
+            btnBron.setBackgroundResource(R.drawable.btn_style_1);
         }
     }
 
@@ -373,7 +452,7 @@ public class NewOrderActivity extends AppCompatActivity implements NumberPicker.
                 numTypeTableMap.put(cursorTables.getInt(numTableIndex), cursorTables.getString(typeTableIndex));
 
             } while (cursorTables.moveToNext());
-            Log.i("Gas4", "typeTableList = " + typeNumTableList);
+//            Log.i("Gas4", "typeTableList = " + typeNumTableList);
 
             // здесь вызываем метод, кот. проведет выборку по времени
             changeFreeTableTime();
@@ -408,8 +487,9 @@ public class NewOrderActivity extends AppCompatActivity implements NumberPicker.
             int orderDateIndex = cursorOrders.getColumnIndex(DBHelper.KEY_ORDER_DATE);
             int orderTimeIndex = cursorOrders.getColumnIndex(DBHelper.KEY_ORDER_TIME);
             int clientIndex = cursorOrders.getColumnIndex(DBHelper.KEY_CLIENT);
-            int tariffIndex = cursorOrders.getColumnIndex(DBHelper.KEY_TARIFF);
             int employeeIndex = cursorOrders.getColumnIndex(DBHelper.KEY_EMPLOYEE);
+            int bronIndex = cursorOrders.getColumnIndex(DBHelper.KEY_BRON);
+            int statusIndex = cursorOrders.getColumnIndex(DBHelper.KEY_STATUS);
 
             Log.i("Gas1", "typeNumTableList = " + typeNumTableList);
             do {
@@ -436,7 +516,8 @@ public class NewOrderActivity extends AppCompatActivity implements NumberPicker.
                                     cursorOrders.getString(orderTimeIndex),
                                     cursorOrders.getString(clientIndex),
                                     cursorOrders.getString(employeeIndex),
-                                    cursorOrders.getString(tariffIndex)));
+                                    cursorOrders.getString(bronIndex),
+                                    cursorOrders.getString(statusIndex)));
                         }
                         // если на желаемую дату вообще нет резервов, то это супер
                         else break;
@@ -630,10 +711,6 @@ public class NewOrderActivity extends AppCompatActivity implements NumberPicker.
         ArrayAdapter<String> adapter = new ArrayAdapter<>(
                 this, android.R.layout.simple_dropdown_item_1line, finishList);
         actvFreeTable.setAdapter(adapter);
-
-        ArrayAdapter<String> adapter1 = new ArrayAdapter<>(
-                this, android.R.layout.simple_dropdown_item_1line, tariffList);
-        actvTariff.setAdapter(adapter1);
     }
 
     private void datePicker() {
@@ -654,8 +731,10 @@ public class NewOrderActivity extends AppCompatActivity implements NumberPicker.
                     // переводим дату и время в формат Date
                     try {
                         // из строки в Date
-                        reserveDateTime = dateTimeFormat.parse(myDaySt + "." + myMonthSt + "." + yearReserve + " " + "11:00");
-//                        Log.i("Gas1", "reserveDateTime = " + reserveDateTime);
+//                        reserveDateTime = dateTimeFormat.parse(myDaySt + "." + myMonthSt + "." + yearReserve + " " + "11:00");
+                        reserveDateTime = dateTimeFormat.parse(myDaySt + "." + myMonthSt + "." + yearReserve + " " +
+                                btnNewReserveTime.getText());
+                        Log.i("Gas3", "reserveDateTime = " + reserveDateTime);
                     } catch (ParseException e) {
                         e.printStackTrace();
                     }
@@ -665,6 +744,8 @@ public class NewOrderActivity extends AppCompatActivity implements NumberPicker.
                 Log.i("Gas1", "reserveDateTime before currentTime? = " + reserveDateTime.before(new Date()));
 
                 if ((reserveDateTime.before(new Date())) || (hourReserve < 11 && hourReserve > 4)) {
+                    Log.i("Gas3", "new Date() = " + new Date());
+                    Log.i("Gas3", "hourReserve = " + hourReserve);
                     // то резерв не м.б. создан
                     Toast.makeText(NewOrderActivity.this, "Дата уже прошла", Toast.LENGTH_SHORT).show();
                     btnNewReserveDate.setTextColor(Color.RED);
@@ -804,10 +885,10 @@ public class NewOrderActivity extends AppCompatActivity implements NumberPicker.
             Toast.makeText(NewOrderActivity.this, "Не выбран стол", Toast.LENGTH_SHORT).show();
         } else if (actvClient.getText().toString().equals("")) {
             Toast.makeText(NewOrderActivity.this, "Не выбран клиент", Toast.LENGTH_SHORT).show();
-        } else if (actvTariff.getText().toString().equals("")) {
-            Toast.makeText(NewOrderActivity.this, "Не выбран тариф", Toast.LENGTH_SHORT).show();
         } else if (btnNewReserveDuration.getText().toString().equals("")) {
             Toast.makeText(NewOrderActivity.this, "Не выбрана продолжительность игры", Toast.LENGTH_SHORT).show();
+        } else if (!(btnBron.getText().toString().equals("Бронь") || btnBron.getText().toString().equals("Без брони"))) {
+            Toast.makeText(NewOrderActivity.this, "Не выбрана бронь", Toast.LENGTH_SHORT).show();
         } else {
             // вытаскиваем выбранный номер стола
             String[] numTableArr = actvFreeTable.getText().toString().split(" ");
@@ -825,7 +906,7 @@ public class NewOrderActivity extends AppCompatActivity implements NumberPicker.
                             "\nВремя резерва: " + btnNewReserveTime.getText().toString() +
                             "\nПродолжительность: " + btnNewReserveDuration.getText().toString() +
                             "\nКлиент: " + actvClient.getText().toString() +
-                            "\nТариф: " + actvTariff.getText().toString())
+                            "\n" + btnBron.getText().toString())
                     .setCancelable(true)  // разрешает/запрещает нажатие кнопки назад
                     .setNegativeButton("Отмена", (dialogInterface, i) -> Toast.makeText(getApplicationContext(),
                             "Резерв отменен", Toast.LENGTH_SHORT).show())
@@ -834,17 +915,16 @@ public class NewOrderActivity extends AppCompatActivity implements NumberPicker.
 
             if (getNumReserve != -1) { // если передали сюда стол
                 actvClient.setText(getClient);
-                actvTariff.setText(getTariff);
                 builderAlert.setTitle("Изменить резерв?");
                 builderAlert.setPositiveButton("Изменить", (dialogInterface, i) -> {
                     getClient = actvClient.getText().toString();
-                    getTariff = actvTariff.getText().toString();
                     putReserveInDB();
                     Toast.makeText(getApplicationContext(), "Резерв изменен", Toast.LENGTH_SHORT).show();
 
                     Intent intent = new Intent("editDBActivity");
                     // передаем название заголовка
                     intent.putExtra("headName", "Резервы");
+                    intent.putExtra("adminName", getAdminName);
                     startActivity(intent);
                 });
 
@@ -852,11 +932,12 @@ public class NewOrderActivity extends AppCompatActivity implements NumberPicker.
                 builderAlert.setTitle("Создать резерв?");
                 builderAlert.setPositiveButton("Создать", (dialogInterface, i) -> {
                     getClient = actvClient.getText().toString();
-                    getTariff = actvTariff.getText().toString();
                     putReserveInDB();
                     Toast.makeText(getApplicationContext(), "Резерв создан", Toast.LENGTH_SHORT).show();
 
                     Intent intent = new Intent("commonActivity");
+                    intent.putExtra("headName", "Резервы");
+                    intent.putExtra("adminName", getAdminName);
                     startActivity(intent);
                 });
             }
@@ -884,7 +965,10 @@ public class NewOrderActivity extends AppCompatActivity implements NumberPicker.
         contentValues.put(DBHelper.KEY_EMPLOYEE, getAdminName);
         contentValues.put(DBHelper.KEY_ORDER_DATE, currentDaySt + "." + currentMonthSt + "." + currentYearSt);
         contentValues.put(DBHelper.KEY_ORDER_TIME, currentHourSt + ":" + currentMinuteSt);
-        contentValues.put(DBHelper.KEY_TARIFF, getTariff);
+
+        if (btnBron.getText().toString().equals("Бронь")) contentValues.put(DBHelper.KEY_BRON, "Бронь");
+        else contentValues.put(DBHelper.KEY_BRON, "Без брони");
+
         contentValues.put(DBHelper.KEY_STATUS, "");
 
         database.insert(DBHelper.ORDERS, null, contentValues);

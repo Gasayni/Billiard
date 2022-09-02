@@ -24,6 +24,9 @@ public class ReserveTable {
     private Date dateTimeStartReserve;
     private String dateOrder;
     private String timeOrder;
+
+    private String bron;
+    private String status;
     private int hourStartReserve;
     private int minuteStartReserve;
     private int hourEndReserve;
@@ -32,7 +35,6 @@ public class ReserveTable {
 
     private String client;
     private String employee;
-    private String tariff;
 
     public ReserveTable(int idOrder,
                         int numTable,
@@ -43,7 +45,8 @@ public class ReserveTable {
                         String timeOrder,
                         String client,
                         String employee,
-                        String tariff) {
+                        String bron,
+                        String status) {
         this.idOrder = idOrder;
         this.numTable = numTable;
         this.dateStartReserve = dateStartReserve;
@@ -53,7 +56,8 @@ public class ReserveTable {
         this.duration = duration;
         this.client = client;
         this.employee = employee;
-        this.tariff = tariff;
+        this.bron = bron;
+        this.status = status;
 
 
         try {
@@ -104,10 +108,6 @@ public class ReserveTable {
         return employee;
     }
 
-    public String getTariff() {
-        return tariff;
-    }
-
     public String getDateOrder() {
         return dateOrder;
     }
@@ -156,4 +156,14 @@ public class ReserveTable {
     public Calendar getEndDateTimeReserveCal() {
         return endDateTimeReserveCal;
     }
+
+    public String getBron() {
+        return bron;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+
 }

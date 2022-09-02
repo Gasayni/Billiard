@@ -16,7 +16,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_centerHorizontal="true"
-        android:layout_marginBottom="75dp"
+        android:layout_marginBottom="70dp"
         android:gravity="center_horizontal"
         android:orientation="vertical"
         android:scrollbars="none">
@@ -28,7 +28,6 @@
             android:gravity="center"
             android:orientation="vertical">
 
-
             <LinearLayout
                 android:id="@+id/linHead"
                 android:layout_width="match_parent"
@@ -36,7 +35,6 @@
                 android:gravity="left"
                 android:orientation="horizontal">
 
-                <!-- дата и столы-->
                 <LinearLayout
                     android:id="@+id/linTableHead"
                     android:layout_width="wrap_content"
@@ -82,7 +80,7 @@
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1"
-            android:gravity="end"
+            android:gravity="center"
             android:orientation="vertical">
 
             <TextView
@@ -100,8 +98,8 @@
             android:id="@+id/btnAdd"
             android:layout_width="300dp"
             android:layout_height="70dp"
-            android:layout_gravity="end"
             android:background="@drawable/btn_style_2"
+            android:layout_gravity="end"
             android:text="Добавить резерв"
             android:textSize="14sp" />
 

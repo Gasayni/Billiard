@@ -14,8 +14,8 @@
         android:ems="10"
         android:focusable="true"
         android:gravity="center"
-        android:hint="Выберите"
+        android:hint="..."
         android:textIsSelectable="false"
-        android:textSize="20sp" />
+        android:textSize="32sp" />
 
 </RelativeLayout>

@@ -17,5 +17,5 @@
     <string name="duration">длительность</string>
     <string name="statusToExtend">следующий\nрезерв</string>
     <string name="reserve">Резервы</string>
-    <string name="back"><![CDATA[<]]></string>
+    <string name="back">Назад</string>
 </resources>

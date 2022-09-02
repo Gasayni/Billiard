@@ -30,7 +30,7 @@ public class OptionallyClass {
     SQLiteDatabase database;
     ContentValues contentValues;
     Calendar cal = Calendar.getInstance();
-    Cursor cursorEmployee, cursorOrders, cursorClients, cursorTariff;
+    Cursor cursorEmployee, cursorOrders, cursorClients;
 
     List<String> adminsList = new ArrayList<>();
     List<String> passList = new ArrayList<>();
@@ -92,8 +92,7 @@ public class OptionallyClass {
             int nameIndex = cursorClients.getColumnIndex(DBHelper.KEY_NAME);
             int phoneIndex = cursorClients.getColumnIndex(DBHelper.KEY_PHONE);
             int ordersCountIndex = cursorClients.getColumnIndex(DBHelper.KEY_ORDERS_COUNT);
-            int spentIndex = cursorClients.getColumnIndex(DBHelper.KEY_SPENT);
-            int ratingIndex = cursorClients.getColumnIndex(DBHelper.KEY_RATING);
+            int durationSumMinuteIndex = cursorClients.getColumnIndex(DBHelper.KEY_DURATION_SUM_MINUTE);
             do {
                 // находим всех клиентов из бд
                 clientsList.add(cursorClients.getString(nameIndex));
@@ -121,8 +120,7 @@ public class OptionallyClass {
             int nameIndex = cursorClients.getColumnIndex(DBHelper.KEY_NAME);
             int phoneIndex = cursorClients.getColumnIndex(DBHelper.KEY_PHONE);
             int ordersCountIndex = cursorClients.getColumnIndex(DBHelper.KEY_ORDERS_COUNT);
-            int spentIndex = cursorClients.getColumnIndex(DBHelper.KEY_SPENT);
-            int ratingIndex = cursorClients.getColumnIndex(DBHelper.KEY_RATING);
+            int durationSumMinuteIndex = cursorClients.getColumnIndex(DBHelper.KEY_DURATION_SUM_MINUTE);
             do {
                 if (client.equals(cursorClients.getString(nameIndex))) {
                     phone = cursorClients.getString(phoneIndex);
@@ -135,61 +133,6 @@ public class OptionallyClass {
         cursorClients.close();
         database.close();
         return phone;
-    }
-
-    public List<String> initTariff(Context context, String whatReturn) {
-        // работа с БД
-        dbHelper = new DBHelper(context);
-        database = dbHelper.getWritableDatabase();
-        contentValues = new ContentValues();
-
-        List<String> tariffList = new ArrayList<>();
-
-        // получаем данные c табл "TARIFF"
-        cursorTariff = database.query(DBHelper.TARIFF,
-                null, null, null,
-                null, null, null);
-        if (cursorTariff.moveToFirst()) {
-            int priceIndex = cursorTariff.getColumnIndex(DBHelper.KEY_PRICE);
-            int nameIndex = cursorTariff.getColumnIndex(DBHelper.KEY_NAME);
-            do {
-                if (whatReturn.equals("tariffList")) {
-                    tariffList.add(cursorTariff.getString(nameIndex));
-                }
-
-            } while (cursorTariff.moveToNext());
-        } else {
-            // если не задан ни один сотрудника, то м. перейти в настройки его создания
-            Log.d("Gas", "0 rows");
-        }
-        cursorTariff.close();
-        return tariffList;
-    }
-
-    public int getPriceFromTariff(Context context, String tariff) {
-        // работа с БД
-        dbHelper = new DBHelper(context);
-        database = dbHelper.getWritableDatabase();
-        contentValues = new ContentValues();
-        int price = 0;
-        // получаем данные c табл "TARIFF"
-        cursorTariff = database.query(DBHelper.TARIFF,
-                null, null, null,
-                null, null, null);
-        if (cursorTariff.moveToFirst()) {
-            int priceIndex = cursorTariff.getColumnIndex(DBHelper.KEY_PRICE);
-            int nameIndex = cursorTariff.getColumnIndex(DBHelper.KEY_NAME);
-            do {
-                if (tariff.equals(cursorTariff.getString(nameIndex))) {
-                    price = cursorTariff.getInt(priceIndex);
-                }
-            } while (cursorTariff.moveToNext());
-        } else {
-            // если не задан ни один сотрудника, то м. перейти в настройки его создания
-            Log.d("Gas", "0 rows");
-        }
-        cursorTariff.close();
-        return price;
     }
 
     // нужно проверить БД на устаревание
@@ -217,7 +160,7 @@ public class OptionallyClass {
             int employeeIndex = cursorOrders.getColumnIndex(DBHelper.KEY_EMPLOYEE);
             int orderDateIndex = cursorOrders.getColumnIndex(DBHelper.KEY_ORDER_DATE);
             int orderTimeIndex = cursorOrders.getColumnIndex(DBHelper.KEY_ORDER_TIME);
-            int tariffIndex = cursorOrders.getColumnIndex(DBHelper.KEY_TARIFF);
+            int bronIndex = cursorOrders.getColumnIndex(DBHelper.KEY_BRON);
             int statusIndex = cursorOrders.getColumnIndex(DBHelper.KEY_STATUS);
             do {
                 {
@@ -261,7 +204,8 @@ public class OptionallyClass {
                             cursorOrders.getString(orderTimeIndex),
                             cursorOrders.getString(clientIndex),
                             cursorOrders.getString(employeeIndex),
-                            cursorOrders.getString(tariffIndex)));
+                            cursorOrders.getString(bronIndex),
+                            cursorOrders.getString(statusIndex)));
                 }
             } while (cursorOrders.moveToNext());
         } else {
@@ -288,7 +232,7 @@ public class OptionallyClass {
             contentValues.put(DBHelper.KEY_EMPLOYEE, oldReserveList.get(i).getEmployee());
             contentValues.put(DBHelper.KEY_ORDER_DATE, oldReserveList.get(i).getDateOrder());
             contentValues.put(DBHelper.KEY_ORDER_TIME, oldReserveList.get(i).getTimeOrder());
-            contentValues.put(DBHelper.KEY_TARIFF, oldReserveList.get(i).getTariff());
+            contentValues.put(DBHelper.KEY_BRON, oldReserveList.get(i).getBron());
             contentValues.put(DBHelper.KEY_STATUS, "Old");
 
             database.insert(DBHelper.ORDERS, null, contentValues);
@@ -310,7 +254,7 @@ public class OptionallyClass {
         database.insert(DBHelper.TABLES, null, contentValues);
     }
 
-    public void openDialogCreateClient(Context context) {
+    public void openDialogCreateClient(Context context, String getAdminName) {
         LayoutInflater inflater = LayoutInflater.from(context);
         View subView = inflater.inflate(R.layout.dialog_create_client_or_employee, null);
         final EditText etName = (EditText) subView.findViewById(R.id.etName);
@@ -337,6 +281,7 @@ public class OptionallyClass {
                             Intent intent = new Intent(context, EditDBActivity.class);
                             // передаем название заголовка
                             intent.putExtra("headName", "Клиенты");
+                            intent.putExtra("adminName", getAdminName);
                             context.startActivity(intent);
                         }
                     }
@@ -351,8 +296,7 @@ public class OptionallyClass {
         alert.show();
     }
 
-    private void putClientInDB(Context context, String nameNewClient, String phoneNewClient) {
-        // работа с БД
+    void putClientInDB(Context context, String nameNewClient, String phoneNewClient) {
         dbHelper = new DBHelper(context);
         database = dbHelper.getWritableDatabase();
         contentValues = new ContentValues();
@@ -360,14 +304,13 @@ public class OptionallyClass {
         contentValues.put(DBHelper.KEY_NAME, nameNewClient);
         contentValues.put(DBHelper.KEY_PHONE, phoneNewClient);
         contentValues.put(DBHelper.KEY_ORDERS_COUNT, 0);
-        contentValues.put(DBHelper.KEY_SPENT, 0);
-        contentValues.put(DBHelper.KEY_RATING, 0);
+        contentValues.put(DBHelper.KEY_DURATION_SUM_MINUTE, 0);
 
 
         database.insert(DBHelper.CLIENTS, null, contentValues);
     }
 
-    public void openDialogCreateEmployee(Context context) {
+    public void openDialogCreateEmployee(Context context, String getAdminName) {
         LayoutInflater inflater = LayoutInflater.from(context);
         View subView = inflater.inflate(R.layout.dialog_create_client_or_employee, null);
         final EditText etName = (EditText) subView.findViewById(R.id.etName);
@@ -394,6 +337,7 @@ public class OptionallyClass {
                             Intent intent = new Intent(context, EditDBActivity.class);
                             // передаем название заголовка
                             intent.putExtra("headName", "Сотрудники");
+                            intent.putExtra("adminName", getAdminName);
                             context.startActivity(intent);
                         }
                     }
@@ -416,65 +360,8 @@ public class OptionallyClass {
 
         contentValues.put(DBHelper.KEY_NAME, nameNewEmployee);
         contentValues.put(DBHelper.KEY_PHONE, phoneNewEmployee);
-        contentValues.put(DBHelper.KEY_RATING, 0);
 
         database.insert(DBHelper.EMPLOYEES, null, contentValues);
-    }
-
-    public void openDialogCreateTariff(Context context) {
-        LayoutInflater inflater = LayoutInflater.from(context);
-        View subView = inflater.inflate(R.layout.dialog_create_tariff, null);
-        final EditText etPrice = (EditText) subView.findViewById(R.id.etPrice);
-        final EditText etTariff = (EditText) subView.findViewById(R.id.etTariff);
-        etPrice.setText("0");
-
-        AlertDialog.Builder builder = new AlertDialog.Builder(context);
-        builder.setTitle("Добавление Тарифа\n")
-                .setMessage("Введите данные нового Тарифа")
-                .setView(subView)
-                .setPositiveButton("Добавить", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        int priceNewTariff = Integer.parseInt(etPrice.getText().toString());
-                        final String nameNewTariff = etTariff.getText().toString();
-                        if (etPrice.getText().toString().equals("")) priceNewTariff = 0;
-
-                        if (nameNewTariff.equals("")) {
-                            Toast.makeText(context, "Введите название тарифа", Toast.LENGTH_SHORT).show();
-                            etTariff.setHintTextColor(Color.RED);
-                        } else {
-                            etTariff.setHintTextColor(Color.BLACK);
-                            putTariffInDB(context, nameNewTariff, priceNewTariff);
-                            Toast.makeText(context, "Тариф добавлен", Toast.LENGTH_SHORT).show();
-
-                            // чтобы БД клиентов сразу обновилась
-                            Intent intent = new Intent(context, EditDBActivity.class);
-                            // передаем название заголовка
-                            intent.putExtra("headName", "Тарифы");
-                            context.startActivity(intent);
-                        }
-                    }
-                })
-                .setNegativeButton("Отмена", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        Toast.makeText(context, "Отмена", Toast.LENGTH_SHORT).show();
-                    }
-                });
-        AlertDialog alert = builder.create();
-        alert.show();
-    }
-
-    private void putTariffInDB(Context context, String nameNewTariff, int priceNewTariff) {
-        // работа с БД
-        dbHelper = new DBHelper(context);
-        database = dbHelper.getWritableDatabase();
-        contentValues = new ContentValues();
-
-        contentValues.put(DBHelper.KEY_NAME, nameNewTariff);
-        contentValues.put(DBHelper.KEY_PRICE, priceNewTariff);
-
-        database.insert(DBHelper.TARIFF, null, contentValues);
     }
 
     public String dateFormatMethod(Calendar dateCal) {
