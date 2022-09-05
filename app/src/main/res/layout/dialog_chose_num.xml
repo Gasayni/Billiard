@@ -13,8 +13,8 @@
         android:layout_marginTop="16dp"
         android:ems="10"
         android:gravity="center"
-        android:inputType="number"
         android:hint="..."
+        android:inputType="number"
         android:textSize="32sp" />
 
 </RelativeLayout>

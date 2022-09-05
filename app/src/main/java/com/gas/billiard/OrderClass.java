@@ -8,10 +8,12 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.Locale;
 
-public class ReserveTable {
+public class OrderClass {
     private final SimpleDateFormat dateTimeFormat = new SimpleDateFormat("dd.MM.yyyy HH:mm", Locale.ENGLISH);
     Calendar startDateTimeReserveCal = Calendar.getInstance();
-    Calendar endDateTimeReserveCal = Calendar.getInstance();
+    private Calendar endDateTimeReserveCal = Calendar.getInstance();
+    String reserveFinishTimeStr;
+    Date reserveStartDateTime = new Date();
 
     private int idOrder;
     private int numTable;
@@ -36,17 +38,17 @@ public class ReserveTable {
     private String client;
     private String employee;
 
-    public ReserveTable(int idOrder,
-                        int numTable,
-                        String dateStartReserve,
-                        String timeStartReserve,
-                        int duration,
-                        String dateOrder,
-                        String timeOrder,
-                        String client,
-                        String employee,
-                        String bron,
-                        String status) {
+    public OrderClass(int idOrder,
+                      int numTable,
+                      String dateStartReserve,
+                      String timeStartReserve,
+                      int duration,
+                      String dateOrder,
+                      String timeOrder,
+                      String client,
+                      String employee,
+                      String bron,
+                      String status) {
         this.idOrder = idOrder;
         this.numTable = numTable;
         this.dateStartReserve = dateStartReserve;
@@ -58,16 +60,20 @@ public class ReserveTable {
         this.employee = employee;
         this.bron = bron;
         this.status = status;
+        this.endDateTimeReserveCal = getEndReserveDateTimeMethod();
+    }
 
-
+    private Calendar getEndReserveDateTimeMethod() {
         try {
-            dateTimeStartReserve = dateTimeFormat.parse(dateStartReserve + " " + timeStartReserve);
+            reserveStartDateTime = dateTimeFormat.parse(dateStartReserve + " " + timeStartReserve); // из строки в Date
         } catch (ParseException e) {
             e.printStackTrace();
         }
-        startDateTimeReserveCal.setTime(dateTimeStartReserve);
-        endDateTimeReserveCal.setTime(dateTimeStartReserve);
+
+        assert reserveStartDateTime != null;
+        endDateTimeReserveCal.setTime(reserveStartDateTime);
         endDateTimeReserveCal.add(Calendar.MINUTE, duration);
+        return endDateTimeReserveCal;
     }
 
     public int getHourStartReserve() {

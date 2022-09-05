@@ -2,9 +2,7 @@ package com.gas.billiard;
 
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
-import android.app.Dialog;
 import android.content.ContentValues;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
@@ -14,7 +12,6 @@ import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -22,8 +19,6 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.Button;
-import android.widget.EditText;
-import android.widget.NumberPicker;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -32,14 +27,19 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
-import java.util.GregorianCalendar;
 import java.util.List;
 import java.util.Locale;
-import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
 public class TableActivity extends AppCompatActivity implements View.OnClickListener {
-    OptionallyClass optionallyClass = new OptionallyClass();
+    OptionallyClass optionalClass = new OptionallyClass();
+    // определим, сколько заказов есть на этот день
+    List<List<OrderClass>> allOrdersList = optionalClass.findAllOrders(this, "Необязательно", false);
+    List<AdminClass> allAdminsList = optionalClass.findAllAdmins(this, false);
+    List<ClientClass> allClientsList = optionalClass.findAllClients(this, false);
+    List<TableClass> allTablesList = optionalClass.findAllTables(this, false);
+    List<String> phoneClientsList = new ArrayList<>();
+
     private final SimpleDateFormat dateTimeFormat = new SimpleDateFormat("dd.MM.yyyy HH:mm", Locale.ENGLISH);
     private final SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm", Locale.ENGLISH);
     private final SimpleDateFormat dateFormat = new SimpleDateFormat("dd.MM.yyyy", Locale.ENGLISH);
@@ -53,8 +53,8 @@ public class TableActivity extends AppCompatActivity implements View.OnClickList
     List<String> typeTableList = new ArrayList<>();
     List<String> nameTableList = new ArrayList<>();
     List<Integer> numTableList = new ArrayList<>();
-    List<ReserveTable> checkList = new ArrayList<>();
-    ReserveTable finishTable, getTable;
+    List<OrderClass> checkOrdersList = new ArrayList<>();
+    OrderClass finishTable, getTable;
 
     // БД
     DBHelper dbHelper;
@@ -137,7 +137,7 @@ public class TableActivity extends AppCompatActivity implements View.OnClickList
         });
         actvNameTable.setAdapter(adapter);
 
-        optionallyClass.checkOldReserve(this);
+        optionalClass.checkOldReserve(TableActivity.this);
 
         choseTable();
 
@@ -149,7 +149,7 @@ public class TableActivity extends AppCompatActivity implements View.OnClickList
             Log.i("Gas5", "getClient = " + getClient);
             Log.i("Gas5", "getAdminName = " + getAdminName);
             Log.i("Gas5", "getBron = " + getBron);
-            getTable = new ReserveTable(
+            getTable = new OrderClass(
                     getId,
                     getNumTable,
                     getReserveDateStr,
@@ -161,7 +161,7 @@ public class TableActivity extends AppCompatActivity implements View.OnClickList
                     getAdminName,
                     getBron,
                     "");
-            checkList.add(getTable);
+            checkOrdersList.add(getTable);
         } else {
             changeFreeTableTime();
         }
@@ -282,6 +282,7 @@ public class TableActivity extends AppCompatActivity implements View.OnClickList
         contentValues.put(DBHelper.KEY_STATUS, "");
 
         database.insert(DBHelper.ORDERS, null, contentValues);
+        allOrdersList = optionalClass.findAllOrders(TableActivity.this, optionalClass.getWorkDay(), true);
 
         // нужно обновить стол
         Intent intent = new Intent("tableActivity");
@@ -318,7 +319,7 @@ public class TableActivity extends AppCompatActivity implements View.OnClickList
         }
 
         newDuration = finishTable.getDuration() + 15;
-        newDuration = optionallyClass.checkLeftEndWorkMinute(newDuration);
+        newDuration = optionalClass.checkLeftEndWorkMinute(newDuration);
 
 
         database.delete(DBHelper.ORDERS, DBHelper.KEY_ID + "=" + finishTable.getIdOrder(), null);
@@ -338,6 +339,7 @@ public class TableActivity extends AppCompatActivity implements View.OnClickList
         database.insert(DBHelper.ORDERS, null, contentValues);
 
         Toast.makeText(TableActivity.this, "Добавлено 15 минут. \n", Toast.LENGTH_SHORT).show();
+        allOrdersList = optionalClass.findAllOrders(TableActivity.this, optionalClass.getWorkDay(), true);
 
         // нужно обновить стол
         Intent intent = new Intent("tableActivity");
@@ -391,33 +393,28 @@ public class TableActivity extends AppCompatActivity implements View.OnClickList
 
     // метод формирует список номеров и список типы столов
     private void initNameTableList() {
-        // получаем данные c табл "TABLES"
-        cursorTables = database.query(DBHelper.TABLES,
-                null, null, null,
-                null, null, null);
-        int numberTableIndex = cursorTables.getColumnIndex(DBHelper.KEY_ID);
-        int typeIndex = cursorTables.getColumnIndex(DBHelper.KEY_TYPE);
-        if (cursorTables.moveToFirst()) {
-            cursorTables.getColumnIndex(DBHelper.KEY_ID);
-            do {
-                // инициализируем каждую кнопку шапки стола
-                nameTableList.add("Стол № " + cursorTables.getInt(numberTableIndex));
-                numTableList.add(cursorTables.getInt(numberTableIndex));
-                typeTableList.add(cursorTables.getString(typeIndex));
-            } while (cursorTables.moveToNext());
-        } else {
-            // если не задан ни один сотрудника, то м. перейти в настройки его создания
-            Log.d("Gas", "0 rows");
+        Log.i("TableActivity", "\n --- /// ---   Method initNameTableList");
+        for (int i = 0; i < allTablesList.size(); i++) {
+            TableClass table = allTablesList.get(i);
+
+            // инициализируем каждую кнопку шапки стола
+            nameTableList.add("Стол № " + table.getNumber());
+            numTableList.add(table.getNumber());
+            typeTableList.add(table.getType());
         }
-        cursorTables.close();
+
+        Log.i("TableActivity", "nameTableList: " + nameTableList);
+        Log.i("TableActivity", "numTableList: " + numTableList);
+        Log.i("TableActivity", "typeTableList: " + typeTableList);
     }
 
     // метод меняет вьюшки активити в зависимости от типа стола
     @SuppressLint("ClickableViewAccessibility")
     private void choseTable() {
+        Log.i("TableActivity", "\n --- /// ---   Method choseTable");
         // мы получаем выбранное значение
         String nameTable = actvNameTable.getText().toString();
-        Log.i("Gas5", "nameTable = " + nameTable);
+        Log.i("TableActivity", "nameTable = " + nameTable);
         for (int i = 0; i < nameTableList.size(); i++) {
             if (nameTableList.get(i).equals(nameTable)) {
                 getNumTable = numTableList.get(i);
@@ -433,137 +430,103 @@ public class TableActivity extends AppCompatActivity implements View.OnClickList
                 break;
             }
         }
-//        changeFreeTableTime();
+        Log.i("TableActivity", "getNumTable = " + getNumTable);
+        getTable = null; // если мы переключили стол, то нужно удалить переданный стол, чтобы не мешал
+        changeFreeTableTime();
     }
 
     // метод формирует список резервов на сегодня, которые нужно проверить тщательнее
     // и вызывает следующей метод
     private void changeFreeTableTime() {
-        checkList.clear();
+        Log.i("TableActivity", "\n --- /// ---   Method changeFreeTableTime");
+        checkOrdersList.clear();
 
-        // получаем данные c табл "ORDERS"
-        String selection = DBHelper.KEY_STATUS + " = \'\'";
-        cursorOrders = database.query(DBHelper.ORDERS,
-                null, selection, null,
-                null, null, null);
-        if (cursorOrders.moveToFirst()) {
-            int idIndex = cursorOrders.getColumnIndex(DBHelper.KEY_ID);
-            int numTableIndex = cursorOrders.getColumnIndex(DBHelper.KEY_NUM_TABLE);
-            int reserveDateIndex = cursorOrders.getColumnIndex(DBHelper.KEY_RESERVE_DATE);
-            int reserveTimeIndex = cursorOrders.getColumnIndex(DBHelper.KEY_RESERVE_TIME);
-            int durationIndex = cursorOrders.getColumnIndex(DBHelper.KEY_DURATION);
-            int orderDateIndex = cursorOrders.getColumnIndex(DBHelper.KEY_ORDER_DATE);
-            int orderTimeIndex = cursorOrders.getColumnIndex(DBHelper.KEY_ORDER_TIME);
-            int clientIndex = cursorOrders.getColumnIndex(DBHelper.KEY_CLIENT);
-            int employeeIndex = cursorOrders.getColumnIndex(DBHelper.KEY_EMPLOYEE);
-            int bronIndex = cursorOrders.getColumnIndex(DBHelper.KEY_BRON);
-            int statusIndex = cursorOrders.getColumnIndex(DBHelper.KEY_STATUS);
+        Log.i("TableActivity", "   Date currentDateStr = " + currentDateStr);
+        // ?? старые заказы
+        for (int i = 0; i < allOrdersList.size(); i++) {
+            for (int j = 0; j < allOrdersList.get(i).size(); j++) {
+                OrderClass order = allOrdersList.get(i).get(j);
 
-            Log.i("Gas5", "getNumTable = " + getNumTable);
-            do {
-                Log.i("Gas5", "idIndex = " + cursorOrders.getInt(idIndex));
-                Log.i("Gas5", "cursorOrders.getInt(numTableIndex) = " + cursorOrders.getInt(numTableIndex));
-                // если стол м.б. занят этим заказом (номера столов совпадают)
-                if (getNumTable == cursorOrders.getInt(numTableIndex)) {
-                    Log.i("Gas5", "   Date currentDateStr = " + currentDateStr);
-                    Log.i("Gas5", "   Date reserveDateIndex = " + cursorOrders.getString(reserveDateIndex));
+                // если номера столов совпадают
+                Log.i("TableActivity", "   Date reserveDateIndex = " + order.getDateStartReserve());
+                if (getNumTable == order.getNumTable()) {
                     // если даты совпадают
-                    if (currentDateStr.equals(cursorOrders.getString(reserveDateIndex))) {
-                        Log.i("Gas5", "checkList add");
-                        checkList.add(new ReserveTable(
-                                cursorOrders.getInt(idIndex),
-                                cursorOrders.getInt(numTableIndex),
-                                cursorOrders.getString(reserveDateIndex),
-                                cursorOrders.getString(reserveTimeIndex),
-                                cursorOrders.getInt(durationIndex),
-                                cursorOrders.getString(orderDateIndex),
-                                cursorOrders.getString(orderTimeIndex),
-                                cursorOrders.getString(clientIndex),
-                                cursorOrders.getString(employeeIndex),
-                                cursorOrders.getString(bronIndex),
-                                cursorOrders.getString(statusIndex)));
+                    if (currentDateStr.equals(order.getDateStartReserve())) {
+                        Log.i("TableActivity", "checkList added");
+                        checkOrdersList.add(order);
                     }
                 }
-            } while (cursorOrders.moveToNext());
-            Log.i("Gas5", "List checkList: " + checkList);
-        } else {
-            // если в БД нет заказов
-            Log.d("Gas", "0 rows");
+            }
         }
-        cursorOrders.close();
 
+        Log.i("TableActivity", "checkList.size(): " + checkOrdersList.size());
         checkFreeTimeReserve();
     }
 
     // метод проверяет занят ли стол в данный момент (формирует список столов на сегодня, которые нужно проверить тщательнее)
     @SuppressLint("SetTextI18n")
     private void checkFreeTimeReserve() {
-        Log.i("Gas5", " --- // --- ");
-        Log.i("Gas5", "Start method: checkFreeTimeReserve from TableActivity");
+        Log.i("TableActivity", "\n --- /// ---   Method TableActivity");
 
         // нам просто нужно определить занят ли стол в данный момент, ничего лишнего
-        String[] newReserveStartTimeArr = currentTimeStr.split(":");
-        Log.i("Gas5", "currentTimeStr = " + currentTimeStr);
-        int currentHour = Integer.parseInt(newReserveStartTimeArr[0]);
-        int currentMinute = Integer.parseInt(newReserveStartTimeArr[1]);
+        String[] currentTimeArr = currentTimeStr.split(":");
+        Log.i("TableActivity", "currentTimeStr = " + currentTimeStr);
+        int currentHour = Integer.parseInt(currentTimeArr[0]);
+        int currentMinute = Integer.parseInt(currentTimeArr[1]);
+        Log.i("TableActivity", "сейчас часов = " + currentHour);
+        Log.i("TableActivity", "сейчас минут = " + currentMinute);
 
-        Log.i("Gas5", "сейчас часов = " + currentHour);
-        Log.i("Gas5", "сейчас минут = " + currentMinute);
-
-        Log.i("Gas5", "   Size checkList = " + checkList.size() + " (Кол-во проверяемых заказов на выбранную дату)");
-        Log.i("Gas5", "   Start cycle (начинаем цикл по этим заказам)");
-        Log.i("Gas5", "NumTable = " + getNumTable);
 
         boolean busyFlag = false;
         boolean leftLess30MinFlag = false;
         int finishLeftMinute = 1080;
-        for (int i = 0; i < checkList.size(); i++) {
-            Log.i("Gas5", " i = " + i);
-            int hourStartReserve = checkList.get(i).getHourStartReserve();
-            Log.i("Gas5", "hourStartReserve = " + hourStartReserve);
-            int minuteStartReserve = checkList.get(i).getMinuteStartReserve();
-            Log.i("Gas5", "minuteStartReserve = " + minuteStartReserve);
-            int durationMinuteReserve = checkList.get(i).getDuration();
-            Log.i("Gas5", "Old durationMinuteReserve = " + durationMinuteReserve);
+        Log.i("TableActivity", "\tStart cycle (начинаем цикл по заказам checkOrdersList)");
+        for (int i = 0; i < checkOrdersList.size(); i++) {
+            Log.i("TableActivity", " i = " + i);
+            int hourStartReserve = checkOrdersList.get(i).getHourStartReserve();
+            Log.i("TableActivity", "hourStartReserve = " + hourStartReserve);
+            int minuteStartReserve = checkOrdersList.get(i).getMinuteStartReserve();
+            Log.i("TableActivity", "minuteStartReserve = " + minuteStartReserve);
+            int durationMinuteReserve = checkOrdersList.get(i).getDuration();
+            Log.i("TableActivity", "Old durationMinuteReserve = " + durationMinuteReserve);
             int hourFinishReserve = hourStartReserve + (minuteStartReserve + durationMinuteReserve) / 60;
-            Log.i("Gas5", "Old hourFinishReserve " + hourFinishReserve);
+            Log.i("TableActivity", "Old hourFinishReserve " + hourFinishReserve);
             int minuteFinishReserve = (minuteStartReserve + durationMinuteReserve) % 60;
-            Log.i("Gas5", "Old minuteFinishReserve = " + minuteFinishReserve);
-
-            // проверяем если время протыкает, то сразу заканчиваем проверку и пользуемся данными этого резерва
+            Log.i("TableActivity", "Old minuteFinishReserve = " + minuteFinishReserve);
 
             // фильтр по времени
             // посчитаем сколько остается минут до след. резерва (на сколько м. зарезервировать)
             if (hourStartReserve < 5) hourStartReserve += 24;
             int leftMinute = ((hourStartReserve - currentHour) * 60) + (minuteStartReserve - currentMinute);
-            Log.i("Gas5", "hourStartReserve = " + hourStartReserve);
-            Log.i("Gas5", "currentHour = " + currentHour);
-            Log.i("Gas5", "minuteStartReserve = " + minuteStartReserve);
-            Log.i("Gas5", "currentMinute = " + currentMinute);
-            Log.i("Gas5", "Осталось минут до след резерва leftMinute = " + leftMinute);
+            Log.i("TableActivity", "hourStartReserve = " + hourStartReserve);
+            Log.i("TableActivity", "currentHour = " + currentHour);
+            Log.i("TableActivity", "minuteStartReserve = " + minuteStartReserve);
+            Log.i("TableActivity", "currentMinute = " + currentMinute);
+            Log.i("TableActivity", "leftMinute = " + leftMinute);
 
             // если СТОЛ СВОБОДЕН и остается больше 30 мин
-            if (leftMinute >= 30 || (checkList.get(i).getEndDateTimeReserveCal().before(Calendar.getInstance()))) {
-                Log.i("Gas5", "Стол свободен! И до следующего резерва больше 30 мин");
+            if (leftMinute >= 30 || (checkOrdersList.get(i).getEndDateTimeReserveCal().before(Calendar.getInstance()))) {
+                Log.i("TableActivity", "Стол свободен! И до следующего резерва больше 30 мин");
                 // но нужно проверить дальше, если, вдруг дальше выяснится, что стол занят
                 if (leftMinute < finishLeftMinute) {
                     finishLeftMinute = leftMinute;
-                    finishTable = checkList.get(i);
+                    finishTable = checkOrdersList.get(i);
                 }
-            } else if (leftMinute > 0) { // если СТОЛ СВОБОДЕН, но остается меньше 30 мин
-                Log.i("Gas5", "Стол свободен, НО! Остается меньше 30 мин");
+
+            }
+            // если СТОЛ СВОБОДЕН, но остается меньше 30 мин
+            else if (leftMinute > 0) {
+                Log.i("TableActivity", "Стол свободен, НО! Остается меньше 30 мин");
                 if (leftMinute < finishLeftMinute) {
                     finishLeftMinute = leftMinute;
-                    finishTable = checkList.get(i);
+                    finishTable = checkOrdersList.get(i);
                 }
                 leftLess30MinFlag = true;
-            } else {
-                /*int finishMinute = ((hourFinishReserve - currentHour) * 60) + (minuteFinishReserve - currentMinute);
-                Log.i("Gas5", "finishMinute = " + finishMinute);
-                if (finishMinute > 0) {*/
-                // если СТОЛ ОТКРЫТ(ЗАНЯТ) (текущее время Протыкает время резерва)
-                Log.i("Gas5", "Этот стол сейчас занят! (проткнул)");
-                finishTable = checkList.get(i);
+            }
+            // если СТОЛ ЗАНЯТ (текущее время Протыкает время резерва)
+            else {
+                Log.i("TableActivity", "Этот стол сейчас занят! (проткнул)");
+                finishTable = checkOrdersList.get(i);
                 busyFlag = true;
                 break;
             }
@@ -574,11 +537,8 @@ public class TableActivity extends AppCompatActivity implements View.OnClickList
 //        btnResume.setClickable(false);
         btnStart.setClickable(true);
 
-        String phoneClient = "8 800 2000 600";
         // если стол вообще есть
         if (finishTable != null) {
-            // нужно найти номер клиента
-            phoneClient = optionallyClass.findPhoneClient(this, finishTable.getClient());
             tvTimeStartGame.setText("Начало игры: " + finishTable.getTimeStartReserve());
             tvTimeEndGame.setText("Конец игры: " + finishTable.getTimeEndReserve());
 
@@ -598,14 +558,14 @@ public class TableActivity extends AppCompatActivity implements View.OnClickList
                 btnStart.setText("Закрыть");
                 btnStart.setBackgroundResource(R.drawable.btn_style_6);
 //                btnResume.setClickable(true);
-                tvCurrentClient.setText("Клиент: " + finishTable.getClient() + "\nТел: " + phoneClient);
+                tvCurrentClient.setText("Клиент: " + finishTable.getClient() + "\nТел: " + findPhoneClient(finishTable.getClient()));
             } else if (leftLess30MinFlag) { // если СТОЛ СВОБОДЕН, но <30 минут
                 btnStart.setClickable(false);
                 btnStart.setBackgroundResource(R.drawable.btn_style_6_1);
                 tvCurrentClient.setTextColor(Color.RED);
                 tvCurrentClient.setText("Следующий резерв начнется в " + finishTable.getTimeStartReserve() + " \n" +
                         "(осталось " + finishLeftMinute + " мин.)\n" +
-                        "Клиент: " + finishTable.getClient() + "\tТел: " + phoneClient);
+                        "Клиент: " + finishTable.getClient() + "\tТел: " + findPhoneClient(finishTable.getClient()));
 
             } else { // если стол свободен и >30 мин
                 tvCurrentClient.setTextColor(Color.BLACK);
@@ -613,9 +573,13 @@ public class TableActivity extends AppCompatActivity implements View.OnClickList
                     int hour = finishLeftMinute / 60;
                     int minute = finishLeftMinute % 60;
                     if (minute == 0)
-                        tvCurrentClient.setText("Следующий резерв начнется в " + finishTable.getTimeStartReserve() + " \n(осталось " + hour + " час. ");
+                        tvCurrentClient.setText("Следующий резерв начнется в " + finishTable.getTimeStartReserve() + " \n" +
+                                "(осталось " + hour + " час.)\n" +
+                                "Клиент: " + finishTable.getClient() + "\tТел: " + findPhoneClient(finishTable.getClient()));
                     else
-                        tvCurrentClient.setText("Следующий резерв начнется в " + finishTable.getTimeStartReserve() + " \n(осталось " + hour + " час. " + minute + " мин.)");
+                        tvCurrentClient.setText("Следующий резерв начнется в " + finishTable.getTimeStartReserve() + " \n" +
+                                "(осталось " + hour + " час. " + minute + " мин.)\n" +
+                                "Клиент: " + finishTable.getClient() + "\tТел: " + findPhoneClient(finishTable.getClient()));
                 }
             }
         } else {
@@ -627,13 +591,12 @@ public class TableActivity extends AppCompatActivity implements View.OnClickList
             tvCurrentGameDuration.setText("Продолжительность игры: _ ч _ мин");
         }
 
-        if (getTable != null) { // если мы открыли резерв через таблицу
+        // если мы открыли резерв через таблицу (Если мы получили getTable)
+        if (getTable != null) {
             tvCurrentClient.setText("Резерв на " + finishTable.getTimeStartReserve() + " \n" +
-                    "Клиент: " + finishTable.getClient() + "\tТел: " + phoneClient);
+                    "Клиент: " + finishTable.getClient() + "\tТел: " + findPhoneClient(finishTable.getClient()));
 
 //            btnDeleteReserve.setVisibility(View.VISIBLE);
-        } else {
-//            btnDeleteReserve.setVisibility(View.INVISIBLE);
         }
 
     }
@@ -664,5 +627,18 @@ public class TableActivity extends AppCompatActivity implements View.OnClickList
                 actualTime();  // мисис рекурсия
             });
         }).start();
+    }
+
+    private String findPhoneClient(String nameClient) {
+        Log.i("TableActivity", "\n --- /// ---   Method findPhoneClient");
+        String phone = "Клиент не найден";
+        for (int i = 0; i < allClientsList.size(); i++) {
+            if (allClientsList.get(i).getName().equals(nameClient)) {
+                phone = allClientsList.get(i).getPhone();
+                break;
+            }
+        }
+        Log.i("TableActivity", "phone = " + phone);
+        return phone;
     }
 }

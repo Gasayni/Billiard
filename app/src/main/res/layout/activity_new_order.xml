@@ -189,7 +189,6 @@
         android:clickable="true"
         android:focusable="true"
         android:gravity="center"
-        android:onClick="showDialogAlertCreateReserve"
         android:text="Создать резерв"
         android:textColor="@color/black"
         android:textSize="24sp" />

@@ -19,7 +19,6 @@ import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.Button;
@@ -35,7 +34,14 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class EditDBActivity extends AppCompatActivity implements CompoundButton.OnCheckedChangeListener, View.OnClickListener {
-    OptionallyClass optionallyClass = new OptionallyClass();
+    OptionallyClass optionalClass = new OptionallyClass();
+    // определим, сколько заказов есть на этот день
+    List<List<OrderClass>> allOrdersList = optionalClass.findAllOrders(this, "Необязательно", false);
+    List<AdminClass> allAdminsList = optionalClass.findAllAdmins(this, false);
+    List<ClientClass> allClientsList = optionalClass.findAllClients(this, false);
+    List<TableClass> allTablesList = optionalClass.findAllTables(this, false);
+
+
     LinearLayout linColumns;
     Button btnColumns, btnAdd, btnDelete, btnChange;
     TextView tvHead, tvData, tvPyramid, tvPool;
@@ -138,10 +144,10 @@ public class EditDBActivity extends AppCompatActivity implements CompoundButton.
                     startActivity(intent);
                 }
                 if (tvHead.getText().toString().equals("Клиенты")) {
-                    optionallyClass.openDialogCreateClient(this, getAdminName);
+                    optionalClass.openDialogCreateClient(this, getAdminName);
                 }
                 if (tvHead.getText().toString().equals("Сотрудники")) {
-                    optionallyClass.openDialogCreateEmployee(this, getAdminName);
+                    optionalClass.openDialogCreateEmployee(this, getAdminName);
                 }
                 break;
             }
@@ -224,7 +230,7 @@ public class EditDBActivity extends AppCompatActivity implements CompoundButton.
     // метод отрисовывает кнопки сортировки и фильтрации и прочих в шапке
     public void addBtnColumns() {
         // сначала отрисуем кнопки шапки
-        marginLength = optionallyClass.convertDpToPixels(this, 2);
+        marginLength = optionalClass.convertDpToPixels(this, 2);
 
         linColumns = findViewById(R.id.linHead);
         nameBtnColumns.add("Сортировка");
@@ -256,8 +262,8 @@ public class EditDBActivity extends AppCompatActivity implements CompoundButton.
             btnColumns = new Button(linColumns.getContext());
             btnColumns.setTag("btnColumns" + (i + 1));
             btnColumns.setLayoutParams(new LinearLayout.LayoutParams(
-                    optionallyClass.convertDpToPixels(this, 60),
-                    optionallyClass.convertDpToPixels(this, 60)));
+                    optionalClass.convertDpToPixels(this, 60),
+                    optionalClass.convertDpToPixels(this, 60)));
             LinearLayout.LayoutParams marginBtnTable = (LinearLayout.LayoutParams) btnColumns.getLayoutParams();
 
             // здесь особые кнопки сортировки и фильтации и другие (else)
@@ -275,8 +281,8 @@ public class EditDBActivity extends AppCompatActivity implements CompoundButton.
                 }
             } else {
                 btnColumns.setLayoutParams(new LinearLayout.LayoutParams(
-                        optionallyClass.convertDpToPixels(this, 180),
-                        optionallyClass.convertDpToPixels(this, 60)));
+                        optionalClass.convertDpToPixels(this, 180),
+                        optionalClass.convertDpToPixels(this, 60)));
 
                 marginBtnTable.setMargins((marginLength * 8), 0, (marginLength * 8), 0);
                 btnColumns.setBackgroundResource(R.drawable.btn_style_2);
@@ -302,6 +308,7 @@ public class EditDBActivity extends AppCompatActivity implements CompoundButton.
                                String groupBy, String having, String orderBy) {
         // очищаем сначала
         tvData.setText("");
+
 
         int idIndex = 0, durationSumMinuteIndex = 0, ordersIndex = 0, phoneIndex = 0,
                 nameIndex = 0, numTableIndex = 0, reserveDateIndex = 0, reserveTimeIndex = 0,
@@ -672,12 +679,12 @@ public class EditDBActivity extends AppCompatActivity implements CompoundButton.
                         editBtnColumns(columnsArr, null, null, null, null, sortTableName);
                         return true;
                     case R.id.clientMenu:
-                        clientsList = optionallyClass.initClient(EditDBActivity.this);
+                        initClients();
                         Log.i("Gas", "clientsList = " + clientsList);
                         openDialogActvChose(clientsList, "Клиент");
                         return true;
                     case R.id.employeeMenu:
-                        adminsList = optionallyClass.initAdmins(EditDBActivity.this, "adminsList");
+                        initAdmins();
                         Log.i("Gas", "adminsList = " + adminsList);
                         openDialogActvChose(adminsList, "Администратор");
                         return true;
@@ -737,8 +744,7 @@ public class EditDBActivity extends AppCompatActivity implements CompoundButton.
             public boolean onMenuItemClick(MenuItem item) {
                 switch (item.getItemId()) {
                     case R.id.nameMenu:
-                        clientsList = optionallyClass.initClient(EditDBActivity.this);
-                        Log.i("Gas", "clientsList = " + clientsList);
+                        initClients();
                         openDialogActvChose(clientsList, "Table Client Name");
                         return true;
                     default: {
@@ -854,7 +860,7 @@ public class EditDBActivity extends AppCompatActivity implements CompoundButton.
                             Log.i("Gas", "numTableDB = " + numTableDB);
                             Log.i("Gas", "choseTypeTable = " + choseTypeTable);
 
-                            optionallyClass.changeTableInDB(EditDBActivity.this, numTableDB, choseTypeTable);
+                            optionalClass.changeTableInDB(EditDBActivity.this, numTableDB, choseTypeTable);
 
                             editBtnColumns(null, null, null,
                                     null, null, DBHelper.KEY_ID);
@@ -1169,5 +1175,21 @@ public class EditDBActivity extends AppCompatActivity implements CompoundButton.
         contentValues.put(DBHelper.KEY_PHONE, phoneDB);
 
         database.insert(DBHelper.EMPLOYEES, null, contentValues);
+    }
+
+    private void initClients() {
+        Log.i("EditDBActivity", "\n --- /// ---   Method initClients");
+        for (int i = 0; i < allClientsList.size(); i++) {
+            clientsList.add(allClientsList.get(i).getName());
+        }
+        Log.i("EditDBActivity", "clientsList: " + clientsList);
+    }
+
+    private void initAdmins() {
+        Log.i("EditDBActivity", "\n --- /// ---   Method initAdmins");
+        for (int i = 0; i < allAdminsList.size(); i++) {
+            adminsList.add(allAdminsList.get(i).getName());
+        }
+        Log.i("EditDBActivity", "adminsList: " + adminsList);
     }
 }

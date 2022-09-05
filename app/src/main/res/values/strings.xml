@@ -7,6 +7,7 @@
     <string name="tableNumber">Номер стола</string>
     <string name="tariff">Тарифы</string>
     <string name="employee">Сотрудники</string>
+    <string name="share">Архивировать БД</string>
     <string name="admin">Администраторы</string>
     <string name="client">Клиенты</string>
     <string name="sale">скидки</string>
