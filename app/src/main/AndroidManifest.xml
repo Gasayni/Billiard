@@ -2,25 +2,42 @@
 <manifest
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
+    android:requestLegacyExternalStorage="true"
     package="com.gas.billiard">
 
-<!--    android:icon="@mipmap/ic_launcher"-->
-<!--    android:roundIcon="@mipmap/ic_launcher_round"-->
-<!--    android:theme="@style/Theme.Billiard"-->
-<!--    -->
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+
+
+    <!--    android:icon="@mipmap/ic_launcher"-->
+    <!--    android:roundIcon="@mipmap/ic_launcher_round"-->
+    <!--    android:theme="@style/Theme.Billiard"-->
+    <!--    -->
     <application
-        android:hardwareAccelerated="false"
-        android:largeHeap="true"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
-        android:label="@string/app_name"
+        android:hardwareAccelerated="false"
         android:icon="@drawable/semenov_logo"
-        android:roundIcon="@drawable/bol_pool1"
+        android:label="@string/app_name"
+        android:largeHeap="true"
         android:logo="@drawable/bol_pool1"
+        android:roundIcon="@drawable/bol_pool1"
         android:supportsRtl="true"
         android:theme="@style/Theme.AppCompat.Light.DarkActionBar"
         tools:targetApi="31">
+
+        <provider
+            android:name="android.support.v4.content.FileProvider"
+            android:authorities="com.example.homefolder.gas.provider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <!-- ressource file to create -->
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths">
+            </meta-data>
+        </provider>
+
         <activity
             android:name=".EditDBActivity"
             android:exported="false">
