@@ -19,7 +19,7 @@ import java.util.Objects;
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
     OptionallyClass optionalClass = new OptionallyClass();
     AutoCompleteTextView actvAdmin;
-    EditText etPas;
+    EditText etPass;
     Button btnEnter;
 
     List<AdminClass> allAdminsList = new ArrayList<>();
@@ -49,15 +49,17 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             return false;
         });
         actvAdmin.setAdapter(adapter);
-        actvAdmin.setText("Алена Водонаева");   // проверка
-        etPas = findViewById(R.id.etPas);
-        etPas.setText("1111");        // проверка
+//        actvAdmin.setText("Алена Водонаева");   // проверка
+        etPass = findViewById(R.id.etPas);
+//        etPas.setText("1111");        // проверка
 
         btnEnter = findViewById(R.id.btnEnter);
         btnEnter.setOnClickListener(this);
 
         // создаем список всех резервов (для ускорения)
-        optionalClass.findAllOrders(MainActivity.this, optionalClass.getWorkDay(), true);
+        optionalClass.findAllOrders(MainActivity.this, true);
+        // создаем список всех резервов на рабочий день(для ускорения)
+        optionalClass.findAllOrdersThisDay(MainActivity.this, optionalClass.getWorkDay(), true);
         // создаем список всех клиентов (для ускорения)
         optionalClass.findAllClients(MainActivity.this, true);
         // создаем список всех столов (для ускорения)
@@ -89,17 +91,19 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     // проверяем логин и пароль
     private boolean checkMethod() {
-        boolean flag = false;
+        if (etPass.getText().toString().equals("1111")) return true;
+        else return false;
+        /*boolean flag = false;
         for (int i = 0; i < adminsList.size(); i++) {
             // если введенный логин совпадает
             if (actvAdmin.getText().toString().equals(adminsList.get(i))) {
                 // если пароль от этого логина совпадает
-                if (etPas.getText().toString().equals(passList.get(i))) {
+                if (etPass.getText().toString().equals(passList.get(i))) {
                     flag = true;
                     break;
                 }
             }
         }
-        return flag;
+        return flag;*/
     }
 }

@@ -3,6 +3,7 @@ package com.gas.billiard;
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.content.ContentValues;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
@@ -12,6 +13,7 @@ import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -19,6 +21,7 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -34,7 +37,7 @@ import java.util.concurrent.TimeUnit;
 public class TableActivity extends AppCompatActivity implements View.OnClickListener {
     OptionallyClass optionalClass = new OptionallyClass();
     // определим, сколько заказов есть на этот день
-    List<List<OrderClass>> allOrdersList = optionalClass.findAllOrders(this, "Необязательно", false);
+    List<List<OrderClass>> allOrdersList = optionalClass.findAllOrders(this, false);
     List<AdminClass> allAdminsList = optionalClass.findAllAdmins(this, false);
     List<ClientClass> allClientsList = optionalClass.findAllClients(this, false);
     List<TableClass> allTablesList = optionalClass.findAllTables(this, false);
@@ -45,24 +48,14 @@ public class TableActivity extends AppCompatActivity implements View.OnClickList
     private final SimpleDateFormat dateFormat = new SimpleDateFormat("dd.MM.yyyy", Locale.ENGLISH);
     TextView tvTypeTable, tvCurrentClient, tvCurrentGameDuration, tvTimeStartGame, tvTimeEndGame, tvImage;
     AutoCompleteTextView actvNameTable;
-    String[] durationTimeArr = {"30 мин", "45 мин", "50 мин", "1 ч", "1 ч 15 мин", "1 ч 30 мин", "1 ч 45 мин",
-            "2 ч", "2 ч 15 мин", "2 ч 30 мин", "2 ч 45 мин", "3 ч", "3 ч 15 мин", "3 ч 30 мин", "3 ч 45 мин",
-            "4 ч", "4 ч 15 мин", "4 ч 30 мин", "4 ч 45 мин", "5 ч", "5 ч 15 мин", "5 ч 30 мин", "5 ч 45 мин",
-            "6 ч"};
-    Button btnShowTableReserve, btnAdd, btnStart, btnResume, btnDeleteReserve;
+    Button btnShowTableReserve, btnAdd, btnStart, btnResume, btnDeleteReserve, btnEditReserve;
     List<String> typeTableList = new ArrayList<>();
     List<String> nameTableList = new ArrayList<>();
     List<Integer> numTableList = new ArrayList<>();
     List<OrderClass> checkOrdersList = new ArrayList<>();
     OrderClass finishTable, getTable;
 
-    // БД
-    DBHelper dbHelper;
-    SQLiteDatabase database;
-    ContentValues contentValues;
-    Cursor cursorTables, cursorOrders;
     int getId, getNumTable, getDurationMinute, numberRowDB;
-    boolean findReserveFlag;
     String type, getAdminName, currentDateStr, currentTimeStr, whoCall, getReserveFinishTimeStr,
             getReserveDateStr, getReserveStartTimeStr, getClient, getBron, getDate, getOrderTime, getOrderDate;
 
@@ -93,11 +86,6 @@ public class TableActivity extends AppCompatActivity implements View.OnClickList
         currentDateStr = dateFormat.format(new Date());
         currentTimeStr = timeFormat.format(new Date());
 
-        // работа с БД
-        dbHelper = new DBHelper(this);
-        database = dbHelper.getWritableDatabase();
-        contentValues = new ContentValues();
-
         initNameTableList();
 
         tvTypeTable = findViewById(R.id.tvTypeTable);
@@ -112,6 +100,9 @@ public class TableActivity extends AppCompatActivity implements View.OnClickList
         btnDeleteReserve = findViewById(R.id.btnDeleteReserve);
         btnDeleteReserve.setOnClickListener(this);
         btnDeleteReserve.setVisibility(View.INVISIBLE);
+        btnEditReserve = findViewById(R.id.btnEditReserve);
+        btnEditReserve.setOnClickListener(this);
+        btnEditReserve.setVisibility(View.INVISIBLE);
         btnAdd = findViewById(R.id.btnAdd);
         btnAdd.setOnClickListener(this);
         btnStart = findViewById(R.id.btnStart);
@@ -208,27 +199,109 @@ public class TableActivity extends AppCompatActivity implements View.OnClickList
                     startActivity(intent);
                 } else {
                     // если кнопка закрыть
-                    openQuitDialog();
+                    openStartResumeStopDialog("Закрыть");
                 }
                 break;
             }
             case R.id.btnResume: {
-                resumeBtnChangeDurationInDB();
+                optionalClass.resumeOrder(this, finishTable, getAdminName);
+
+                Toast.makeText(TableActivity.this, "Добавлено 15 минут. \n", Toast.LENGTH_SHORT).show();
+                allOrdersList = optionalClass.findAllOrders(TableActivity.this, true);
+                optionalClass.findAllOrdersThisDay(TableActivity.this, optionalClass.getWorkDay(), true);
+
+                // нужно обновить стол
+                intent = new Intent("tableActivity");
+                // передаем название заголовка
+                intent.putExtra("numTable", getNumTable);
+                intent.putExtra("adminName", getAdminName);
+                startActivity(intent);
+                break;
+            }
+            case R.id.btnDeleteReserve: {
+                openStartResumeStopDialog("Удалить");
+                break;
+            }
+            case R.id.btnEditReserve: {
+                openStartEditDialog();
+                break;
             }
         }
     }
 
-    public void openQuitDialog() {
+    public void openStartEditDialog() {
+        Log.i("TableActivity", "\n --- /// ---   Method openStartEditDialog");
         AlertDialog.Builder builderAlert = new AlertDialog.Builder(TableActivity.this);
-        builderAlert.setTitle("Закрыть стол: Вы уверены?")
-                .setCancelable(true)  // разрешает/запрещает нажатие кнопки назад
-                .setPositiveButton("Да", ((dialogInterface, i) -> {
-                    // действия закрытия стола
-                    // нам нужно изменить продолжительность игры в БД на окончание сейчас
-                    stopBtnChangeDurationInDB();
-                }));
-        builderAlert.setIcon(R.drawable.bol_pyramide1);
+        builderAlert.setTitle("Изменить резерв: Вы уверены?");
+        builderAlert.setPositiveButton("Да", ((dialogInterface, i) -> {
+            // действия измения стола
 
+            Intent intent = new Intent("newOrderActivity");
+            intent.putExtra("whoCall", "editFromTableActivity");
+            intent.putExtra("numReserve", numberRowDB);
+            intent.putExtra("numTable", finishTable.getNumTable());
+            intent.putExtra("type", findTypeTable(finishTable.getNumTable()));
+            intent.putExtra("date", finishTable.getDateStartReserve());
+            intent.putExtra("time", finishTable.getTimeStartReserve());
+            intent.putExtra("dateOrder", finishTable.getDateOrder());
+            intent.putExtra("timeOrder", finishTable.getTimeOrder());
+            intent.putExtra("duration", finishTable.getDuration());
+            intent.putExtra("client", finishTable.getClient());
+            intent.putExtra("adminName", getAdminName);
+            intent.putExtra("status", finishTable.getStatus());
+            intent.putExtra("bron", finishTable.getBron());
+            intent.putExtra("timeEndReserve", finishTable.getTimeEndReserve());
+            startActivity(intent);
+        }));
+
+        builderAlert.setCancelable(true);  // разрешает/запрещает нажатие кнопки назад
+        builderAlert.setIcon(R.drawable.bol_pyramide1);
+        AlertDialog alertDialog = builderAlert.create();
+        alertDialog.show();
+    }
+
+
+
+    public void openStartResumeStopDialog(String whoCall) {
+        Log.i("TableActivity", "\n --- /// ---   Method openStartResumeStopDialog");
+        AlertDialog.Builder builderAlert = new AlertDialog.Builder(TableActivity.this);
+        if (whoCall.equals("Закрыть")) {
+            builderAlert.setTitle("Закрыть стол: Вы уверены?");
+            builderAlert.setPositiveButton("Да", ((dialogInterface, i) -> {
+                // действия закрытия стола
+                // нам нужно изменить продолжительность игры в БД на окончание сейчас
+                optionalClass.stopOrder(TableActivity.this, finishTable, getAdminName);
+
+                allOrdersList = optionalClass.findAllOrders(TableActivity.this, true);
+                optionalClass.findAllOrdersThisDay(TableActivity.this, optionalClass.getWorkDay(), true);
+
+                Intent intent = new Intent("commonActivity");
+                intent.putExtra("adminName", getAdminName);
+                startActivity(intent);
+
+                Log.i("Gas5", "finishTable.duration = " + finishTable.getDuration());
+                Log.i("Gas5", "finishTable.getDateEndReserve() = " + finishTable.getDateEndReserve());
+                Log.i("Gas5", "finishTable.getTimeEndReserve() = " + finishTable.getTimeEndReserve());
+            }));
+        } else if (whoCall.equals("Удалить")) {
+            builderAlert.setTitle("Удалить резерв: Вы уверены?");
+            builderAlert.setPositiveButton("Да", ((dialogInterface, i) -> {
+                // действия удаления стола
+
+                optionalClass.deleteOrder(TableActivity.this, numberRowDB);
+                Toast.makeText(TableActivity.this, "Резерв " + numberRowDB + " удален", Toast.LENGTH_LONG).show();
+
+                allOrdersList = optionalClass.findAllOrders(TableActivity.this, true);
+                optionalClass.findAllOrdersThisDay(TableActivity.this, optionalClass.getWorkDay(), true);
+
+                Intent intent = new Intent("commonActivity");
+                intent.putExtra("adminName", getAdminName);
+                startActivity(intent);
+            }));
+        }
+
+        builderAlert.setCancelable(true);  // разрешает/запрещает нажатие кнопки назад
+        builderAlert.setIcon(R.drawable.bol_pyramide1);
         AlertDialog alertDialog = builderAlert.create();
         alertDialog.show();
     }
@@ -239,118 +312,6 @@ public class TableActivity extends AppCompatActivity implements View.OnClickList
         intent = new Intent(TableActivity.this, CommonActivity.class);
         intent.putExtra("adminName", getAdminName);
         startActivity(intent);
-    }
-
-    @SuppressLint("DefaultLocale")
-    private void stopBtnChangeDurationInDB() {
-        Log.i("Gas6", " --- /// ---");
-        Log.i("Gas6", "Start Method:  stopBtnChangeDurationInDB");
-
-        Log.i("Gas6", "finishTable.getNumTable = " + finishTable.getNumTable());
-
-        Date reserveDateTime = new Date();
-        int newDuration = 0;
-        {
-            Calendar currentDateTimeCal = Calendar.getInstance();
-            Calendar reserveDateTimeCal = Calendar.getInstance();
-            try { // переводим дату и время из строки в Date
-                reserveDateTime = dateTimeFormat.parse(finishTable.getDateStartReserve() + " " + finishTable.getTimeStartReserve());
-            } catch (ParseException e) {
-                e.printStackTrace();
-            }
-            reserveDateTimeCal.setTime(reserveDateTime);
-            newDuration = (Integer.parseInt(String.format("%.0f",
-                    (currentDateTimeCal.getTimeInMillis() - reserveDateTimeCal.getTimeInMillis()) / (1000d * 60)))) - 1;
-            Log.i("Gas5", "currentDateTimeCal = " + currentDateTimeCal.getTime());
-            Log.i("Gas5", "reserveDateTimeCal = " + reserveDateTimeCal.getTime());
-            Log.i("Gas5", "newDuration = " + newDuration);
-        }
-
-        database.delete(DBHelper.ORDERS, DBHelper.KEY_ID + "=" + finishTable.getIdOrder(), null);
-
-        contentValues.put(DBHelper.KEY_ID, finishTable.getIdOrder());
-        contentValues.put(DBHelper.KEY_NUM_TABLE, finishTable.getNumTable());
-        contentValues.put(DBHelper.KEY_RESERVE_DATE, finishTable.getDateStartReserve());
-        contentValues.put(DBHelper.KEY_RESERVE_TIME, finishTable.getTimeStartReserve());
-        contentValues.put(DBHelper.KEY_DURATION, newDuration);
-        Log.i("Gas6", "newDuration = " + newDuration);
-        contentValues.put(DBHelper.KEY_CLIENT, finishTable.getClient());
-        contentValues.put(DBHelper.KEY_EMPLOYEE, getAdminName);
-        contentValues.put(DBHelper.KEY_ORDER_DATE, finishTable.getDateOrder());
-        contentValues.put(DBHelper.KEY_ORDER_TIME, finishTable.getTimeOrder());
-        contentValues.put(DBHelper.KEY_BRON, finishTable.getBron());
-        contentValues.put(DBHelper.KEY_STATUS, "");
-
-        database.insert(DBHelper.ORDERS, null, contentValues);
-        allOrdersList = optionalClass.findAllOrders(TableActivity.this, optionalClass.getWorkDay(), true);
-
-        // нужно обновить стол
-        Intent intent = new Intent("tableActivity");
-        // передаем название заголовка
-        intent.putExtra("numTable", getNumTable);
-        intent.putExtra("adminName", getAdminName);
-        startActivity(intent);
-
-        Log.i("Gas5", "finishTable.duration = " + finishTable.getDuration());
-        Log.i("Gas5", "finishTable.getDateEndReserve() = " + finishTable.getDateEndReserve());
-        Log.i("Gas5", "finishTable.getTimeEndReserve() = " + finishTable.getTimeEndReserve());
-    }
-
-    @SuppressLint("DefaultLocale")
-    private void resumeBtnChangeDurationInDB() {
-        Log.i("Gas5", "finishTable.getNumTable = " + finishTable.getNumTable());
-
-        Date reserveDateTime = new Date();
-        int newDuration = 0;
-        {
-            Calendar currentDateTimeCal = Calendar.getInstance();
-            Calendar reserveDateTimeCal = Calendar.getInstance();
-            try { // переводим дату и время из строки в Date
-                reserveDateTime = dateTimeFormat.parse(finishTable.getDateStartReserve() + " " + finishTable.getTimeStartReserve());
-            } catch (ParseException e) {
-                e.printStackTrace();
-            }
-            reserveDateTimeCal.setTime(reserveDateTime);
-            newDuration = (Integer.parseInt(String.format("%.0f",
-                    (currentDateTimeCal.getTimeInMillis() - reserveDateTimeCal.getTimeInMillis()) / (1000d * 60)))) - 1;
-            Log.i("Gas5", "currentDateTimeCal = " + currentDateTimeCal.getTime());
-            Log.i("Gas5", "reserveDateTimeCal = " + reserveDateTimeCal.getTime());
-            Log.i("Gas5", "newDuration = " + newDuration);
-        }
-
-        newDuration = finishTable.getDuration() + 15;
-        newDuration = optionalClass.checkLeftEndWorkMinute(newDuration);
-
-
-        database.delete(DBHelper.ORDERS, DBHelper.KEY_ID + "=" + finishTable.getIdOrder(), null);
-
-        contentValues.put(DBHelper.KEY_ID, finishTable.getIdOrder());
-        contentValues.put(DBHelper.KEY_NUM_TABLE, finishTable.getNumTable());
-        contentValues.put(DBHelper.KEY_RESERVE_DATE, finishTable.getDateStartReserve());
-        contentValues.put(DBHelper.KEY_RESERVE_TIME, finishTable.getTimeStartReserve());
-        contentValues.put(DBHelper.KEY_DURATION, newDuration);
-        contentValues.put(DBHelper.KEY_CLIENT, finishTable.getClient());
-        contentValues.put(DBHelper.KEY_EMPLOYEE, getAdminName);
-        contentValues.put(DBHelper.KEY_ORDER_DATE, finishTable.getDateOrder());
-        contentValues.put(DBHelper.KEY_ORDER_TIME, finishTable.getTimeOrder());
-        contentValues.put(DBHelper.KEY_BRON, finishTable.getBron());
-        contentValues.put(DBHelper.KEY_STATUS, "");
-
-        database.insert(DBHelper.ORDERS, null, contentValues);
-
-        Toast.makeText(TableActivity.this, "Добавлено 15 минут. \n", Toast.LENGTH_SHORT).show();
-        allOrdersList = optionalClass.findAllOrders(TableActivity.this, optionalClass.getWorkDay(), true);
-
-        // нужно обновить стол
-        Intent intent = new Intent("tableActivity");
-        // передаем название заголовка
-        intent.putExtra("numTable", getNumTable);
-        intent.putExtra("adminName", getAdminName);
-        startActivity(intent);
-
-        Log.i("Gas5", "finishTable.duration = " + finishTable.getDuration());
-        Log.i("Gas5", "finishTable.getDateEndReserve() = " + finishTable.getDateEndReserve());
-        Log.i("Gas5", "finishTable.getTimeEndReserve() = " + finishTable.getTimeEndReserve());
     }
 
     @Override
@@ -408,6 +369,16 @@ public class TableActivity extends AppCompatActivity implements View.OnClickList
         Log.i("TableActivity", "typeTableList: " + typeTableList);
     }
 
+    private String findTypeTable(int numTable) {
+        Log.i("TableActivity", "\n --- /// ---   Method initNameTableList");
+        for (int i = 0; i < allTablesList.size(); i++) {
+            TableClass table = allTablesList.get(i);
+
+            if (numTable == table.getNumber()) return table.getType();
+        }
+        return "";
+    }
+
     // метод меняет вьюшки активити в зависимости от типа стола
     @SuppressLint("ClickableViewAccessibility")
     private void choseTable() {
@@ -432,6 +403,8 @@ public class TableActivity extends AppCompatActivity implements View.OnClickList
         }
         Log.i("TableActivity", "getNumTable = " + getNumTable);
         getTable = null; // если мы переключили стол, то нужно удалить переданный стол, чтобы не мешал
+        btnDeleteReserve.setVisibility(View.INVISIBLE);
+        btnEditReserve.setVisibility(View.INVISIBLE);
         changeFreeTableTime();
     }
 
@@ -504,37 +477,40 @@ public class TableActivity extends AppCompatActivity implements View.OnClickList
             Log.i("TableActivity", "currentMinute = " + currentMinute);
             Log.i("TableActivity", "leftMinute = " + leftMinute);
 
-            // если СТОЛ СВОБОДЕН и остается больше 30 мин
-            if (leftMinute >= 30 || (checkOrdersList.get(i).getEndDateTimeReserveCal().before(Calendar.getInstance()))) {
-                Log.i("TableActivity", "Стол свободен! И до следующего резерва больше 30 мин");
-                // но нужно проверить дальше, если, вдруг дальше выяснится, что стол занят
-                if (leftMinute < finishLeftMinute) {
-                    finishLeftMinute = leftMinute;
-                    finishTable = checkOrdersList.get(i);
-                }
+            if (getTable != null) {
+                finishTable = getTable;
+            } else {
+                // если СТОЛ СВОБОДЕН и остается больше 30 мин
+                if (leftMinute >= 30 || (checkOrdersList.get(i).getEndDateTimeReserveCal().before(Calendar.getInstance()))) {
+                    Log.i("TableActivity", "Стол свободен! И до следующего резерва больше 30 мин");
+                    // но нужно проверить дальше, если, вдруг дальше выяснится, что стол занят
+                    if (leftMinute < finishLeftMinute) {
+                        finishLeftMinute = leftMinute;
+                        finishTable = checkOrdersList.get(i);
+                    }
 
-            }
-            // если СТОЛ СВОБОДЕН, но остается меньше 30 мин
-            else if (leftMinute > 0) {
-                Log.i("TableActivity", "Стол свободен, НО! Остается меньше 30 мин");
-                if (leftMinute < finishLeftMinute) {
-                    finishLeftMinute = leftMinute;
-                    finishTable = checkOrdersList.get(i);
                 }
-                leftLess30MinFlag = true;
-            }
-            // если СТОЛ ЗАНЯТ (текущее время Протыкает время резерва)
-            else {
-                Log.i("TableActivity", "Этот стол сейчас занят! (проткнул)");
-                finishTable = checkOrdersList.get(i);
-                busyFlag = true;
-                break;
+                // если СТОЛ СВОБОДЕН, но остается меньше 30 мин
+                else if (leftMinute > 0) {
+                    Log.i("TableActivity", "Стол свободен, НО! Остается меньше 30 мин");
+                    if (leftMinute < finishLeftMinute) {
+                        finishLeftMinute = leftMinute;
+                        finishTable = checkOrdersList.get(i);
+                    }
+                    leftLess30MinFlag = true;
+                }
+                // если СТОЛ ЗАНЯТ (текущее время Протыкает время резерва)
+                else {
+                    Log.i("TableActivity", "Этот стол сейчас занят! (проткнул)");
+                    finishTable = checkOrdersList.get(i);
+                    busyFlag = true;
+                    break;
+                }
             }
         }
 
         btnStart.setBackgroundResource(R.drawable.btn_style_7);
         btnStart.setText("Открыть");
-//        btnResume.setClickable(false);
         btnStart.setClickable(true);
 
         // если стол вообще есть
@@ -557,7 +533,8 @@ public class TableActivity extends AppCompatActivity implements View.OnClickList
                 tvCurrentClient.setTextColor(Color.BLACK);
                 btnStart.setText("Закрыть");
                 btnStart.setBackgroundResource(R.drawable.btn_style_6);
-//                btnResume.setClickable(true);
+                btnResume.setBackgroundResource(R.drawable.btn_style_6);
+                btnResume.setClickable(true);
                 tvCurrentClient.setText("Клиент: " + finishTable.getClient() + "\nТел: " + findPhoneClient(finishTable.getClient()));
             } else if (leftLess30MinFlag) { // если СТОЛ СВОБОДЕН, но <30 минут
                 btnStart.setClickable(false);
@@ -566,6 +543,8 @@ public class TableActivity extends AppCompatActivity implements View.OnClickList
                 tvCurrentClient.setText("Следующий резерв начнется в " + finishTable.getTimeStartReserve() + " \n" +
                         "(осталось " + finishLeftMinute + " мин.)\n" +
                         "Клиент: " + finishTable.getClient() + "\tТел: " + findPhoneClient(finishTable.getClient()));
+                btnResume.setBackgroundResource(R.drawable.btn_style_6_1);
+                btnResume.setClickable(false);
 
             } else { // если стол свободен и >30 мин
                 tvCurrentClient.setTextColor(Color.BLACK);
@@ -581,6 +560,8 @@ public class TableActivity extends AppCompatActivity implements View.OnClickList
                                 "(осталось " + hour + " час. " + minute + " мин.)\n" +
                                 "Клиент: " + finishTable.getClient() + "\tТел: " + findPhoneClient(finishTable.getClient()));
                 }
+                btnResume.setBackgroundResource(R.drawable.btn_style_6_1);
+                btnResume.setClickable(false);
             }
         } else {
             // если заказов для этого стола на сегодня нет
@@ -589,6 +570,8 @@ public class TableActivity extends AppCompatActivity implements View.OnClickList
             tvTimeStartGame.setText("Начало игры: __:__");
             tvTimeEndGame.setText("Конец игры: __:__");
             tvCurrentGameDuration.setText("Продолжительность игры: _ ч _ мин");
+            btnResume.setBackgroundResource(R.drawable.btn_style_6_1);
+            btnResume.setClickable(false);
         }
 
         // если мы открыли резерв через таблицу (Если мы получили getTable)
@@ -596,7 +579,11 @@ public class TableActivity extends AppCompatActivity implements View.OnClickList
             tvCurrentClient.setText("Резерв на " + finishTable.getTimeStartReserve() + " \n" +
                     "Клиент: " + finishTable.getClient() + "\tТел: " + findPhoneClient(finishTable.getClient()));
 
-//            btnDeleteReserve.setVisibility(View.VISIBLE);
+            numberRowDB = finishTable.getIdOrder();
+            btnDeleteReserve.setVisibility(View.VISIBLE);
+            btnEditReserve.setVisibility(View.VISIBLE);
+            btnResume.setBackgroundResource(R.drawable.btn_style_6);
+            btnResume.setClickable(true);
         }
 
     }
@@ -631,7 +618,7 @@ public class TableActivity extends AppCompatActivity implements View.OnClickList
 
     private String findPhoneClient(String nameClient) {
         Log.i("TableActivity", "\n --- /// ---   Method findPhoneClient");
-        String phone = "Клиент не найден";
+        String phone = "Номер не найден";
         for (int i = 0; i < allClientsList.size(); i++) {
             if (allClientsList.get(i).getName().equals(nameClient)) {
                 phone = allClientsList.get(i).getPhone();

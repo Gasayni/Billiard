@@ -2,7 +2,7 @@
     <string name="app_name">Semenov</string>
     <string name="administrator">Администратор</string>
     <string name="password">Пароль</string>
-    <string name="setting">Настойки</string>
+    <string name="setting">Настройки</string>
     <string name="login">Вход</string>
     <string name="tableNumber">Номер стола</string>
     <string name="tariff">Тарифы</string>

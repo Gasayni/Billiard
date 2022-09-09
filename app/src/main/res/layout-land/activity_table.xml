@@ -220,16 +220,33 @@
 
                         </LinearLayout>
 
+                        <LinearLayout
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="4dp"
+                            android:orientation="vertical">
+
+                        <Button
+                            android:id="@+id/btnEditReserve"
+                            android:layout_width="150dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginRight="4dp"
+                            android:background="@drawable/btn_style_1"
+                            android:text="Изменить резерв"
+                            android:textColor="@color/black"
+                            android:textSize="20dp" />
+
                         <Button
                             android:id="@+id/btnDeleteReserve"
                             android:layout_width="150dp"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="16dp"
                             android:layout_marginRight="4dp"
                             android:background="@drawable/btn_style_6"
                             android:text="Удалить резерв"
                             android:textColor="@color/black"
                             android:textSize="20dp" />
+
+                        </LinearLayout>
 
                     </LinearLayout>
                 </LinearLayout>

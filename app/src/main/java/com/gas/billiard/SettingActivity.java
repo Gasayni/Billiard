@@ -30,7 +30,7 @@ import java.util.List;
 public class SettingActivity extends AppCompatActivity implements View.OnClickListener {
     OptionallyClass optionalClass = new OptionallyClass();
     // определим, сколько заказов есть на этот день
-    List<List<OrderClass>> allOrdersList = optionalClass.findAllOrders(this, "Необязательно", false);
+    List<List<OrderClass>> allOrdersList = optionalClass.findAllOrders(this, false);
     List<AdminClass> allAdminsList = optionalClass.findAllAdmins(this, false);
     List<ClientClass> allClientsList = optionalClass.findAllClients(this, false);
     List<TableClass> allTablesList = optionalClass.findAllTables(this, false);
@@ -126,7 +126,7 @@ public class SettingActivity extends AppCompatActivity implements View.OnClickLi
 
     private void shareDB() {
         Log.i("SettingActivity", "\n ...//...    shareDB");
-        String path = (Environment.getExternalStorageDirectory().getAbsolutePath() + "/GasCsv.csv"); // Here path file name is MyCsvFile.path
+        String path = (Environment.getExternalStorageDirectory().getAbsolutePath() + "/Semenov_Clients.csv"); // Here path file name is MyCsvFile.path
         Log.i("SettingActivity", "AbsolutePath = " + Environment.getExternalStorageDirectory().getAbsolutePath());
 
         File file = new File(path);
@@ -156,9 +156,9 @@ public class SettingActivity extends AppCompatActivity implements View.OnClickLi
 
         Intent intent = new Intent(Intent.ACTION_SEND);
         intent.setType("text/plain");
-        String shareBody = "Your Body here";
-        String shareTitle = "Your Title here";
-        String to[] = {"gasajni@mail.ru"};
+        String shareBody = "База данных Клиентов c номерами";
+        String shareTitle = "Semenov";
+        String to[] = {};
         intent.putExtra(Intent.EXTRA_EMAIL, to);
         // передаем название заголовка
         intent.putExtra(Intent.EXTRA_SUBJECT, shareTitle);

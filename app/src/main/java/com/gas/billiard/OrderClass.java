@@ -156,6 +156,12 @@ public class OrderClass {
     }
 
     public Calendar getStartDateTimeReserveCal() {
+        try {
+            reserveStartDateTime = dateTimeFormat.parse(dateStartReserve + " " + timeStartReserve); // из строки в Date
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+        startDateTimeReserveCal.setTime(reserveStartDateTime);
         return startDateTimeReserveCal;
     }
 

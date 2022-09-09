@@ -9,7 +9,7 @@
         tools:targetApi="lollipop">
         <item>
             <shape android:shape="rectangle"
-                android:tint="#DFECF0F1">
+                android:tint="#C0E193">
                 <corners android:radius="2dp"/>
                 <solid android:color="#1a237e"/>
                 <padding android:bottom="6dp"/>

@@ -29,4 +29,50 @@
         android:inputType="phone"
         android:textSize="32sp" />
 
+    <TextView
+        android:id="@+id/tvOrdersCount"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/etPhone"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="64dp"
+        android:text="Посетил"
+        android:textSize="24sp" />
+
+    <EditText
+        android:id="@+id/etOrdersCount"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/tvOrdersCount"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="16dp"
+        android:ems="10"
+        android:gravity="center"
+        android:inputType="number"
+        android:textColor="@color/black"
+        android:textSize="32sp" />
+
+    <TextView
+        android:id="@+id/tvDurationSumMinute"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/etOrdersCount"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="32dp"
+        android:text="Пребывание(минуты)"
+        android:textSize="24sp" />
+
+    <EditText
+        android:id="@+id/etDurationSumMinute"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/tvDurationSumMinute"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="16dp"
+        android:ems="10"
+        android:gravity="center"
+        android:inputType="number"
+        android:textColor="@color/black"
+        android:textSize="32sp" />
+
 </RelativeLayout>

@@ -36,7 +36,7 @@ import java.util.List;
 public class EditDBActivity extends AppCompatActivity implements CompoundButton.OnCheckedChangeListener, View.OnClickListener {
     OptionallyClass optionalClass = new OptionallyClass();
     // определим, сколько заказов есть на этот день
-    List<List<OrderClass>> allOrdersList = optionalClass.findAllOrders(this, "Необязательно", false);
+    List<List<OrderClass>> allOrdersList = optionalClass.findAllOrders(this, false);
     List<AdminClass> allAdminsList = optionalClass.findAllAdmins(this, false);
     List<ClientClass> allClientsList = optionalClass.findAllClients(this, false);
     List<TableClass> allTablesList = optionalClass.findAllTables(this, false);
@@ -52,7 +52,7 @@ public class EditDBActivity extends AppCompatActivity implements CompoundButton.
     private List<String> nameBtnColumns = new ArrayList<>();
     private List<Button> btnColumnsTagsList = new ArrayList<>();
     private int marginLength, numberRowDB, numTableDB, durationMinuteDB, ordersCountDB, durationSumMinuteDB;
-    private String typeDB, dateDB, timeDB, clientDB, nameDB, phoneDB, bronDB, statusDB;
+    private String typeDB, dateDB, timeDB, dateOrderDB, timeOrderDB, clientDB, nameDB, phoneDB, bronDB, statusDB;
     String choseStr;
     AutoCompleteTextView actvChose;
     List<Button> getBtnColumnsTagsList = new ArrayList<>();
@@ -65,7 +65,7 @@ public class EditDBActivity extends AppCompatActivity implements CompoundButton.
     DBHelper dbHelper;
     SQLiteDatabase database;
     ContentValues contentValues;
-    Cursor cursorTABLE_DB, cursorOrders, cursorTables, cursorClient, cursorEmployee;
+    Cursor cursorTABLE_DB;
     private String TABLE_DB, getAdminName;
 
     String sortTableName;
@@ -144,34 +144,34 @@ public class EditDBActivity extends AppCompatActivity implements CompoundButton.
                     startActivity(intent);
                 }
                 if (tvHead.getText().toString().equals("Клиенты")) {
-                    optionalClass.openDialogCreateClient(this, getAdminName);
+                    dialogCreateClient();
                 }
                 if (tvHead.getText().toString().equals("Сотрудники")) {
-                    optionalClass.openDialogCreateEmployee(this, getAdminName);
+                    dialogCreateEmployee();
                 }
                 break;
             }
             case R.id.btnDelete: {
                 if (tvHead.getText().toString().equals("Резервы")) {
-                    openDialogDelete("Резервы");
+                    dialogDelete("Резервы");
                 } else if (tvHead.getText().toString().equals("Клиенты")) {
-                    openDialogDelete("Клиенты");
+                    dialogDelete("Клиенты");
                 } else if (tvHead.getText().toString().equals("Сотрудники")) {
-                    openDialogDelete("Сотрудники");
+                    dialogDelete("Сотрудники");
                 } else if (tvHead.getText().toString().equals("Тарифы")) {
-                    openDialogDelete("Тарифы");
+                    dialogDelete("Тарифы");
                 }
                 break;
             }
             case R.id.btnChange: {
                 if (tvHead.getText().toString().equals("Резервы")) {
-                    openDialogChangeReserve();
+                    dialogChangeOrder();
                 } else if (tvHead.getText().toString().equals("Столы")) {
-                    openDialogChangeTable();
+                    dialogChangeTable();
                 } else if (tvHead.getText().toString().equals("Клиенты")) {
-                    openDialogTakeDataChangeClient();
+                    dialogChoseNumChangeClient();
                 } else if (tvHead.getText().toString().equals("Сотрудники")) {
-                    openDialogTakeDataChangeEmployee();
+                    dialogChoseNumChangeEmployee();
                 }
                 break;
             }
@@ -371,9 +371,9 @@ public class EditDBActivity extends AppCompatActivity implements CompoundButton.
                     case "Клиенты": {
                         s.append("\n" + String.format("%-4s", (cursorTABLE_DB.getInt(idIndex) + ".")))
                                 .append(String.format("%-32s", cursorTABLE_DB.getString(nameIndex)))
-                                .append("Тел: " + String.format("%-14s", cursorTABLE_DB.getString(phoneIndex)))
-                                .append("Заказал: " + String.format("%-10s", (cursorTABLE_DB.getInt(ordersIndex) + " раз")))
-                                .append("Пребывание(мин): " + String.format("%-12s", (cursorTABLE_DB.getInt(durationSumMinuteIndex) + " руб.")));
+                                .append("Тел: " + String.format("%-35s", cursorTABLE_DB.getString(phoneIndex)))
+                                .append("Посетил: " + String.format("%-30s", (cursorTABLE_DB.getInt(ordersIndex) + " раз")))
+                                .append("Пребывание: " + String.format("%-12s", (cursorTABLE_DB.getInt(durationSumMinuteIndex) + " минут")));
                         Log.i("Gas5", s.toString());
                         break;
                     }
@@ -382,7 +382,7 @@ public class EditDBActivity extends AppCompatActivity implements CompoundButton.
                                 .append("Стол № " + String.format("%-7s", cursorTABLE_DB.getInt(numTableIndex)))
                                 .append("Резерв на: " + String.format("%-15s", cursorTABLE_DB.getString(reserveDateIndex)))
                                 .append(String.format("%-10s", cursorTABLE_DB.getString(reserveTimeIndex)))
-                                .append("Продолжительность(мин): " + String.format("%-8s", cursorTABLE_DB.getInt(durationIndex)))
+                                .append("Продолжительность(мин): " + String.format("%-36s", cursorTABLE_DB.getInt(durationIndex)))
                                 .append("Клиент: " + String.format("%-36s", cursorTABLE_DB.getString(clientIndex)))
                                 .append("Оформил: " + String.format("%-36s", cursorTABLE_DB.getString(employeeIndex)))
                                 .append(String.format("%-13s", cursorTABLE_DB.getString(dateOrderIndex)))
@@ -427,134 +427,104 @@ public class EditDBActivity extends AppCompatActivity implements CompoundButton.
 
     // метод забирает все данные из изменяемого резерва (изменение резерва)
     private void takeDataChangeOrder() {
+        Log.i("EditDBActivity", "\n ...//...    takeDataChangeOrder");
         findReserveFlag = false;
-        cursorOrders = database.query(DBHelper.ORDERS,
-                null, null, null,
-                null, null, null);
-        if (cursorOrders.moveToFirst()) {
-            int idIndex = cursorOrders.getColumnIndex(DBHelper.KEY_ID);
-            int numTableIndex = cursorOrders.getColumnIndex(DBHelper.KEY_NUM_TABLE);
-            int reserveDateIndex = cursorOrders.getColumnIndex(DBHelper.KEY_RESERVE_DATE);
-            int reserveTimeIndex = cursorOrders.getColumnIndex(DBHelper.KEY_RESERVE_TIME);
-            int durationIndex = cursorOrders.getColumnIndex(DBHelper.KEY_DURATION);
-            int clientIndex = cursorOrders.getColumnIndex(DBHelper.KEY_CLIENT);
-            int employeeIndex = cursorOrders.getColumnIndex(DBHelper.KEY_EMPLOYEE);
-            int bronIndex = cursorOrders.getColumnIndex(DBHelper.KEY_BRON);
-            int statusIndex = cursorOrders.getColumnIndex(DBHelper.KEY_STATUS);
-            do {
-                if (numberRowDB == cursorOrders.getInt(idIndex)) {
+        Log.i("EditDBActivity", "numberRowDB = " + numberRowDB);
+        Log.i("EditDBActivity", "allOrdersList.size() = " + allOrdersList.size());
+
+        for (int i = 0; i < allOrdersList.size(); i++) {
+            Log.i("EditDBActivity", "i: " + i);
+            Log.i("EditDBActivity", "allOrdersList.get(i).size() = " + allOrdersList.get(i).size());
+            for (int j = 0; j < allOrdersList.get(i).size(); j++) {
+                OrderClass order = allOrdersList.get(i).get(j);
+
+                Log.i("EditDBActivity", "order.getIdOrder() = " + order.getIdOrder());
+                if (numberRowDB == order.getIdOrder()) {
+                    numTableDB = order.getNumTable();
+                    dateDB = order.getDateStartReserve();
+                    timeDB = order.getTimeStartReserve();
+                    dateOrderDB = order.getDateOrder();
+                    timeOrderDB = order.getTimeOrder();
+                    durationMinuteDB = order.getDuration();
+                    clientDB = order.getClient();
+                    bronDB = order.getBron();
+                    statusDB = order.getStatus();
+
                     findReserveFlag = true;
-                    numTableDB = cursorOrders.getInt(numTableIndex);
-                    dateDB = cursorOrders.getString(reserveDateIndex);
-                    timeDB = cursorOrders.getString(reserveTimeIndex);
-                    durationMinuteDB = cursorOrders.getInt(durationIndex);
-                    clientDB = cursorOrders.getString(clientIndex);
-                    bronDB = cursorOrders.getString(bronIndex);
-                    statusDB = cursorOrders.getString(statusIndex);
                 }
-            } while (cursorOrders.moveToNext());
-
-            Log.i("Gas5", "numReserveDB = " + numberRowDB);
-            Log.i("Gas5", "numTableDB = " + numTableDB);
-            Log.i("Gas5", "dateDB = " + dateDB);
-            Log.i("Gas5", "timeDB = " + timeDB);
-            Log.i("Gas5", "durationMinuteDB = " + durationMinuteDB);
-            Log.i("Gas5", "clientDB = " + clientDB);
-
-            if (findReserveFlag) takeTypeTableMethod();
-        } else {
-            // если в БД нет заказов
-            Log.d("Gas", "0 rows");
+            }
         }
-        cursorOrders.close();
+        if (findReserveFlag) {
+            takeTypeTableMethod();
+            Log.i("EditDBActivity", "numberRowDB = " + numberRowDB);
+            Log.i("EditDBActivity", "numTableDB = " + numTableDB);
+            Log.i("EditDBActivity", "dateDB = " + dateDB);
+            Log.i("EditDBActivity", "timeDB = " + timeDB);
+            Log.i("EditDBActivity", "dateOrderDB = " + dateOrderDB);
+            Log.i("EditDBActivity", "timeOrderDB = " + timeOrderDB);
+            Log.i("EditDBActivity", "durationMinuteDB = " + durationMinuteDB);
+            Log.i("EditDBActivity", "clientDB = " + clientDB);
+            Log.i("EditDBActivity", "bronDB = " + bronDB);
+            Log.i("EditDBActivity", "statusDB = " + statusDB);
+        }
     }
 
     // метод забирает все данные из изменяемого клиента (изменение клиента)
     private void takeDataChangeClient() {
+        Log.i("EditDBActivity", "\n ...//...    takeDataChangeClient");
         findClientFlag = false;
-        cursorClient = database.query(DBHelper.CLIENTS,
-                null, null, null,
-                null, null, null);
-        if (cursorClient.moveToFirst()) {
-            int idIndex = cursorClient.getColumnIndex(DBHelper.KEY_ID);
-            int nameIndex = cursorClient.getColumnIndex(DBHelper.KEY_NAME);
-            int phoneIndex = cursorClient.getColumnIndex(DBHelper.KEY_PHONE);
-            int ordersCountIndex = cursorClient.getColumnIndex(DBHelper.KEY_ORDERS_COUNT);
-            int durationSumMinuteIndex = cursorClient.getColumnIndex(DBHelper.KEY_DURATION_SUM_MINUTE);
-            do {
-                if (numberRowDB == cursorClient.getInt(idIndex)) {
-                    findClientFlag = true;
-                    nameDB = cursorClient.getString(nameIndex);
-                    phoneDB = cursorClient.getString(phoneIndex);
-                    ordersCountDB = cursorClient.getInt(ordersCountIndex);
-                    durationSumMinuteDB = cursorClient.getInt(durationSumMinuteIndex);
-                }
-            } while (cursorClient.moveToNext());
+        Log.i("EditDBActivity", "allClientsList.isNOTEmpty() ? = " + !allClientsList.isEmpty());
+        for (int i = 0; i < allClientsList.size(); i++) {
+            ClientClass client = allClientsList.get(i);
 
-            Log.i("Gas5", "nameDB = " + nameDB);
-            Log.i("Gas5", "phoneDB = " + phoneDB);
-            Log.i("Gas5", "ordersCountDB = " + ordersCountDB);
-            Log.i("Gas5", "durationSumMinuteDB = " + durationSumMinuteDB);
-        } else {
-            // если в БД нет заказов
-            Log.d("Gas", "0 rows");
+            if (numberRowDB == client.getId()) {
+                nameDB = client.getName();
+                phoneDB = client.getPhone();
+                ordersCountDB = client.getOrdersCount();
+                durationSumMinuteDB = client.getDurationSumMinute();
+
+                findClientFlag = true;
+                break;
+            }
         }
-        cursorClient.close();
+        Log.i("EditDBActivity", "findClientFlag = " + findClientFlag);
+        Log.i("EditDBActivity", "numberRowDB = " + numberRowDB);
+        Log.i("EditDBActivity", "nameDB = " + nameDB);
+        Log.i("EditDBActivity", "phoneDB = " + phoneDB);
+        Log.i("EditDBActivity", "ordersCountDB = " + ordersCountDB);
+        Log.i("EditDBActivity", "durationSumMinuteDB = " + durationSumMinuteDB);
     }
 
     // метод забирает все данные из изменяемого админа (изменение админа)
     private void takeDataChangeEmployee() {
+        Log.i("EditDBActivity", "\n ...//...    takeDataChangeEmployee");
         findEmployeeFlag = false;
-        cursorEmployee = database.query(DBHelper.EMPLOYEES,
-                null, null, null,
-                null, null, null);
-        if (cursorEmployee.moveToFirst()) {
-            int idIndex = cursorEmployee.getColumnIndex(DBHelper.KEY_ID);
-            int nameIndex = cursorEmployee.getColumnIndex(DBHelper.KEY_NAME);
-            int phoneIndex = cursorEmployee.getColumnIndex(DBHelper.KEY_PHONE);
-            do {
-                if (numberRowDB == cursorEmployee.getInt(idIndex)) {
-                    findEmployeeFlag = true;
-                    nameDB = cursorEmployee.getString(nameIndex);
-                    phoneDB = cursorEmployee.getString(phoneIndex);
-                }
-            } while (cursorEmployee.moveToNext());
+        Log.i("EditDBActivity", "numberRowDB = " + numberRowDB);
+        for (int i = 0; i < allAdminsList.size(); i++) {
+            AdminClass admin = allAdminsList.get(i);
 
-            Log.i("Gas5", "nameDB = " + nameDB);
-            Log.i("Gas5", "phoneDB = " + phoneDB);
-        } else {
-            // если в БД нет заказов
-            Log.d("Gas", "0 rows");
+            if (numberRowDB == admin.getId()) {
+                nameDB = admin.getName();
+                phoneDB = admin.getPhone();
+
+                findEmployeeFlag = true;
+            }
         }
-        cursorEmployee.close();
+        Log.i("EditDBActivity", "nameDB = " + nameDB);
+        Log.i("EditDBActivity", "phoneDB = " + phoneDB);
     }
 
     // метод забирает тип стола изменяемого резерва (изменение стола)
     private void takeTypeTableMethod() {
         // метод получает тип выбранного стола
+        for (int i = 0; i < allTablesList.size(); i++) {
+            TableClass table = allTablesList.get(i);
 
-        // получаем данные c табл "TABLES"
-        cursorTables = database.query(DBHelper.TABLES,
-                null, null, null,
-                null, null, null);
-        if (cursorTables.moveToFirst()) {
-            int numTableIndex = cursorTables.getColumnIndex(DBHelper.KEY_ID);
-            int typeTableIndex = cursorTables.getColumnIndex(DBHelper.KEY_TYPE);
-            do {
-                if (cursorTables.getInt(numTableIndex) == numTableDB) {
-                    typeDB = cursorTables.getString(typeTableIndex);
-                }
-            } while (cursorTables.moveToNext());
-
-            Log.i("Gas5", "typeDB = " + typeDB);
-        } else {
-            // если не задан ни один сотрудника, то м. перейти в настройки его создания
-            Log.d("Gas", "0 rows");
+            if (table.getNumber() == numTableDB) {
+                typeDB = table.getType();
+            }
         }
-        cursorTables.close();
     }
-
-
 
 
 
@@ -672,7 +642,7 @@ public class EditDBActivity extends AppCompatActivity implements CompoundButton.
                     case R.id.numTableMenu:
                         // здесь будет фильтр по столам
                         // Нужно сначала реализовать "выбор стола" а затем по выбранному номеру фильтровать
-                        openDialogChoseTable();
+                        dialogChoseTable();
                         return true;
                     case R.id.dateReserveMenu:
                         sortTableName = DBHelper.KEY_RESERVE_DATE;
@@ -681,12 +651,12 @@ public class EditDBActivity extends AppCompatActivity implements CompoundButton.
                     case R.id.clientMenu:
                         initClients();
                         Log.i("Gas", "clientsList = " + clientsList);
-                        openDialogActvChose(clientsList, "Клиент");
+                        dialogActvChose(clientsList, "Клиент");
                         return true;
                     case R.id.employeeMenu:
                         initAdmins();
                         Log.i("Gas", "adminsList = " + adminsList);
-                        openDialogActvChose(adminsList, "Администратор");
+                        dialogActvChose(adminsList, "Администратор");
                         return true;
 
                     case R.id.dateOrderMenu:
@@ -745,7 +715,7 @@ public class EditDBActivity extends AppCompatActivity implements CompoundButton.
                 switch (item.getItemId()) {
                     case R.id.nameMenu:
                         initClients();
-                        openDialogActvChose(clientsList, "Table Client Name");
+                        dialogActvChose(clientsList, "Table Client Name");
                         return true;
                     default: {
                         return false;
@@ -759,8 +729,60 @@ public class EditDBActivity extends AppCompatActivity implements CompoundButton.
 
 
 
+
+    // метод вызывает диалоговое окно изменения резерва
+    private void dialogChangeOrder() {
+        LayoutInflater inflater = LayoutInflater.from(EditDBActivity.this);
+        View subView = inflater.inflate(R.layout.dialog_chose_num, null);
+        final EditText etNum = (EditText) subView.findViewById(R.id.etNum);
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Изменение резерва\n")
+                .setMessage("Введите порядковый номер резерва для изменения")
+                .setView(subView)
+                .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        numberRowDB = Integer.parseInt(etNum.getText().toString());
+                        // сначала по номеру резерва узнаем все данные резерва
+                        takeDataChangeOrder();
+                        if (findReserveFlag) {
+                            Intent intent = new Intent("newOrderActivity");
+                            intent.putExtra("whoCall", "editFromEditDBActivity");
+                            intent.putExtra("numReserve", numberRowDB);
+                            intent.putExtra("numTable", numTableDB);
+                            intent.putExtra("type", typeDB);
+                            intent.putExtra("date", dateDB);
+                            intent.putExtra("time", timeDB);
+                            intent.putExtra("dateOrder", dateOrderDB);
+                            intent.putExtra("timeOrder", timeOrderDB);
+                            intent.putExtra("duration", durationMinuteDB);
+                            intent.putExtra("client", clientDB);
+                            intent.putExtra("adminName", getAdminName);
+                            intent.putExtra("status", statusDB);
+                            intent.putExtra("bron", bronDB);
+                            startActivity(intent);
+
+//                            editBtnColumns(null, null, null,
+//                                    null, null, DBHelper.KEY_ID);
+                        } else
+                            Toast.makeText(EditDBActivity.this, "Этого резерва нет БД", Toast.LENGTH_SHORT).show();
+                    }
+                })
+                .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        Toast.makeText(EditDBActivity.this, "Отменено", Toast.LENGTH_LONG).show();
+                    }
+                });
+        AlertDialog alert = builder.create();
+        alert.show();
+    }
+
+
+
     // метод вызывает диалоговое окно выбора стола (для фильтации)
-    public void openDialogChoseTable() {
+    public void dialogChoseTable() {
         final Dialog dialog = new Dialog(EditDBActivity.this);
         dialog.setContentView(R.layout.dialog_number_picker);
         Button btnSet = (Button) dialog.findViewById(R.id.btnSet);
@@ -783,57 +805,8 @@ public class EditDBActivity extends AppCompatActivity implements CompoundButton.
         dialog.show();
     }
 
-    // метод вызывает диалоговое окно изменения резерва
-    private void openDialogChangeReserve() {
-        LayoutInflater inflater = LayoutInflater.from(EditDBActivity.this);
-        View subView = inflater.inflate(R.layout.dialog_chose_num, null);
-        final EditText etNum = (EditText) subView.findViewById(R.id.etNum);
-
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("Изменение резерва\n")
-                .setMessage("Введите порядковый номер резерва для изменения")
-                .setView(subView)
-                .setPositiveButton("OK", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        numberRowDB = Integer.parseInt(etNum.getText().toString());
-                        // сначала по номеру резерва узнаем все данные резерва
-                        takeDataChangeOrder();
-                        if (findReserveFlag) {
-                            Intent intent = new Intent("newOrderActivity");
-                            intent.putExtra("whoCall", "editDBActivity_Correct");
-                            intent.putExtra("numReserve", numberRowDB);
-                            intent.putExtra("numTable", numTableDB);
-                            intent.putExtra("type", typeDB);
-                            intent.putExtra("date", dateDB);
-                            intent.putExtra("time", timeDB);
-                            intent.putExtra("duration", durationMinuteDB);
-                            intent.putExtra("client", clientDB);
-                            intent.putExtra("adminName", getAdminName);
-                            intent.putExtra("status", statusDB);
-                            intent.putExtra("bron", bronDB);
-                            startActivity(intent);
-
-                            editBtnColumns(null, null, null,
-                                    null, null, DBHelper.KEY_ID);
-                        } else
-                            Toast.makeText(EditDBActivity.this, "Этого резерва нет БД", Toast.LENGTH_SHORT).show();
-
-
-                    }
-                })
-                .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        Toast.makeText(EditDBActivity.this, "Отменено", Toast.LENGTH_LONG).show();
-                    }
-                });
-        AlertDialog alert = builder.create();
-        alert.show();
-    }
-
     // метод вызывает диалоговое окно изменения стола
-    private void openDialogChangeTable() {
+    private void dialogChangeTable() {
         LayoutInflater inflater = LayoutInflater.from(EditDBActivity.this);
         View subView = inflater.inflate(R.layout.dialog_change_table, null);
         final EditText etNumTable = (EditText) subView.findViewById(R.id.etNum);
@@ -844,7 +817,6 @@ public class EditDBActivity extends AppCompatActivity implements CompoundButton.
         }
         tvPyramid = subView.findViewById(R.id.tvPyramid);
         tvPool = subView.findViewById(R.id.tvPool);
-
 
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle("Изменение стола\n")
@@ -861,13 +833,10 @@ public class EditDBActivity extends AppCompatActivity implements CompoundButton.
                             Log.i("Gas", "choseTypeTable = " + choseTypeTable);
 
                             optionalClass.changeTableInDB(EditDBActivity.this, numTableDB, choseTypeTable);
-
-                            editBtnColumns(null, null, null,
-                                    null, null, DBHelper.KEY_ID);
+                            allTablesList = optionalClass.findAllTables(EditDBActivity.this, true);
+                            editBtnColumns(null, null, null, null, null, DBHelper.KEY_ID);
                         } else
                             Toast.makeText(EditDBActivity.this, "Этого стола нет в БД", Toast.LENGTH_SHORT).show();
-
-
                     }
                 })
                 .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
@@ -880,40 +849,10 @@ public class EditDBActivity extends AppCompatActivity implements CompoundButton.
         alert.show();
     }
 
-    // метод вызывает диалоговое окно для выбора порядкового номера клиента (изменение клиента)
-    private void openDialogTakeDataChangeClient() {
-        LayoutInflater inflater = LayoutInflater.from(EditDBActivity.this);
-        View subView = inflater.inflate(R.layout.dialog_chose_num, null);
-        final EditText etNum = (EditText) subView.findViewById(R.id.etNum);
 
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("Изменение клиента\n")
-                .setMessage("Введите порядковый номер клиента для изменения")
-                .setView(subView)
-                .setPositiveButton("OK", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        numberRowDB = Integer.parseInt(etNum.getText().toString());
-                        // сначала по номеру резерва узнаем все данные резерва
-                        takeDataChangeClient();
-                        if (findClientFlag) {
-                            openDialogChangeClient();
-                        } else
-                            Toast.makeText(EditDBActivity.this, "Этого клиента нет БД", Toast.LENGTH_SHORT).show();
-                    }
-                })
-                .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        Toast.makeText(EditDBActivity.this, "Отменено", Toast.LENGTH_LONG).show();
-                    }
-                });
-        AlertDialog alert = builder.create();
-        alert.show();
-    }
 
     // метод вызывает диалоговое окно для выбора порядкового номера администратора (изменение администратора)
-    private void openDialogTakeDataChangeEmployee() {
+    private void dialogChoseNumChangeEmployee() {
         LayoutInflater inflater = LayoutInflater.from(EditDBActivity.this);
         View subView = inflater.inflate(R.layout.dialog_chose_num, null);
         final EditText etNum = (EditText) subView.findViewById(R.id.etNum);
@@ -929,7 +868,7 @@ public class EditDBActivity extends AppCompatActivity implements CompoundButton.
                         // сначала по номеру резерва узнаем все данные резерва
                         takeDataChangeEmployee();
                         if (findEmployeeFlag) {
-                            openDialogChangeEmployee();
+                            dialogChangeEmployee();
                         } else
                             Toast.makeText(EditDBActivity.this, "Этого администратора нет БД", Toast.LENGTH_SHORT).show();
                     }
@@ -944,8 +883,201 @@ public class EditDBActivity extends AppCompatActivity implements CompoundButton.
         alert.show();
     }
 
-    // метод вызывает диалоговое окно для удаления (удаление)
-    private void openDialogDelete(String whoCallMe) {
+    // метод вызывает диалоговое окно для редактирования администратора (редактирование администратора)
+    private void dialogChangeEmployee() {
+        LayoutInflater inflater = LayoutInflater.from(EditDBActivity.this);
+        View subView = inflater.inflate(R.layout.dialog_create_client_or_employee, null);
+        final EditText etName = (EditText) subView.findViewById(R.id.etName);
+        final EditText etPhone = (EditText) subView.findViewById(R.id.etPhone);
+        final TextView tvOrdersCount = (TextView) subView.findViewById(R.id.tvOrdersCount);
+        final TextView tvDurationSumMinute = (TextView) subView.findViewById(R.id.tvDurationSumMinute);
+        final EditText etOrdersCount = (EditText) subView.findViewById(R.id.etOrdersCount);
+        final EditText etDurationSumMinute = (EditText) subView.findViewById(R.id.etDurationSumMinute);
+        etName.setText(nameDB);
+        etPhone.setText(phoneDB);
+        tvOrdersCount.setVisibility(View.GONE);
+        tvDurationSumMinute.setVisibility(View.GONE);
+        etOrdersCount.setVisibility(View.GONE);
+        etDurationSumMinute.setVisibility(View.GONE);
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(EditDBActivity.this);
+        builder.setTitle("Изменение администратора\n")
+                .setMessage("Измените данные администратора")
+                .setView(subView)
+                .setPositiveButton("Изменить", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        nameDB = etName.getText().toString();
+                        phoneDB = etPhone.getText().toString();
+
+                        if (nameDB.equals("")) {
+                            Toast.makeText(EditDBActivity.this, "Введите имя администратора", Toast.LENGTH_SHORT).show();
+                            etName.setHintTextColor(Color.RED);
+                        } else {
+                            optionalClass.putChangeEmployeeInDB(EditDBActivity.this, new AdminClass(numberRowDB, nameDB, phoneDB, "1111"));
+
+                            Toast.makeText(EditDBActivity.this, "Администратор добавлен", Toast.LENGTH_SHORT).show();
+                            allAdminsList = optionalClass.findAllAdmins(EditDBActivity.this, true);
+                            editBtnColumns(null, null, null, null, null, DBHelper.KEY_ID);
+                        }
+                    }
+                })
+                .setNegativeButton("Отмена", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        Toast.makeText(EditDBActivity.this, "Отмена", Toast.LENGTH_SHORT).show();
+                    }
+                });
+        AlertDialog alert = builder.create();
+        alert.show();
+    }
+
+    public void dialogCreateEmployee() {
+        LayoutInflater inflater = LayoutInflater.from(EditDBActivity.this);
+        View subView = inflater.inflate(R.layout.dialog_create_client_or_employee, null);
+        final EditText etName = (EditText) subView.findViewById(R.id.etName);
+        final EditText etPhone = (EditText) subView.findViewById(R.id.etPhone);
+        final TextView tvOrdersCount = (TextView) subView.findViewById(R.id.tvOrdersCount);
+        final TextView tvDurationSumMinute = (TextView) subView.findViewById(R.id.tvDurationSumMinute);
+        final EditText etOrdersCount = (EditText) subView.findViewById(R.id.etOrdersCount);
+        final EditText etDurationSumMinute = (EditText) subView.findViewById(R.id.etDurationSumMinute);
+        tvOrdersCount.setVisibility(View.GONE);
+        tvDurationSumMinute.setVisibility(View.GONE);
+        etOrdersCount.setVisibility(View.GONE);
+        etDurationSumMinute.setVisibility(View.GONE);
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(EditDBActivity.this);
+        builder.setTitle("Добавление Администратора\n")
+                .setMessage("Введите данные нового администратора")
+                .setView(subView)
+                .setPositiveButton("Добавить", (dialog, which) -> {
+                    String nameNewEmployee = etName.getText().toString();
+                    String phoneNewEmployee = etPhone.getText().toString();
+
+                    if (nameNewEmployee.equals("")) {
+                        Toast.makeText(EditDBActivity.this, "Введите имя администратора", Toast.LENGTH_SHORT).show();
+                        etName.setHintTextColor(Color.RED);
+                    } else {
+                        optionalClass.putEmployeeInDB(EditDBActivity.this, nameNewEmployee, phoneNewEmployee);
+                        Toast.makeText(EditDBActivity.this, "Администратор добавлен", Toast.LENGTH_SHORT).show();
+
+                        allAdminsList = optionalClass.findAllAdmins(EditDBActivity.this, true);
+                        editBtnColumns(null, null, null, null, null, DBHelper.KEY_ID);
+                    }
+                })
+                .setNegativeButton("Отмена", (dialog, which) -> Toast.makeText(EditDBActivity.this, "Отмена", Toast.LENGTH_SHORT).show());
+        AlertDialog alert = builder.create();
+        alert.show();
+    }
+
+
+
+    public void dialogCreateClient() {
+        LayoutInflater inflater = LayoutInflater.from(EditDBActivity.this);
+        View subView = inflater.inflate(R.layout.dialog_create_client_or_employee, null);
+        final EditText etName = (EditText) subView.findViewById(R.id.etName);
+        final EditText etPhone = (EditText) subView.findViewById(R.id.etPhone);
+        final TextView tvOrdersCount = (TextView) subView.findViewById(R.id.tvOrdersCount);
+        final TextView tvDurationSumMinute = (TextView) subView.findViewById(R.id.tvDurationSumMinute);
+        final EditText etOrdersCount = (EditText) subView.findViewById(R.id.etOrdersCount);
+        final EditText etDurationSumMinute = (EditText) subView.findViewById(R.id.etDurationSumMinute);
+        tvOrdersCount.setVisibility(View.GONE);
+        tvDurationSumMinute.setVisibility(View.GONE);
+        etOrdersCount.setVisibility(View.GONE);
+        etDurationSumMinute.setVisibility(View.GONE);
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(EditDBActivity.this);
+        builder.setTitle("Добавление клиента\n")
+                .setMessage("Введите данные нового клиента")
+                .setView(subView)
+                .setPositiveButton("Добавить", (dialog, which) -> {
+                    final String nameNewClient = etName.getText().toString();
+                    final String phoneNewClient = etPhone.getText().toString();
+
+                    if (nameNewClient.equals("")) {
+                        Toast.makeText(EditDBActivity.this, "Введите имя клиента", Toast.LENGTH_SHORT).show();
+                        etName.setHintTextColor(Color.RED);
+                    } else {
+                        ClientClass newClient = new ClientClass(
+                                -1,
+                                nameNewClient,
+                                phoneNewClient,
+                                0,
+                                0);
+                        optionalClass.putClientInDB(EditDBActivity.this, newClient);
+                        Toast.makeText(EditDBActivity.this, "Клиент добавлен", Toast.LENGTH_SHORT).show();
+
+                        allClientsList = optionalClass.findAllClients(EditDBActivity.this, true);
+                        editBtnColumns(null, null, null, null, null, DBHelper.KEY_ID);
+                    }
+                })
+                .setNegativeButton("Отмена", (dialog, which) -> Toast.makeText(EditDBActivity.this, "Отмена", Toast.LENGTH_SHORT).show());
+        AlertDialog alert = builder.create();
+        alert.show();
+    }
+
+    // метод вызывает диалоговое окно для редактирования клиента (редактирование клиента)
+    @SuppressLint("SetTextI18n")
+    private void dialogChangeClient() {
+        Log.i("EditDBActivity", "\n ...//...    openDialogChangeClient()");
+        LayoutInflater inflater = LayoutInflater.from(EditDBActivity.this);
+        View subView = inflater.inflate(R.layout.dialog_create_client_or_employee, null);
+        final EditText etName = (EditText) subView.findViewById(R.id.etName);
+        final EditText etPhone = (EditText) subView.findViewById(R.id.etPhone);
+        final EditText etOrdersCount = (EditText) subView.findViewById(R.id.etOrdersCount);
+        final EditText etDurationSumMinute = (EditText) subView.findViewById(R.id.etDurationSumMinute);
+        etName.setText(nameDB);
+        etPhone.setText(phoneDB);
+        etOrdersCount.setText("" + ordersCountDB);
+        etDurationSumMinute.setText("" + durationMinuteDB);
+        Log.i("EditDBActivity", "инициализация прошла успешно");
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(EditDBActivity.this);
+        builder.setTitle("Изменение клиента\n")
+                .setMessage("Измените данные клиента")
+                .setView(subView)
+                .setPositiveButton("Изменить", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        nameDB = etName.getText().toString();
+                        phoneDB = etPhone.getText().toString();
+                        ordersCountDB = Integer.parseInt(etOrdersCount.getText().toString());
+                        durationMinuteDB = Integer.parseInt(etDurationSumMinute.getText().toString());
+                        Log.i("EditDBActivity", "инициализация прошла успешно");
+
+                        if (nameDB.equals("")) {
+                            Toast.makeText(EditDBActivity.this, "Введите имя клиента", Toast.LENGTH_SHORT).show();
+                            etName.setHintTextColor(Color.RED);
+                        } else {
+                            optionalClass.putChangeClientInDB(EditDBActivity.this,
+                                    new ClientClass(
+                                            numberRowDB,
+                                            nameDB,
+                                            phoneDB,
+                                            ordersCountDB,
+                                            durationSumMinuteDB));
+
+                            Toast.makeText(EditDBActivity.this, "Клиент добавлен", Toast.LENGTH_SHORT).show();
+
+                            allClientsList = optionalClass.findAllClients(EditDBActivity.this, true);
+                            editBtnColumns(null, null, null, null, null, DBHelper.KEY_ID);
+                        }
+                    }
+                })
+                .setNegativeButton("Отмена", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        Toast.makeText(EditDBActivity.this, "Отмена", Toast.LENGTH_SHORT).show();
+                    }
+                });
+        AlertDialog alert = builder.create();
+        alert.show();
+    }
+
+
+
+    // метод вызывает диалоговое окно для удаления (удаление всего)
+    private void dialogDelete(String whoCallMe) {
         LayoutInflater inflater = LayoutInflater.from(EditDBActivity.this);
         View subView = inflater.inflate(R.layout.dialog_chose_num, null);
         final EditText etNum = (EditText) subView.findViewById(R.id.etNum);
@@ -975,6 +1107,7 @@ public class EditDBActivity extends AppCompatActivity implements CompoundButton.
                                 database.delete(DBHelper.ORDERS, DBHelper.KEY_ID + "=" + numberRowDB, null);
 
                                 Toast.makeText(EditDBActivity.this, "Резерв " + numberRowDB + " удален", Toast.LENGTH_LONG).show();
+                                allOrdersList = optionalClass.findAllOrders(EditDBActivity.this, true);
                                 editBtnColumns(null, null, null, null, null, DBHelper.KEY_ID);
                             } else
                                 Toast.makeText(EditDBActivity.this, "В БД не найден!", Toast.LENGTH_SHORT).show();
@@ -991,6 +1124,7 @@ public class EditDBActivity extends AppCompatActivity implements CompoundButton.
                             if (findEmployeeFlag) {
                                 database.delete(DBHelper.EMPLOYEES, DBHelper.KEY_ID + "=" + numberRowDB, null);
                                 Toast.makeText(EditDBActivity.this, "Администратор " + numberRowDB + " удален", Toast.LENGTH_LONG).show();
+                                allAdminsList = optionalClass.findAllAdmins(EditDBActivity.this, true);
                                 editBtnColumns(null, null, null, null, null, DBHelper.KEY_ID);
                             } else
                                 Toast.makeText(EditDBActivity.this, "Администратор В БД не найден!", Toast.LENGTH_SHORT).show();
@@ -1005,10 +1139,9 @@ public class EditDBActivity extends AppCompatActivity implements CompoundButton.
                 });
         AlertDialog alert = builder.create();
         alert.show();
-    }
+    }// метод вызывает диалоговое окно для выбора из ACTV (фильтрация)
 
-    // метод вызывает диалоговое окно для выбора из ACTV (фильтрация)
-    private void openDialogActvChose(List<String> list, String whoCallMe) {
+    private void dialogActvChose(List<String> list, String whoCallMe) {
         LayoutInflater inflater = LayoutInflater.from(EditDBActivity.this);
         View subView = inflater.inflate(R.layout.dialog_chose_actv, null);
         actvChose = (AutoCompleteTextView) subView.findViewById(R.id.actvChose);
@@ -1019,10 +1152,7 @@ public class EditDBActivity extends AppCompatActivity implements CompoundButton.
         actvChose.setAdapter(adapterChose);
 
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        if (whoCallMe.equals("Тариф")) {
-            builder.setTitle("Выбор тарифа\n");
-            builder.setMessage("Выберите тариф для фильтрации");
-        } else if (whoCallMe.equals("Клиент") || whoCallMe.equals("Table Client Name")) {
+        if (whoCallMe.equals("Клиент") || whoCallMe.equals("Table Client Name")) {
             builder.setTitle("Выбор клиента\n");
             builder.setMessage("Выберите клиента для фильтрации");
         } else if (whoCallMe.equals("Администратор") || whoCallMe.equals("Table Employee Name")) {
@@ -1063,90 +1193,35 @@ public class EditDBActivity extends AppCompatActivity implements CompoundButton.
         alert.show();
     }
 
-    // метод вызывает диалоговое окно для редактирования клиента (редактирование клиента)
-    private void openDialogChangeClient() {
+    // метод вызывает диалоговое окно для выбора порядкового номера клиента (изменение клиента)
+    private void dialogChoseNumChangeClient() {
+        Log.i("EditDBActivity", "\n ...//...    openDialogTakeDataChangeClient");
         LayoutInflater inflater = LayoutInflater.from(EditDBActivity.this);
-        View subView = inflater.inflate(R.layout.dialog_create_client_or_employee, null);
-        final EditText etName = (EditText) subView.findViewById(R.id.etName);
-        final EditText etPhone = (EditText) subView.findViewById(R.id.etPhone);
-        etName.setText(nameDB);
-        etPhone.setText(phoneDB);
+        View subView = inflater.inflate(R.layout.dialog_chose_num, null);
+        final EditText etNum = (EditText) subView.findViewById(R.id.etNum);
 
-        AlertDialog.Builder builder = new AlertDialog.Builder(EditDBActivity.this);
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle("Изменение клиента\n")
-                .setMessage("Измените данные клиента")
+                .setMessage("Введите порядковый номер клиента для изменения")
                 .setView(subView)
-                .setPositiveButton("Изменить", new DialogInterface.OnClickListener() {
+                .setPositiveButton("OK", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        nameDB = etName.getText().toString();
-                        phoneDB = etPhone.getText().toString();
-
-                        if (nameDB.equals("")) {
-                            Toast.makeText(EditDBActivity.this, "Введите имя клиента", Toast.LENGTH_SHORT).show();
-                            etName.setHintTextColor(Color.RED);
-                        } else {
-                            putChangeClientInDB();
-                            Toast.makeText(EditDBActivity.this, "Клиент добавлен", Toast.LENGTH_SHORT).show();
-
-                            // чтобы БД клиентов сразу обновилась
-                            Intent intent = new Intent(EditDBActivity.this, EditDBActivity.class);
-                            // передаем название заголовка
-                            intent.putExtra("headName", "Клиенты");
-                            intent.putExtra("adminName", getAdminName);
-                            startActivity(intent);
-                        }
+                        numberRowDB = Integer.parseInt(etNum.getText().toString());
+                        // сначала по номеру резерва узнаем все данные резерва
+                        takeDataChangeClient();
+                        Log.i("EditDBActivity", "успешно Проходит метод takeDataChangeClient()");
+                        if (findClientFlag) {
+                            Log.i("EditDBActivity", "успешно Заходит в условие findClientFlag");
+                            dialogChangeClient();
+                        } else
+                            Toast.makeText(EditDBActivity.this, "Этого клиента нет БД", Toast.LENGTH_SHORT).show();
                     }
                 })
-                .setNegativeButton("Отмена", new DialogInterface.OnClickListener() {
+                .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        Toast.makeText(EditDBActivity.this, "Отмена", Toast.LENGTH_SHORT).show();
-                    }
-                });
-        AlertDialog alert = builder.create();
-        alert.show();
-    }
-
-    // метод вызывает диалоговое окно для редактирования администратора (редактирование администратора)
-    private void openDialogChangeEmployee() {
-        LayoutInflater inflater = LayoutInflater.from(EditDBActivity.this);
-        View subView = inflater.inflate(R.layout.dialog_create_client_or_employee, null);
-        final EditText etName = (EditText) subView.findViewById(R.id.etName);
-        final EditText etPhone = (EditText) subView.findViewById(R.id.etPhone);
-        etName.setText(nameDB);
-        etPhone.setText(phoneDB);
-
-        AlertDialog.Builder builder = new AlertDialog.Builder(EditDBActivity.this);
-        builder.setTitle("Изменение администратора\n")
-                .setMessage("Измените данные администратора")
-                .setView(subView)
-                .setPositiveButton("Изменить", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        nameDB = etName.getText().toString();
-                        phoneDB = etPhone.getText().toString();
-
-                        if (nameDB.equals("")) {
-                            Toast.makeText(EditDBActivity.this, "Введите имя администратора", Toast.LENGTH_SHORT).show();
-                            etName.setHintTextColor(Color.RED);
-                        } else {
-                            putChangeEmployeeInDB();
-                            Toast.makeText(EditDBActivity.this, "Администратор добавлен", Toast.LENGTH_SHORT).show();
-
-                            // чтобы БД клиентов сразу обновилась
-                            Intent intent = new Intent(EditDBActivity.this, EditDBActivity.class);
-                            // передаем название заголовка
-                            intent.putExtra("headName", "Сотрудники");
-                            intent.putExtra("adminName", getAdminName);
-                            startActivity(intent);
-                        }
-                    }
-                })
-                .setNegativeButton("Отмена", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        Toast.makeText(EditDBActivity.this, "Отмена", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(EditDBActivity.this, "Отменено", Toast.LENGTH_LONG).show();
                     }
                 });
         AlertDialog alert = builder.create();
@@ -1155,27 +1230,7 @@ public class EditDBActivity extends AppCompatActivity implements CompoundButton.
 
 
 
-    // метод заменяет данные Клиента в БД (редактирование клиента)
-    private void putChangeClientInDB() {
-        database.delete(DBHelper.CLIENTS, DBHelper.KEY_ID + "=" + numberRowDB, null);
-        contentValues.put(DBHelper.KEY_ID, numberRowDB);
-        contentValues.put(DBHelper.KEY_NAME, nameDB);
-        contentValues.put(DBHelper.KEY_PHONE, phoneDB);
-        contentValues.put(DBHelper.KEY_ORDERS_COUNT, ordersCountDB);
-        contentValues.put(DBHelper.KEY_DURATION_SUM_MINUTE, durationSumMinuteDB);
 
-        database.insert(DBHelper.CLIENTS, null, contentValues);
-    }
-
-    // метод заменяет данные администратора в БД (редактирование Администратора)
-    private void putChangeEmployeeInDB() {
-        database.delete(DBHelper.EMPLOYEES, DBHelper.KEY_ID + "=" + numberRowDB, null);
-        contentValues.put(DBHelper.KEY_ID, numberRowDB);
-        contentValues.put(DBHelper.KEY_NAME, nameDB);
-        contentValues.put(DBHelper.KEY_PHONE, phoneDB);
-
-        database.insert(DBHelper.EMPLOYEES, null, contentValues);
-    }
 
     private void initClients() {
         Log.i("EditDBActivity", "\n --- /// ---   Method initClients");
