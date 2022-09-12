@@ -10,7 +10,6 @@ import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Color;
 import android.os.Handler;
 import android.support.annotation.NonNull;
-import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -45,7 +44,9 @@ public class CommonActivity extends AppCompatActivity implements View.OnClickLis
     RelativeLayout relativeTable;
     Button btnAdd, btnDate, btnDate1, btnDate2, btnTableHead, btnTime, btnTable, btnZoom;
     private int marginLength, marginLengthMinute;
+    double marginLengthDouble;
     String getAdminName;
+    /*static*/ boolean zoomFlag;
 
     // БД
     DBHelper dbHelper;
@@ -79,6 +80,7 @@ public class CommonActivity extends AppCompatActivity implements View.OnClickLis
 //        getSupportActionBar().setIcon(R.drawable.ic_launcher_foreground);
 
 
+        actualTime();
         Intent getIntent = getIntent();
         getAdminName = getIntent.getStringExtra("adminName");
         Log.i("Gas4", "getAdminName in Common = " + getAdminName);
@@ -89,27 +91,31 @@ public class CommonActivity extends AppCompatActivity implements View.OnClickLis
         contentValues = new ContentValues();
 
         // сначала отрисуем кнопки шапки часов
-        marginLength = optionalClass.convertDpToPixels(this, 2);
-        marginLengthMinute = optionalClass.convertDpToPixels(this, 4);
-        addBtnHour();
-        // также отрисуем кнопку выбора даты и шапки столов
         addBtnTableHead();
 
         btnAdd = findViewById(R.id.btnAdd);
         btnAdd.setOnClickListener(this);
         btnZoom = findViewById(R.id.btnZoom);
         btnZoom.setOnClickListener(this);
+        if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT)
+            btnZoom.setVisibility(View.INVISIBLE);
+        else if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE)
+            btnZoom.setVisibility(View.VISIBLE);
 
         // покажем текущее время
         tvTime = findViewById(R.id.tvTime);
-
+        marginLength = optionalClass.convertDpToPixels(this, 2); // влияет на сдвиг
+        Log.i("CommonActivityClass", "marginLength = " + marginLength);
+        marginLengthMinute = optionalClass.convertDpToPixels(this, 4); // влияет на малый сдвиг (не изменяется ступенчато)
+        addBtnHour();
         addBtnCommon();
-        actualTime();
+        Log.i("CommonActivityClass", "start zoomFlag = " + zoomFlag);
     }
 
     @SuppressLint("NonConstantResourceId")
     @Override
     public void onClick(View view) {
+        Log.i("CommonActivityClass", "\n --- /// ---   Method onClick");
         Intent intent;
         switch (view.getId()) {
             // переключаемся на редактор резерва
@@ -123,9 +129,27 @@ public class CommonActivity extends AppCompatActivity implements View.OnClickLis
                 break;
             }
             case R.id.btnZoom: {
+                linTableTimeHead.removeAllViews();
+                if (zoomFlag) {
+                    marginLength = optionalClass.convertDpToPixels(this, 2); // влияет на сдвиг
+                    marginLengthMinute = optionalClass.convertDpToPixels(this, 4); // влияет на малый сдвиг (не изменяется ступенчато)
 
+                    addBtnHour();
+                    addBtnCommon();
+                    zoomFlag = false;
+                    btnZoom.setText("Сжать");
+                } else {
+                    marginLength = (int) optionalClass.convertDpToPixelsDouble(this, 1);
+                    marginLengthDouble = 1.5;
+
+                    addBtnHourZoom();
+                    addBtnCommonZoom();
+                    zoomFlag = true;
+                    btnZoom.setText("Расжать");
+                }
             }
         }
+        Log.i("CommonActivityClass", "after_click zoomFlag = " + zoomFlag);
     }
 
 
@@ -216,7 +240,7 @@ public class CommonActivity extends AppCompatActivity implements View.OnClickLis
 
 
         linTableHead.addView(btnDate1);
-        if(getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT)
+        if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT)
             btnDate1.setVisibility(View.INVISIBLE);
         else if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE)
             btnDate1.setVisibility(View.VISIBLE);
@@ -339,6 +363,40 @@ public class CommonActivity extends AppCompatActivity implements View.OnClickLis
         linTableTimeHead.addView(linHour);
     }
 
+    public void addBtnHourZoom() {
+        linTableTimeHead = findViewById(R.id.linTableTimeHead);
+        linHour = new LinearLayout(linTableTimeHead.getContext());
+        linHour.setLayoutParams(new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT));
+        linHour.setOrientation(LinearLayout.HORIZONTAL);
+
+        int hourRight = 11;
+        int hourCount = 13;
+        for (int i = 0; i < hourCount; i++, hourRight++) {
+            if (hourRight == 24) {
+                hourRight = 0;
+            }
+
+            btnTime = new Button(linHour.getContext());
+            btnTime.setLayoutParams(new LinearLayout.LayoutParams(
+                    optionalClass.convertDpToPixels(this, 90),
+                    optionalClass.convertDpToPixels(this, 50)));
+
+            btnTime.setTag("btnTime" + hourRight);
+            btnTime.setText(hourRight + "");
+            btnTime.setTextSize(16);
+            btnTime.setClickable(false);
+//            LinearLayout.LayoutParams marginBtnTable = (LinearLayout.LayoutParams) btnTime.getLayoutParams();
+//            marginBtnTable.setMargins(0, 0, marginLength, 0);
+
+            linHour.removeView(btnTable);
+            linHour.addView(btnTime);
+        }
+        linTableTimeHead.removeView(linHour);
+        linTableTimeHead.addView(linHour);
+    }
+
     public void addBtnCommon() {
         Log.i("CommonActivityClass", "\n --- /// ---   Method addBtnCommon");
         OrderClass order;
@@ -354,7 +412,7 @@ public class CommonActivity extends AppCompatActivity implements View.OnClickLis
                     LinearLayout.LayoutParams.MATCH_PARENT,
                     optionalClass.convertDpToPixels(this, 60)));
             linTable.setOrientation(LinearLayout.HORIZONTAL);
-            if (i%2 !=0) {
+            if (i % 2 != 0) {
                 linTable.setBackgroundResource(R.color.white);
             } else linTable.setBackgroundResource(R.color.greyWhite);
 //            linTable.setBackgroundResource(R.drawable.gradient);
@@ -375,7 +433,7 @@ public class CommonActivity extends AppCompatActivity implements View.OnClickLis
                     Log.i("CommonActivityClass", "\tTrue: if(getNumTable() - 1) == i");
                     btnTable = new Button(relativeTable.getContext());
                     btnTable.setLayoutParams(new LinearLayout.LayoutParams(
-                            optionalClass.convertDpToPixels(this, order.getDuration() * 3),
+                            optionalClass.convertDpToPixels(this, order.getDuration() * 3),  // определяется ширина кнопки
                             optionalClass.convertDpToPixels(this, 60)));
 
                     btnTable.setTag(order.getIdOrder());
@@ -404,7 +462,11 @@ public class CommonActivity extends AppCompatActivity implements View.OnClickLis
 
                     LinearLayout.LayoutParams marginBtnTable = (LinearLayout.LayoutParams) btnTable.getLayoutParams();
 
-                    int shiftMinute = optionalClass.calcMinuteFromDateTime(btnDate.getText().toString(), order);
+                    int shiftMinute = (optionalClass.calcMinuteFromDateTime(btnDate.getText().toString(), order));
+                    if (order.getClient().equals("Гасайни")) {
+                        Log.i("CommonActivityClass", "order.getClient() = " + order.getClient());
+                        Log.i("CommonActivityClass", "order.getDuration() = " + order.getDuration());
+                    }
                     int shift = optionalClass.convertDpToPixels(this, shiftMinute);
                     Log.i("CommonActivityClass", "\t\tshift = " + shift);
                     marginBtnTable.setMargins(marginLength * shift + marginLengthMinute, 0, 0, 0);
@@ -421,10 +483,15 @@ public class CommonActivity extends AppCompatActivity implements View.OnClickLis
             linTable.addView(relativeTable);
         }
 
-        if(getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT)
+        if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT)
             addPlugBtnHour();
-        else if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE)
-            addBtnHour();
+        else if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE) {
+            if (zoomFlag) {
+                addBtnHourZoom();
+            } else {
+                addBtnHour();
+            }
+        }
 
         for (int i = allOrdersList.size() - 9; i < allOrdersList.size(); i++) {
 
@@ -435,7 +502,7 @@ public class CommonActivity extends AppCompatActivity implements View.OnClickLis
                     optionalClass.convertDpToPixels(this, 60)));
             linTable.setOrientation(LinearLayout.HORIZONTAL);
             linTable.setTag(i);
-            if (i%2 ==0) {
+            if (i % 2 == 0) {
                 linTable.setBackgroundResource(R.color.white);
 //            linTable.setBackgroundResource(R.drawable.gradient);
             } else linTable.setBackgroundResource(R.color.greyWhite);
@@ -501,7 +568,177 @@ public class CommonActivity extends AppCompatActivity implements View.OnClickLis
             linTable.addView(relativeTable);
         }
 
-        addBtnHour();
+        if (zoomFlag) {
+            addBtnHourZoom();
+        } else {
+            addBtnHour();
+        }
+    }
+
+    public void addBtnCommonZoom() {
+        Log.i("CommonActivityClass", "\n --- /// ---   Method addBtnCommon");
+        OrderClass order;
+        linTableTime = findViewById(R.id.linTableTimeHead);
+        Log.i("CommonActivityClass", "linTableTime.toString() = " + linTableTime.toString());
+
+        Log.i("CommonActivityClass", "allTablesList.size() = " + allOrdersList.size());
+        for (int i = 0; i < allOrdersList.size() - 9; i++) {
+
+            Log.i("CommonActivityClass", "i: " + i);
+            linTable = new LinearLayout(linTableTime.getContext());
+            linTable.setLayoutParams(new LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    optionalClass.convertDpToPixels(this, 60)));
+            linTable.setOrientation(LinearLayout.HORIZONTAL);
+            if (i % 2 != 0) {
+                linTable.setBackgroundResource(R.color.white);
+            } else linTable.setBackgroundResource(R.color.greyWhite);
+//            linTable.setBackgroundResource(R.drawable.gradient);
+            linTable.setTag(i);
+            linTable.setBaselineAligned(false); // чтобы не сползало вниз
+
+            relativeTable = new RelativeLayout(linTable.getContext());
+            relativeTable.setLayoutParams(new RelativeLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    LinearLayout.LayoutParams.MATCH_PARENT));
+
+            Log.i("CommonActivityClass", "allTablesList.get(i).size() = " + allOrdersList.get(i).size());
+            for (int j = 0; j < allOrdersList.get(i).size(); j++) {
+                order = allOrdersList.get(i).get(j);
+                Log.i("CommonActivityClass", "orderClass.getNumTable() = " + order.getNumTable());
+
+                if (i == (order.getNumTable() - 1)) {
+                    Log.i("CommonActivityClass", "\tTrue: if(getNumTable() - 1) == i");
+                    btnTable = new Button(relativeTable.getContext());
+                    btnTable.setLayoutParams(new LinearLayout.LayoutParams(
+                            optionalClass.convertDpToPixels(this, (int) (order.getDuration() * 1.5)),
+                            optionalClass.convertDpToPixels(this, 60)));
+
+                    btnTable.setTag(order.getIdOrder());
+                    Log.i("CommonActivityClass", "\t\tTag = " + order.getIdOrder());
+                    btnTable.setBackgroundResource(R.drawable.btn_style_4);
+                    btnTable.setTextSize(12);
+                    OrderClass thisOrder = order;
+                    btnTable.setOnClickListener(new View.OnClickListener() {
+                        public void onClick(View view) {
+                            Intent intent = new Intent("tableActivity");
+                            intent.putExtra("whoCall", "btnCommon");
+                            intent.putExtra("numTable", thisOrder.getNumTable());
+                            intent.putExtra("id", thisOrder.getIdOrder());
+                            intent.putExtra("adminName", getAdminName);
+                            intent.putExtra("client", thisOrder.getClient());
+                            intent.putExtra("duration", thisOrder.getDuration());
+                            intent.putExtra("bron", thisOrder.getBron());
+                            intent.putExtra("reserveDateStr", /*btnDate.getText().toString()*/thisOrder.getDateStartReserve());
+                            intent.putExtra("reserveStartTimeStr", thisOrder.getTimeStartReserve());
+                            intent.putExtra("dateOrder", thisOrder.getDateOrder());
+                            intent.putExtra("timeOrder", thisOrder.getTimeOrder());
+                            intent.putExtra("reserveFinishTimeStr", thisOrder.getTimeEndReserve());
+                            startActivity(intent);
+                        }
+                    });
+
+                    LinearLayout.LayoutParams marginBtnTable = (LinearLayout.LayoutParams) btnTable.getLayoutParams();
+
+                    int shiftMinute = optionalClass.calcMinuteFromDateTime(btnDate.getText().toString(), order);
+                    int shift = optionalClass.convertDpToPixels(this, shiftMinute);
+                    Log.i("CommonActivityClass", "\t\tshift = " + shift);
+                    marginBtnTable.setMargins((int) (marginLengthDouble * shift + marginLengthMinute), 0, 0, 0);
+
+
+                    relativeTable.removeView(btnTable);
+                    relativeTable.addView(btnTable);
+
+                    drawBtnCommon(order);
+                }
+            }
+
+            linTableTime.addView(linTable);
+            linTable.addView(relativeTable);
+        }
+
+        if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT)
+            addPlugBtnHour();
+        else if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE) {
+            addBtnHourZoom();
+        }
+
+        for (int i = allOrdersList.size() - 9; i < allOrdersList.size(); i++) {
+
+            Log.i("CommonActivityClass", "i: " + i);
+            linTable = new LinearLayout(linTableTime.getContext());
+            linTable.setLayoutParams(new LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    optionalClass.convertDpToPixels(this, 60)));
+            linTable.setOrientation(LinearLayout.HORIZONTAL);
+            linTable.setTag(i);
+            if (i % 2 == 0) {
+                linTable.setBackgroundResource(R.color.white);
+//            linTable.setBackgroundResource(R.drawable.gradient);
+            } else linTable.setBackgroundResource(R.color.greyWhite);
+            linTable.setBaselineAligned(false); // чтобы не сползало вниз
+
+            relativeTable = new RelativeLayout(linTable.getContext());
+            relativeTable.setLayoutParams(new RelativeLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    LinearLayout.LayoutParams.MATCH_PARENT));
+
+            Log.i("CommonActivityClass", "allTablesList.get(i).size() = " + allOrdersList.get(i).size());
+            for (int j = 0; j < allOrdersList.get(i).size(); j++) {
+                order = allOrdersList.get(i).get(j);
+                Log.i("CommonActivityClass", "orderClass.getNumTable() = " + order.getNumTable());
+
+                if (i == (order.getNumTable() - 1)) {
+                    Log.i("CommonActivityClass", "\tTrue: if(getNumTable() - 1) == i");
+                    btnTable = new Button(relativeTable.getContext());
+                    btnTable.setLayoutParams(new LinearLayout.LayoutParams(
+                            optionalClass.convertDpToPixels(this, (int) (order.getDuration() * 1.5)),
+                            optionalClass.convertDpToPixels(this, 60)));
+
+                    btnTable.setTag(order.getIdOrder());
+                    Log.i("CommonActivityClass", "\t\tTag = " + order.getIdOrder());
+                    btnTable.setBackgroundResource(R.drawable.btn_style_4);
+                    btnTable.setTextSize(12);
+                    OrderClass thisOrder = order;
+                    btnTable.setOnClickListener(new View.OnClickListener() {
+                        public void onClick(View view) {
+                            Intent intent = new Intent("tableActivity");
+                            intent.putExtra("whoCall", "btnCommon");
+                            intent.putExtra("numTable", thisOrder.getNumTable());
+                            intent.putExtra("id", thisOrder.getIdOrder());
+                            intent.putExtra("adminName", getAdminName);
+                            intent.putExtra("client", thisOrder.getClient());
+                            intent.putExtra("duration", thisOrder.getDuration());
+                            intent.putExtra("bron", thisOrder.getBron());
+                            intent.putExtra("reserveDateStr", /*btnDate.getText().toString()*/thisOrder.getDateStartReserve());
+                            intent.putExtra("reserveStartTimeStr", thisOrder.getTimeStartReserve());
+                            intent.putExtra("dateOrder", thisOrder.getDateOrder());
+                            intent.putExtra("timeOrder", thisOrder.getTimeOrder());
+                            intent.putExtra("reserveFinishTimeStr", thisOrder.getTimeEndReserve());
+                            startActivity(intent);
+                        }
+                    });
+
+                    LinearLayout.LayoutParams marginBtnTable = (LinearLayout.LayoutParams) btnTable.getLayoutParams();
+
+                    int shiftMinute = optionalClass.calcMinuteFromDateTime(btnDate.getText().toString(), order);
+                    int shift = optionalClass.convertDpToPixels(this, shiftMinute);
+                    Log.i("CommonActivityClass", "\t\tshift = " + shift);
+                    marginBtnTable.setMargins((int) (marginLengthDouble * shift + marginLengthMinute), 0, 0, 0);
+
+
+                    relativeTable.removeView(btnTable);
+                    relativeTable.addView(btnTable);
+
+                    drawBtnCommon(order);
+                }
+            }
+
+            linTableTime.addView(linTable);
+            linTable.addView(relativeTable);
+        }
+
+        addBtnHourZoom();
     }
 
     public void addPlugBtnHour() {
@@ -562,14 +799,14 @@ public class CommonActivity extends AppCompatActivity implements View.OnClickLis
                 btnTable.setBackgroundResource(R.drawable.btn_style_3);
             else if (order.getStartDateTimeReserveCal().after(Calendar.getInstance())) {
                 btnTable.setBackgroundResource(R.drawable.btn_style_4);
-            }
-            else btnTable.setBackgroundResource(R.drawable.btn_style_6);
+            } else btnTable.setBackgroundResource(R.drawable.btn_style_6);
         } else
             Log.i("CommonActivityClass", "orderClass is null");
     }
 
     private void datePicker() {
         Log.i("CommonActivityClass", "\n --- /// ---   Method datePicker");
+        Log.i("CommonActivityClass", "zoomFlag = " + zoomFlag);
         DatePickerDialog datePickerDialog = new DatePickerDialog(this,
                 new DatePickerDialog.OnDateSetListener() {
 
@@ -593,11 +830,17 @@ public class CommonActivity extends AppCompatActivity implements View.OnClickLis
                         allOrdersList = optionalClass.findAllOrdersThisDay(CommonActivity.this, btnDate.getText().toString(), true);
 
                         linTableTimeHead.removeAllViews();
-                        addBtnHour();
-                        addBtnCommon();
+                        if (zoomFlag) {
+                            addBtnHourZoom();
+                            addBtnCommonZoom();
+                        } else {
+                            addBtnHour();
+                            addBtnCommon();
+                        }
                     }
                 }, myYear, myMonth, myDay);
         datePickerDialog.show();
+        Log.i("CommonActivityClass", "after_datePicker zoomFlag = " + zoomFlag);
     }
 
     @Override

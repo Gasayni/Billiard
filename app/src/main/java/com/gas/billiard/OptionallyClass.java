@@ -550,6 +550,9 @@ public class OptionallyClass {
     public int convertDpToPixels(Context context, int dp) {
         return (int) (dp * context.getResources().getDisplayMetrics().density);
     }
+    public double convertDpToPixelsDouble(Context context, double dp) {
+        return (dp * context.getResources().getDisplayMetrics().density);
+    }
 
     public String dateDateToString(Calendar dateCal) {
         String myMonthSt, myDaySt;
