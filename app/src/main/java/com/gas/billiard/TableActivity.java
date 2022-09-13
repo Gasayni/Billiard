@@ -57,7 +57,7 @@ public class TableActivity extends AppCompatActivity implements View.OnClickList
 
     int getId, getNumTable, getDurationMinute, numberRowDB;
     String type, getAdminName, currentDateStr, currentTimeStr, whoCall, getReserveFinishTimeStr,
-            getReserveDateStr, getReserveStartTimeStr, getClient, getBron, getDate, getOrderTime, getOrderDate;
+            getReserveDateStr, getReserveStartTimeStr, getClient, getBron, getCash, getDate, getOrderTime, getOrderDate;
 
     @SuppressLint({"ClickableViewAccessibility", "SetTextI18n"})
     @Override
@@ -77,6 +77,7 @@ public class TableActivity extends AppCompatActivity implements View.OnClickList
         getReserveStartTimeStr = getIntent.getStringExtra("reserveStartTimeStr");
         getReserveFinishTimeStr = getIntent.getStringExtra("reserveFinishTimeStr");
         getBron = getIntent.getStringExtra("bron");
+        getCash = getIntent.getStringExtra("cash");
         getOrderDate = getIntent.getStringExtra("dateOrder");
         getOrderTime = getIntent.getStringExtra("timeOrder");
         getDurationMinute = getIntent.getIntExtra("duration", -1);
@@ -140,6 +141,7 @@ public class TableActivity extends AppCompatActivity implements View.OnClickList
             Log.i("Gas5", "getClient = " + getClient);
             Log.i("Gas5", "getAdminName = " + getAdminName);
             Log.i("Gas5", "getBron = " + getBron);
+            Log.i("Gas5", "getCash = " + getCash);
             getTable = new OrderClass(
                     getId,
                     getNumTable,
@@ -151,6 +153,7 @@ public class TableActivity extends AppCompatActivity implements View.OnClickList
                     getClient,
                     getAdminName,
                     getBron,
+                    getCash,
                     "");
             checkOrdersList.add(getTable);
         } else {
@@ -250,6 +253,7 @@ public class TableActivity extends AppCompatActivity implements View.OnClickList
             intent.putExtra("adminName", getAdminName);
             intent.putExtra("status", finishTable.getStatus());
             intent.putExtra("bron", finishTable.getBron());
+            intent.putExtra("cash", finishTable.getCash());
             intent.putExtra("timeEndReserve", finishTable.getTimeEndReserve());
             startActivity(intent);
         }));

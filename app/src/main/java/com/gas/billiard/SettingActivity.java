@@ -36,7 +36,7 @@ public class SettingActivity extends AppCompatActivity implements View.OnClickLi
     List<TableClass> allTablesList = optionalClass.findAllTables(this, false);
     Button btnEmployee, btnBack, btnTables, btnShare;
     String getAdminName;
-    int superPass = 1111, checkPass;
+    int superPass = 1000, checkPass;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

@@ -121,7 +121,7 @@
 
         <AutoCompleteTextView
             android:id="@+id/actvFreeTable"
-            android:layout_width="500sp"
+            android:layout_width="400sp"
             android:layout_height="wrap_content"
             android:layout_marginRight="32dp"
             android:clickable="true"
@@ -133,13 +133,25 @@
             android:textSize="32sp" />
 
         <Button
+            android:id="@+id/btnCash"
+            android:layout_width="80dp"
+            android:layout_height="80dp"
+            android:layout_marginStart="8dp"
+            android:layout_marginEnd="8dp"
+            android:background="@drawable/btn_style_1"
+            android:gravity="center"
+            android:textColor="@color/black"
+            android:text="Без нал."
+            android:textSize="14sp" />
+
+        <Button
             android:id="@+id/btnBron"
             android:layout_width="80dp"
             android:layout_height="80dp"
             android:layout_marginStart="8dp"
             android:background="@drawable/btn_style_1"
             android:gravity="center"
-            android:hint="Бронь"
+            android:text="Бронь"
             android:textSize="14sp" />
 
     </LinearLayout>

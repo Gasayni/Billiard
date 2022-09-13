@@ -66,7 +66,7 @@ public class NewOrderActivity extends AppCompatActivity implements NumberPicker.
     SwitchCompat switchTypeTable;
     TextView tvPyramid, tvPool;
     AutoCompleteTextView actvFreeTable, actvClient;
-    Button btnNewReserveTime, btnNewReserveDate, btnNewReserveDuration, btnCreateReserve, btnCreateClient, btnBron;
+    Button btnNewReserveTime, btnNewReserveDate, btnNewReserveDuration, btnCreateReserve, btnCreateClient, btnBron, btnCash;
     int numTable = -1;
 
     String[] durationTimeArr = {"1 ч", "1 ч 30 мин", "2 ч", "2 ч 30 мин", "3 ч", "3 ч 30 мин",
@@ -97,6 +97,7 @@ public class NewOrderActivity extends AppCompatActivity implements NumberPicker.
     Date reserveDateTime;
     String getAdminName;
 
+
     {
         if (monthReserve < 10) currentMonthSt = "0" + (monthReserve + 1);
         else currentMonthSt = "" + (monthReserve + 1);
@@ -113,7 +114,7 @@ public class NewOrderActivity extends AppCompatActivity implements NumberPicker.
     int durationNewReserve;
 
     private int getNumOrder, getNumTable, getDurationMinute;
-    private String getType = "", getDate, getTime, getDateOrder, getTimeOrder, getTimeEndReserve, getClient, getBron, getStatus, whoCall, whatIsBtn;
+    private String getType = "", getDate, getTime, getDateOrder, getTimeOrder, getTimeEndReserve, getClient, getBron, getCash, getStatus, whoCall, whatIsBtn;
     boolean choseClientFlag = false;
 
     @SuppressLint({"ClickableViewAccessibility", "SetTextI18n"})
@@ -141,8 +142,10 @@ public class NewOrderActivity extends AppCompatActivity implements NumberPicker.
         getTimeEndReserve = intent.getStringExtra("timeEndReserve");
         getClient = intent.getStringExtra("client");
         getBron = intent.getStringExtra("bron");
+        getCash = intent.getStringExtra("cash");
         getStatus = intent.getStringExtra("status");
         if (getBron == null) getBron = "";
+        if (getCash == null) getCash = "";
         getDurationMinute = intent.getIntExtra("duration", -1);
         getAdminName = intent.getStringExtra("adminName");
         Log.i("Gas4", "getAdminName in newOrder = " + getAdminName);
@@ -164,6 +167,8 @@ public class NewOrderActivity extends AppCompatActivity implements NumberPicker.
         btnCreateClient.setOnClickListener(this);
         btnBron = findViewById(R.id.btnBron);
         btnBron.setOnClickListener(this);
+        btnCash = findViewById(R.id.btnCash);
+        btnCash.setOnClickListener(this);
 
         switchTypeTable = findViewById(R.id.switchTypeTable);
         if (switchTypeTable != null) {     // мы еще не нажали на свитч
@@ -248,6 +253,16 @@ public class NewOrderActivity extends AppCompatActivity implements NumberPicker.
                 }
                 break;
             }
+            case R.id.btnCash: {
+                if (btnCash.getText().toString().equals("Без нал.")) {
+                    btnCash.setText("Нал.");
+                    btnCash.setBackgroundResource(R.drawable.btn_style_6);
+                } else {
+                    btnCash.setText("Без нал.");
+                    btnCash.setBackgroundResource(R.drawable.btn_style_1);
+                }
+                break;
+            }
             case R.id.btnCreateReserve: {
                 showDialogAlertCreateReserve();
                 break;
@@ -287,6 +302,7 @@ public class NewOrderActivity extends AppCompatActivity implements NumberPicker.
                         etName.setHintTextColor(Color.RED);
                     } else {
                         ClientClass newClient = new ClientClass(0, nameNewClient, phoneNewClient, 0, 0);
+                        choseClientFlag = true;
                         optionalClass.putClientInDB(NewOrderActivity.this, newClient);
                         Toast.makeText(NewOrderActivity.this, "Клиент добавлен", Toast.LENGTH_SHORT).show();
 
@@ -319,6 +335,7 @@ public class NewOrderActivity extends AppCompatActivity implements NumberPicker.
             intent.putExtra("client", getClient);
             intent.putExtra("duration", getDurationMinute);
             intent.putExtra("bron", getBron);
+            intent.putExtra("cash", getCash);
             intent.putExtra("reserveDateStr", getDate);
             intent.putExtra("reserveStartTimeStr", getTime);
             intent.putExtra("dateOrder", getDateOrder);
@@ -397,6 +414,8 @@ public class NewOrderActivity extends AppCompatActivity implements NumberPicker.
             btnBron.setText(getBron);
             if (getBron.equals("C бронью")) btnBron.setBackgroundResource(R.drawable.btn_style_1);
             else btnBron.setBackgroundResource(R.drawable.btn_style_6);
+            if (getCash.equals("Без нал.")) btnCash.setBackgroundResource(R.drawable.btn_style_1);
+            else btnCash.setBackgroundResource(R.drawable.btn_style_6);
             numTypeTableMap.put(getNumTable, getType);
         } else if (whoCall.equals("editDBActivity_add")) {
             btnCreateReserve.setText("Создать  резерв");
@@ -892,6 +911,9 @@ public class NewOrderActivity extends AppCompatActivity implements NumberPicker.
                 typeTable = "Американский пул";
             else typeTable = "Русская пирамида";
 
+            String cashStr = "";
+            if (btnCash.getText().toString().equals("Нал.")) cashStr = "Наличными";
+            else cashStr = "Безналичный расчет";
 
             AlertDialog.Builder builderAlert = new AlertDialog.Builder(NewOrderActivity.this);
             builderAlert.setMessage("Стол № " + numTable +
@@ -900,7 +922,8 @@ public class NewOrderActivity extends AppCompatActivity implements NumberPicker.
                             "\nВремя резерва: " + btnNewReserveTime.getText().toString() +
                             "\nПродолжительность: " + btnNewReserveDuration.getText().toString() +
                             "\nКлиент: " + actvClient.getText().toString() +
-                            "\n" + btnBron.getText().toString())
+                            "\n" + btnBron.getText().toString() +
+                            "\n" + cashStr)
                     .setCancelable(true)  // разрешает/запрещает нажатие кнопки назад
                     .setNegativeButton("Отмена", (dialogInterface, i) -> Toast.makeText(getApplicationContext(),
                             "Резерв отменен", Toast.LENGTH_SHORT).show())
@@ -923,6 +946,7 @@ public class NewOrderActivity extends AppCompatActivity implements NumberPicker.
                             getClient,
                             getAdminName,
                             btnBron.getText().toString(),
+                            btnCash.getText().toString(),
                             "");
                     optionalClass.putReserveInDB(NewOrderActivity.this, order);
                     Toast.makeText(getApplicationContext(), "Резерв изменен", Toast.LENGTH_SHORT).show();
@@ -965,6 +989,7 @@ public class NewOrderActivity extends AppCompatActivity implements NumberPicker.
                         intent.putExtra("client", getClient);
                         intent.putExtra("duration", getDurationMinute);
                         intent.putExtra("bron", getBron);
+                        intent.putExtra("cash", getCash);
                         intent.putExtra("reserveDateStr", getDate);
                         intent.putExtra("reserveStartTimeStr", getTime);
                         intent.putExtra("dateOrder", getDateOrder);
@@ -992,6 +1017,7 @@ public class NewOrderActivity extends AppCompatActivity implements NumberPicker.
                             getClient,
                             getAdminName,
                             btnBron.getText().toString(),
+                            btnCash.getText().toString(),
                             "");
                     optionalClass.putReserveInDB(NewOrderActivity.this, order);
 

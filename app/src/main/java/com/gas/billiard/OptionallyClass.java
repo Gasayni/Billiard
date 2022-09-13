@@ -41,9 +41,6 @@ public class OptionallyClass {
     private final SimpleDateFormat dateTimeFormat = new SimpleDateFormat("dd.MM.yyyy HH:mm", Locale.ENGLISH);
     Date reserveFinishDateTime;
 
-
-
-
     public List<List<OrderClass>> findAllOrders(Context context, boolean reFind) {
         Log.i("OptionalClass", "\n ...//...    findAllOrders");
         if (allOrdersList.isEmpty() || reFind) { // если мы не инициализировали этот лист
@@ -75,6 +72,7 @@ public class OptionallyClass {
                 int clientIndex = cursorOrders.getColumnIndex(DBHelper.KEY_CLIENT);
                 int employeeIndex = cursorOrders.getColumnIndex(DBHelper.KEY_EMPLOYEE);
                 int bronIndex = cursorOrders.getColumnIndex(DBHelper.KEY_BRON);
+                int cashIndex = cursorOrders.getColumnIndex(DBHelper.KEY_CASH);
                 int statusIndex = cursorOrders.getColumnIndex(DBHelper.KEY_STATUS);
                 do {
                     Log.i("OptionalClass", "\ti: " + cursorOrders.getString(idIndex));
@@ -92,6 +90,7 @@ public class OptionallyClass {
                                 cursorOrders.getString(clientIndex),
                                 cursorOrders.getString(employeeIndex),
                                 cursorOrders.getString(bronIndex),
+                                cursorOrders.getString(cashIndex),
                                 cursorOrders.getString(statusIndex));
 
                         // каждый стол добавляем в список
@@ -143,6 +142,7 @@ public class OptionallyClass {
                 int clientIndex = cursorOrders.getColumnIndex(DBHelper.KEY_CLIENT);
                 int employeeIndex = cursorOrders.getColumnIndex(DBHelper.KEY_EMPLOYEE);
                 int bronIndex = cursorOrders.getColumnIndex(DBHelper.KEY_BRON);
+                int cashIndex = cursorOrders.getColumnIndex(DBHelper.KEY_CASH);
                 int statusIndex = cursorOrders.getColumnIndex(DBHelper.KEY_STATUS);
                 do {
                     Log.i("OptionalClass", "\ti: " + cursorOrders.getString(idIndex));
@@ -176,6 +176,7 @@ public class OptionallyClass {
                                 cursorOrders.getString(clientIndex),
                                 cursorOrders.getString(employeeIndex),
                                 cursorOrders.getString(bronIndex),
+                                cursorOrders.getString(cashIndex),
                                 cursorOrders.getString(statusIndex));
 
                         // каждый стол добавляем в список
@@ -216,6 +217,10 @@ public class OptionallyClass {
         if (order.getBron().equals("Бронь"))
             contentValues.put(DBHelper.KEY_BRON, "Бронь");
         else contentValues.put(DBHelper.KEY_BRON, "Без брони");
+
+        if (order.getCash().equals("Нал."))
+            contentValues.put(DBHelper.KEY_CASH, "Нал.");
+        else contentValues.put(DBHelper.KEY_CASH, "Без нал.");
 
         contentValues.put(DBHelper.KEY_STATUS, order.getStatus());
 
@@ -261,6 +266,7 @@ public class OptionallyClass {
             contentValues.put(DBHelper.KEY_ORDER_DATE, oldReserveList.get(i).getDateOrder());
             contentValues.put(DBHelper.KEY_ORDER_TIME, oldReserveList.get(i).getTimeOrder());
             contentValues.put(DBHelper.KEY_BRON, oldReserveList.get(i).getBron());
+            contentValues.put(DBHelper.KEY_CASH, oldReserveList.get(i).getCash());
             contentValues.put(DBHelper.KEY_STATUS, "Old");
 
             database.insert(DBHelper.ORDERS, null, contentValues);
@@ -298,6 +304,7 @@ public class OptionallyClass {
         contentValues.put(DBHelper.KEY_ORDER_DATE, table.getDateOrder());
         contentValues.put(DBHelper.KEY_ORDER_TIME, table.getTimeOrder());
         contentValues.put(DBHelper.KEY_BRON, table.getBron());
+        contentValues.put(DBHelper.KEY_CASH, table.getCash());
         contentValues.put(DBHelper.KEY_STATUS, "");
 
         database.insert(DBHelper.ORDERS, null, contentValues);
@@ -329,6 +336,7 @@ public class OptionallyClass {
         contentValues.put(DBHelper.KEY_ORDER_DATE, table.getDateOrder());
         contentValues.put(DBHelper.KEY_ORDER_TIME, table.getTimeOrder());
         contentValues.put(DBHelper.KEY_BRON, table.getBron());
+        contentValues.put(DBHelper.KEY_CASH, table.getCash());
         contentValues.put(DBHelper.KEY_STATUS, "");
 
         database.insert(DBHelper.ORDERS, null, contentValues);

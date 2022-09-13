@@ -451,6 +451,7 @@ public class CommonActivity extends AppCompatActivity implements View.OnClickLis
                             intent.putExtra("client", thisOrder.getClient());
                             intent.putExtra("duration", thisOrder.getDuration());
                             intent.putExtra("bron", thisOrder.getBron());
+                            intent.putExtra("cash", thisOrder.getCash());
                             intent.putExtra("reserveDateStr", /*btnDate.getText().toString()*/thisOrder.getDateStartReserve());
                             intent.putExtra("reserveStartTimeStr", thisOrder.getTimeStartReserve());
                             intent.putExtra("dateOrder", thisOrder.getDateOrder());
@@ -540,6 +541,7 @@ public class CommonActivity extends AppCompatActivity implements View.OnClickLis
                             intent.putExtra("client", thisOrder.getClient());
                             intent.putExtra("duration", thisOrder.getDuration());
                             intent.putExtra("bron", thisOrder.getBron());
+                            intent.putExtra("cash", thisOrder.getCash());
                             intent.putExtra("reserveDateStr", /*btnDate.getText().toString()*/thisOrder.getDateStartReserve());
                             intent.putExtra("reserveStartTimeStr", thisOrder.getTimeStartReserve());
                             intent.putExtra("dateOrder", thisOrder.getDateOrder());
@@ -629,6 +631,7 @@ public class CommonActivity extends AppCompatActivity implements View.OnClickLis
                             intent.putExtra("client", thisOrder.getClient());
                             intent.putExtra("duration", thisOrder.getDuration());
                             intent.putExtra("bron", thisOrder.getBron());
+                            intent.putExtra("cash", thisOrder.getCash());
                             intent.putExtra("reserveDateStr", /*btnDate.getText().toString()*/thisOrder.getDateStartReserve());
                             intent.putExtra("reserveStartTimeStr", thisOrder.getTimeStartReserve());
                             intent.putExtra("dateOrder", thisOrder.getDateOrder());
@@ -710,6 +713,7 @@ public class CommonActivity extends AppCompatActivity implements View.OnClickLis
                             intent.putExtra("client", thisOrder.getClient());
                             intent.putExtra("duration", thisOrder.getDuration());
                             intent.putExtra("bron", thisOrder.getBron());
+                            intent.putExtra("cash", thisOrder.getCash());
                             intent.putExtra("reserveDateStr", /*btnDate.getText().toString()*/thisOrder.getDateStartReserve());
                             intent.putExtra("reserveStartTimeStr", thisOrder.getTimeStartReserve());
                             intent.putExtra("dateOrder", thisOrder.getDateOrder());
@@ -785,11 +789,20 @@ public class CommonActivity extends AppCompatActivity implements View.OnClickLis
 
             // пишем в кнопке
             if (order.getBron().equals("Без брони"))
-                btnTable.setText(order.getClient() + "\n" +
-                        order.getTimeStartReserve() + "  -  " + order.getTimeEndReserve());
-            else
-                btnTable.setText(order.getClient() + "\n" +
-                        order.getTimeStartReserve() + "  -  " + order.getTimeEndReserve() + "\t🅱");
+                if (order.getCash().equals("Без нал.")) {
+                    btnTable.setText(order.getClient() + "\n" +
+                            order.getTimeStartReserve() + "  -  " + order.getTimeEndReserve() + "\t\uD83D\uDCB3");
+                } else
+                    btnTable.setText(order.getClient() + "\n" +
+                            order.getTimeStartReserve() + "  -  " + order.getTimeEndReserve() + "\t\uD83D\uDCB5");
+            else {
+                if (order.getCash().equals("Без нал.")) {
+                    btnTable.setText(order.getClient() + "\n" +
+                            order.getTimeStartReserve() + "  -  " + order.getTimeEndReserve() + "\t🅱\t\uD83D\uDCB3");
+                } else
+                    btnTable.setText(order.getClient() + "\n" +
+                            order.getTimeStartReserve() + "  -  " + order.getTimeEndReserve() + "\t🅱\t\uD83D\uDCB5");
+            }
 
 
             Log.i("CommonActivityClass", "order.getStartDateTimeReserveCal() = "

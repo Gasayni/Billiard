@@ -52,7 +52,7 @@ public class EditDBActivity extends AppCompatActivity implements CompoundButton.
     private List<String> nameBtnColumns = new ArrayList<>();
     private List<Button> btnColumnsTagsList = new ArrayList<>();
     private int marginLength, numberRowDB, numTableDB, durationMinuteDB, ordersCountDB, durationSumMinuteDB;
-    private String typeDB, dateDB, timeDB, dateOrderDB, timeOrderDB, clientDB, nameDB, phoneDB, bronDB, statusDB;
+    private String typeDB, dateDB, timeDB, dateOrderDB, timeOrderDB, clientDB, nameDB, phoneDB, bronDB, cashDB, statusDB;
     String choseStr;
     AutoCompleteTextView actvChose;
     List<Button> getBtnColumnsTagsList = new ArrayList<>();
@@ -72,7 +72,7 @@ public class EditDBActivity extends AppCompatActivity implements CompoundButton.
     int getFilterNumTable;
     String[] columnsArr = {DBHelper.KEY_ID, DBHelper.KEY_NUM_TABLE, DBHelper.KEY_RESERVE_DATE,
             DBHelper.KEY_RESERVE_TIME, DBHelper.KEY_DURATION, DBHelper.KEY_CLIENT, DBHelper.KEY_EMPLOYEE,
-            DBHelper.KEY_ORDER_DATE, DBHelper.KEY_ORDER_TIME, DBHelper.KEY_BRON, DBHelper.KEY_STATUS};
+            DBHelper.KEY_ORDER_DATE, DBHelper.KEY_ORDER_TIME, DBHelper.KEY_BRON, DBHelper.KEY_CASH, DBHelper.KEY_STATUS};
     String selection = null;
 
 
@@ -313,7 +313,7 @@ public class EditDBActivity extends AppCompatActivity implements CompoundButton.
         int idIndex = 0, durationSumMinuteIndex = 0, ordersIndex = 0, phoneIndex = 0,
                 nameIndex = 0, numTableIndex = 0, reserveDateIndex = 0, reserveTimeIndex = 0,
                 durationIndex = 0, clientIndex = 0, employeeIndex = 0, dateOrderIndex = 0,
-                timeOrderIndex = 0, typeIndex = 0, bronIndex = 0, statusIndex = 0;
+                timeOrderIndex = 0, typeIndex = 0, bronIndex = 0, cashIndex = 0, statusIndex = 0;
 
         // получаем данные c табл выбранной таблицы
         cursorTABLE_DB = database.query(TABLE_DB, column, selection, selectionArgs, groupBy, having, orderBy);
@@ -348,6 +348,7 @@ public class EditDBActivity extends AppCompatActivity implements CompoundButton.
                     dateOrderIndex = cursorTABLE_DB.getColumnIndex(DBHelper.KEY_ORDER_DATE);
                     timeOrderIndex = cursorTABLE_DB.getColumnIndex(DBHelper.KEY_ORDER_TIME);
                     bronIndex = cursorTABLE_DB.getColumnIndex(DBHelper.KEY_BRON);
+                    cashIndex = cursorTABLE_DB.getColumnIndex(DBHelper.KEY_CASH);
                     statusIndex = cursorTABLE_DB.getColumnIndex(DBHelper.KEY_STATUS);
                     break;
                 }
@@ -387,7 +388,8 @@ public class EditDBActivity extends AppCompatActivity implements CompoundButton.
                                 .append("Оформил: " + String.format("%-36s", cursorTABLE_DB.getString(employeeIndex)))
                                 .append(String.format("%-13s", cursorTABLE_DB.getString(dateOrderIndex)))
                                 .append(String.format("%-10s", cursorTABLE_DB.getString(timeOrderIndex)))
-                                .append("\t" + cursorTABLE_DB.getString(bronIndex));
+                                .append("\t" + cursorTABLE_DB.getString(bronIndex))
+                                .append("\t" + cursorTABLE_DB.getString(cashIndex));
                         break;
                     }
                 }
@@ -448,6 +450,7 @@ public class EditDBActivity extends AppCompatActivity implements CompoundButton.
                     durationMinuteDB = order.getDuration();
                     clientDB = order.getClient();
                     bronDB = order.getBron();
+                    cashDB = order.getCash();
                     statusDB = order.getStatus();
 
                     findReserveFlag = true;
@@ -465,6 +468,7 @@ public class EditDBActivity extends AppCompatActivity implements CompoundButton.
             Log.i("EditDBActivity", "durationMinuteDB = " + durationMinuteDB);
             Log.i("EditDBActivity", "clientDB = " + clientDB);
             Log.i("EditDBActivity", "bronDB = " + bronDB);
+            Log.i("EditDBActivity", "cashDB = " + cashDB);
             Log.i("EditDBActivity", "statusDB = " + statusDB);
         }
     }
@@ -761,6 +765,7 @@ public class EditDBActivity extends AppCompatActivity implements CompoundButton.
                             intent.putExtra("adminName", getAdminName);
                             intent.putExtra("status", statusDB);
                             intent.putExtra("bron", bronDB);
+                            intent.putExtra("cash", cashDB);
                             startActivity(intent);
 
 //                            editBtnColumns(null, null, null,

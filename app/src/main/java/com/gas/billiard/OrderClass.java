@@ -28,6 +28,7 @@ public class OrderClass {
     private String timeOrder;
 
     private String bron;
+    private String cash;
     private String status;
     private int hourStartReserve;
     private int minuteStartReserve;
@@ -48,6 +49,7 @@ public class OrderClass {
                       String client,
                       String employee,
                       String bron,
+                      String cash,
                       String status) {
         this.idOrder = idOrder;
         this.numTable = numTable;
@@ -59,6 +61,7 @@ public class OrderClass {
         this.client = client;
         this.employee = employee;
         this.bron = bron;
+        this.cash = cash;
         this.status = status;
         this.endDateTimeReserveCal = getEndReserveDateTimeMethod();
     }
@@ -178,4 +181,7 @@ public class OrderClass {
     }
 
 
+    public String getCash() {
+        return cash;
+    }
 }
